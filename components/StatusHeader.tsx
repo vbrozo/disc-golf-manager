@@ -5,6 +5,7 @@ import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatMoney } from "@/utils/format";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import FloatingNumbers from "@/components/FloatingNumbers";
 import AchievementBadges from "@/components/AchievementBadges";
 import { getAchievements, getCurrentStreak } from "@/game/achievements";
@@ -44,6 +45,7 @@ export default function StatusHeader() {
 
   const achievements = getAchievements(club, tournaments);
   const streak = getCurrentStreak(tournaments);
+  const displayedMoney = useAnimatedNumber(club.money);
 
   return (
     <>
@@ -54,7 +56,7 @@ export default function StatusHeader() {
         </div>
         <div className="floating-number-host">
           <span className="loop-status-label">{t("loop.money")}</span>
-          <strong>{formatMoney(club.money)}</strong>
+          <strong>{formatMoney(displayedMoney)}</strong>
           <FloatingNumbers items={moneyFloats.items} />
         </div>
         <div className="floating-number-host">
