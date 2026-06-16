@@ -30,7 +30,8 @@ Build a browser-based Disc Golf management simulator where the player:
 - Next.js (App Router) scaffold + folders + layout: ✅ done
 
 ### Core State
-- Zustand store: 🔄 prepared (folder + dependency, no state yet)
+- Zustand store: ✅ done (club, players, tournaments, inventory)
+  - actions: setClub, addMoney, updatePlayer, addTournamentResult
 
 ### Simulation Engine
 - tournament simulation: ❌ not started
