@@ -34,7 +34,11 @@ Build a browser-based Disc Golf management simulator where the player:
   - actions: setClub, addMoney, updatePlayer, addTournamentResult
 
 ### Simulation Engine
-- tournament simulation: ❌ not started
+- tournament simulation: ✅ done
+  - pure TypeScript engine in `game/simulation.ts` (no React, no Zustand)
+  - functions: simulateHole, simulateRound, simulateTournament
+  - stat weights: Driving 30% / Accuracy 40% / Putting 20% / Mental 10% + random factor
+  - hole outcomes: eagle, birdie, par, bogey
 
 ### Tournament System
 - 10 tournaments: ❌ not started
