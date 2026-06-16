@@ -68,6 +68,12 @@ export interface HoleByHoleEntry {
   scoreToPar: number;
 }
 
+/** One club player's hole-by-hole sequence for the results animation. */
+export interface PlayerHoleTrack {
+  playerName: string;
+  holes: HoleByHoleEntry[];
+}
+
 /** The full standings of the most recent tournament, kept for the results screen. */
 export interface TournamentSummary {
   tournamentName: string;
@@ -76,10 +82,8 @@ export interface TournamentSummary {
   clubEarnings: number;
   /** Reputation the club gained from its best finisher. */
   clubReputation: number;
-  /** The club's best finisher's name, for labelling the hole-by-hole playback. */
-  bestPlayerName: string;
-  /** Every hole the club's best finisher played, across all rounds, in order. */
-  holeByHole: HoleByHoleEntry[];
+  /** Per-club-player hole sequences for the playback animation, ordered best first. */
+  playerTracks: PlayerHoleTrack[];
 }
 
 /**
@@ -467,13 +471,15 @@ export const useGameStore = create<GameState>()(
       })),
       clubEarnings: settlement.earnings,
       clubReputation: settlement.reputationGained,
-      bestPlayerName: playerDisplayName(best.player),
-      holeByHole: best.rounds.flatMap((round) =>
-        round.holes.map((hole) => ({
-          outcome: hole.outcome,
-          scoreToPar: hole.scoreToPar,
-        }))
-      ),
+      playerTracks: clubStandings.map((s) => ({
+        playerName: playerDisplayName(s.player),
+        holes: s.rounds.flatMap((round) =>
+          round.holes.map((hole) => ({
+            outcome: hole.outcome,
+            scoreToPar: hole.scoreToPar,
+          }))
+        ),
+      })),
     };
 
     // Map each club player's round rating by id so we can update their history.

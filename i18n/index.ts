@@ -83,8 +83,8 @@ const en: Dict = {
   "results.you": "You",
   "results.clubTotal": "Your club earned {earnings} and +{rep} reputation.",
   "results.continue": "Continue",
-  "playback.watching": "Watching {name} play the round…",
   "playback.skip": "Skip",
+  "playback.viewResults": "View Results",
 
   // Season loop — status header
   "loop.club": "Club",
@@ -262,8 +262,8 @@ const hr: Dict = {
   "results.you": "Vi",
   "results.clubTotal": "Tvoj klub zaradio je {earnings} i +{rep} ugleda.",
   "results.continue": "Nastavi",
-  "playback.watching": "Gledaš kako {name} igra rundu…",
   "playback.skip": "Preskoči",
+  "playback.viewResults": "Pogledaj rezultate",
 
   // Season loop — status header
   "loop.club": "Klub",
