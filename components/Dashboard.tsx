@@ -2,12 +2,15 @@
 
 import { useGameStore } from "@/store/gameStore";
 import { effectivePlayerStats, TRAINING_PROGRAMS } from "@/game";
+import { useTranslation } from "@/hooks/useTranslation";
 
 function formatMoney(amount: number): string {
   return `$${amount.toLocaleString("en-US")}`;
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
+
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
   const tournaments = useGameStore((s) => s.tournaments);
@@ -17,27 +20,27 @@ export default function Dashboard() {
   return (
     <div className="dash-grid">
       <section className="dash-card">
-        <h3>Club Overview</h3>
+        <h3>{t("dash.clubOverview")}</h3>
         <ul className="dash-list">
           <li>
-            Name <strong>{club.name}</strong>
+            {t("dash.name")} <strong>{club.name}</strong>
           </li>
           <li>
-            Money <strong>{formatMoney(club.money)}</strong>
+            {t("loop.money")} <strong>{formatMoney(club.money)}</strong>
           </li>
           <li>
-            Reputation <strong>{club.reputation}</strong>
+            {t("loop.reputation")} <strong>{club.reputation}</strong>
           </li>
           <li>
-            Season <strong>{season.season}</strong>
+            {t("loop.season")} <strong>{season.season}</strong>
           </li>
         </ul>
       </section>
 
       <section className="dash-card">
-        <h3>Players</h3>
+        <h3>{t("dash.players")}</h3>
         {players.length === 0 ? (
-          <p className="dash-empty">No players yet.</p>
+          <p className="dash-empty">{t("dash.noPlayers")}</p>
         ) : (
           <ul className="dash-list">
             {players.map((player) => {
@@ -47,8 +50,13 @@ export default function Dashboard() {
                   <strong>{player.name}</strong>
                   <span className="loop-meta">
                     {" "}
-                    DRV {stats.Driving} · ACC {stats.Accuracy} · PUT{" "}
-                    {stats.Putting} · MEN {stats.Mental} · STA {stats.Stamina}
+                    {t("dash.playerStats", {
+                      drv: stats.Driving,
+                      acc: stats.Accuracy,
+                      put: stats.Putting,
+                      men: stats.Mental,
+                      sta: stats.Stamina,
+                    })}
                   </span>
                 </li>
               );
@@ -58,9 +66,9 @@ export default function Dashboard() {
       </section>
 
       <section className="dash-card">
-        <h3>Tournaments</h3>
+        <h3>{t("dash.tournaments")}</h3>
         {tournaments.length === 0 ? (
-          <p className="dash-empty">No tournaments played yet.</p>
+          <p className="dash-empty">{t("dash.noTournaments")}</p>
         ) : (
           <ul className="dash-list">
             {tournaments.map((result) => (
@@ -68,8 +76,11 @@ export default function Dashboard() {
                 <strong>{result.tournamentName}</strong>
                 <span className="loop-meta">
                   {" "}
-                  #{result.placement} · {formatMoney(result.earnings)} · +
-                  {result.reputationGained} rep
+                  {t("dash.tournamentResult", {
+                    placement: result.placement,
+                    earnings: formatMoney(result.earnings),
+                    rep: result.reputationGained,
+                  })}
                 </span>
               </li>
             ))}
@@ -78,14 +89,17 @@ export default function Dashboard() {
       </section>
 
       <section className="dash-card">
-        <h3>Training</h3>
+        <h3>{t("dash.training")}</h3>
         <ul className="dash-list">
           {TRAINING_PROGRAMS.map((program) => (
             <li key={program.type}>
-              <strong>{program.name}</strong>
+              <strong>{t(`program.${program.type}`)}</strong>
               <span className="loop-meta">
                 {" "}
-                trains {program.stat} · {formatMoney(program.cost)}
+                {t("dash.trainingItem", {
+                  stat: t(`stat.${program.stat}`),
+                  cost: formatMoney(program.cost),
+                })}
               </span>
             </li>
           ))}
@@ -93,9 +107,9 @@ export default function Dashboard() {
       </section>
 
       <section className="dash-card">
-        <h3>Inventory</h3>
+        <h3>{t("dash.inventory")}</h3>
         {inventory.length === 0 ? (
-          <p className="dash-empty">No discs owned yet.</p>
+          <p className="dash-empty">{t("dash.noDiscs")}</p>
         ) : (
           <ul className="dash-list">
             {inventory.map((disc) => (
@@ -103,7 +117,11 @@ export default function Dashboard() {
                 <strong>{disc.name}</strong>
                 <span className="loop-meta">
                   {" "}
-                  {disc.type} · {disc.rarity} · +{disc.bonus}
+                  {t("dash.inventoryItem", {
+                    type: t(`discType.${disc.type}`),
+                    rarity: t(`rarity.${disc.rarity}`),
+                    bonus: disc.bonus,
+                  })}
                 </span>
               </li>
             ))}

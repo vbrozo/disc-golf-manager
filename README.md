@@ -137,7 +137,7 @@ Stats (1–100):
 - Verified Vercel-ready: ✅
   - `npm run build` compiles, type-checks, and statically prerenders `/` (no SSR/runtime errors)
   - no server-only or Node.js-only APIs (`fs`, `path`, `child_process`, `process.env`) used in app code
-  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`, `DiscShop.tsx`) marked `"use client"`; game engine (`game/*`) stays pure TS with no React/Zustand/window/localStorage access
+  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`, `DiscShop.tsx`, `NewGameModal.tsx`, `LanguageSwitcher.tsx`) marked `"use client"`; game engine (`game/*`) and i18n dictionary (`i18n/*`) stay pure TS with no React/Zustand/window/localStorage access
   - localStorage persistence is SSR-safe: the Zustand `persist` store uses `createJSONStorage(() => localStorage)` (lazy, never touched on the server) + `skipHydration`, and `components/GameClient.tsx` rehydrates in a client-only `useEffect` so server and first client render match (no hydration mismatch)
 - Tests: `npm test` (Vitest) — pure-engine unit tests run headless, no browser/DOM needed
 
@@ -168,15 +168,30 @@ Stats (1–100):
   - store action `buyDisc(discId)` charges club money and adds a uniquely-id'd copy to inventory
   - finally surfaces the existing disc engine in the UI (bonuses flow into `effectivePlayerStats`)
 
+### Localization (i18n)
+- English + Croatian: ✅ done
+  - framework-free dictionary + `t(language, key, params?)` in `i18n/index.ts` ({placeholder} interpolation, falls back to English then the raw key)
+  - active language lives in the store (`language` + `setLanguage`) and is persisted with the save
+  - `useTranslation()` hook (`hooks/useTranslation.ts`) binds `t` to the store language so the whole app re-renders on switch
+  - `components/LanguageSwitcher.tsx` is fixed to the top-right of the header (English / Hrvatski)
+  - all UI strings (dashboard, season loop, disc shop, modal, enum labels) are translated
+
+### New Game flow
+- start screen + modal: ✅ done
+  - first load (preseason) shows a single **New Game** button
+  - clicking opens `components/NewGameModal.tsx` asking for language + club name, then seeds the game
+  - language chosen in the modal applies live to the whole app
+
 ### Tests
-- engine unit tests: ✅ done
+- engine + i18n unit tests: ✅ done
   - Vitest (`npm test`), config in `vitest.config.ts` with the `@/` alias
-  - 24 tests across `tests/economy|discs|season|training.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, and deterministic training boosts
+  - 27 tests across `tests/economy|discs|season|training|i18n.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, deterministic training boosts, and translation lookup/interpolation
 
 ## 📌 Next Task
 (not set yet)
 
 All core systems are implemented and wired into the season game loop, with a
-read-only dashboard, a disc shop, club creation, localStorage persistence, and
-engine unit tests. Possible follow-ups: a per-disc/per-player stat breakdown UI,
-multi-season player progression/aging, and richer tournament variety.
+read-only dashboard, a disc shop, a New Game start screen + modal, localStorage
+persistence, English/Croatian localization, and engine + i18n unit tests.
+Possible follow-ups: a per-disc/per-player stat breakdown UI, multi-season
+player progression/aging, and richer tournament variety.

@@ -14,6 +14,8 @@ import {
   TRAINING_PROGRAMS,
 } from "@/game";
 import type { Player, Tournament, TrainingType } from "@/types";
+import { useTranslation } from "@/hooks/useTranslation";
+import NewGameModal from "@/components/NewGameModal";
 
 /** A short status line shown to the player after an action. */
 interface Notice {
@@ -26,11 +28,12 @@ function formatMoney(amount: number): string {
 }
 
 export default function SeasonLoop() {
+  const { t } = useTranslation();
+
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
   const season = useGameStore((s) => s.season);
 
-  const startNewGame = useGameStore((s) => s.startNewGame);
   const startSeason = useGameStore((s) => s.startSeason);
   const playTournamentRound = useGameStore((s) => s.playTournamentRound);
   const advanceSeason = useGameStore((s) => s.advanceSeason);
@@ -40,58 +43,29 @@ export default function SeasonLoop() {
   const [lastResult, setLastResult] = useState<EnterTournamentResult | null>(
     null
   );
+  const [showNewGame, setShowNewGame] = useState(false);
 
-  // Club-creation form state (only used on the preseason screen).
-  const [clubName, setClubName] = useState("");
-  const [playerNames, setPlayerNames] = useState(["", "", ""]);
-
-  // -- Phase: preseason (new game / club setup) --------------------------
+  // -- Phase: preseason (start screen) -----------------------------------
   if (season.phase === "preseason") {
     return (
-      <section className="loop">
-        <h2>🥏 New Game</h2>
-        <p className="loop-lead">
-          Name your club and players, then run a full season: pick a tournament,
-          simulate it, bank the rewards, train your players, and repeat.
-        </p>
-        <div className="loop-setup">
-          <label className="loop-field">
-            <span>Club name</span>
-            <input
-              className="loop-input"
-              type="text"
-              placeholder="New Club"
-              value={clubName}
-              onChange={(e) => setClubName(e.target.value)}
-            />
-          </label>
-          {playerNames.map((name, index) => (
-            <label key={index} className="loop-field">
-              <span>Player {index + 1}</span>
-              <input
-                className="loop-input"
-                type="text"
-                placeholder={`Player ${index + 1}`}
-                value={name}
-                onChange={(e) =>
-                  setPlayerNames((prev) =>
-                    prev.map((n, i) => (i === index ? e.target.value : n))
-                  )
-                }
-              />
-            </label>
-          ))}
-        </div>
+      <section className="loop loop-start">
+        <h2>{t("newgame.heading")}</h2>
+        <p className="loop-lead">{t("newgame.intro")}</p>
         <button
           className="btn btn-primary"
-          onClick={() => {
-            startNewGame({ clubName, playerNames });
-            setNotice(null);
-            setLastResult(null);
-          }}
+          onClick={() => setShowNewGame(true)}
         >
-          Start Season
+          {t("newgame.button")}
         </button>
+        {showNewGame ? (
+          <NewGameModal
+            onClose={() => {
+              setShowNewGame(false);
+              setNotice(null);
+              setLastResult(null);
+            }}
+          />
+        ) : null}
       </section>
     );
   }
@@ -100,23 +74,23 @@ export default function SeasonLoop() {
   const header = (
     <header className="loop-status">
       <div>
-        <span className="loop-status-label">Club</span>
+        <span className="loop-status-label">{t("loop.club")}</span>
         <strong>{club.name}</strong>
       </div>
       <div>
-        <span className="loop-status-label">Money</span>
+        <span className="loop-status-label">{t("loop.money")}</span>
         <strong>{formatMoney(club.money)}</strong>
       </div>
       <div>
-        <span className="loop-status-label">Reputation</span>
+        <span className="loop-status-label">{t("loop.reputation")}</span>
         <strong>{club.reputation}</strong>
       </div>
       <div>
-        <span className="loop-status-label">Season</span>
+        <span className="loop-status-label">{t("loop.season")}</span>
         <strong>{season.season}</strong>
       </div>
       <div>
-        <span className="loop-status-label">Round</span>
+        <span className="loop-status-label">{t("loop.round")}</span>
         <strong>
           {Math.min(season.round, season.totalRounds)} / {season.totalRounds}
         </strong>
@@ -140,10 +114,8 @@ export default function SeasonLoop() {
           tone: "bad",
           text:
             eligibility.reason === "insufficient-funds"
-              ? `Not enough money for the ${formatMoney(
-                  eligibility.entryFee
-                )} entry fee.`
-              : "Could not enter that tournament.",
+              ? t("loop.noFunds", { fee: formatMoney(eligibility.entryFee) })
+              : t("loop.cantEnter"),
         });
         return;
       }
@@ -151,16 +123,18 @@ export default function SeasonLoop() {
       const { result, settlement } = outcome;
       setNotice({
         tone: "good",
-        text: `Finished #${result.placement} — earned ${formatMoney(
-          settlement.earnings
-        )} and +${settlement.reputationGained} reputation.`,
+        text: t("loop.entered", {
+          placement: result.placement,
+          earnings: formatMoney(settlement.earnings),
+          rep: settlement.reputationGained,
+        }),
       });
     };
 
     return (
       <section className="loop">
         {header}
-        <h2>Select a Tournament</h2>
+        <h2>{t("loop.selectTitle")}</h2>
         {noticeBar}
         <ul className="loop-tournaments">
           {available.map((tournament) => {
@@ -171,9 +145,12 @@ export default function SeasonLoop() {
                 <div className="loop-tournament-info">
                   <strong>{tournament.name}</strong>
                   <span className="loop-meta">
-                    {tournament.holes} holes · difficulty {tournament.difficulty}{" "}
-                    · pool {formatMoney(tournament.prizePool)} · entry{" "}
-                    {formatMoney(fee)}
+                    {t("loop.tournamentMeta", {
+                      holes: tournament.holes,
+                      difficulty: tournament.difficulty,
+                      pool: formatMoney(tournament.prizePool),
+                      fee: formatMoney(fee),
+                    })}
                   </span>
                 </div>
                 <button
@@ -181,7 +158,7 @@ export default function SeasonLoop() {
                   disabled={!eligibility.canEnter}
                   onClick={() => onEnter(tournament)}
                 >
-                  Enter
+                  {t("loop.enter")}
                 </button>
               </li>
             );
@@ -201,30 +178,33 @@ export default function SeasonLoop() {
     const onTrain = (player: Player, type: TrainingType) => {
       const result = trainPlayer(player.id, type);
       if (!result) {
-        setNotice({
-          tone: "bad",
-          text: "Not enough money for that training session.",
-        });
+        setNotice({ tone: "bad", text: t("loop.noTrainFunds") });
         return;
       }
       setNotice({
         tone: "good",
-        text: `${player.name}: ${result.stat} +${result.boost} (now ${result.newValue}) for ${formatMoney(
-          result.cost
-        )}.`,
+        text: t("loop.trained", {
+          player: player.name,
+          stat: t(`stat.${result.stat}`),
+          boost: result.boost,
+          newValue: result.newValue,
+          cost: formatMoney(result.cost),
+        }),
       });
     };
 
     return (
       <section className="loop">
         {header}
-        <h2>Training</h2>
+        <h2>{t("loop.trainingTitle")}</h2>
         {roundResult ? (
           <p className="loop-lead">
-            Last round: <strong>{roundResult.tournamentName}</strong> — finished
-            #{roundResult.placement}, earned{" "}
-            {formatMoney(roundResult.earnings)} and +
-            {roundResult.reputationGained} reputation.
+            {t("loop.lastRound", {
+              name: roundResult.tournamentName,
+              placement: roundResult.placement,
+              earnings: formatMoney(roundResult.earnings),
+              rep: roundResult.reputationGained,
+            })}
           </p>
         ) : null}
         {noticeBar}
@@ -235,9 +215,13 @@ export default function SeasonLoop() {
               <div key={player.id} className="loop-player">
                 <strong>{player.name}</strong>
                 <span className="loop-meta">
-                  DRV {effective.Driving} · ACC {effective.Accuracy} · PUT{" "}
-                  {effective.Putting} · MEN {effective.Mental} · STA{" "}
-                  {effective.Stamina}
+                  {t("dash.playerStats", {
+                    drv: effective.Driving,
+                    acc: effective.Accuracy,
+                    put: effective.Putting,
+                    men: effective.Mental,
+                    sta: effective.Stamina,
+                  })}
                 </span>
                 <div className="loop-train-buttons">
                   {TRAINING_PROGRAMS.map((program) => (
@@ -247,7 +231,10 @@ export default function SeasonLoop() {
                       disabled={club.money < program.cost}
                       onClick={() => onTrain(player, program.type)}
                     >
-                      {program.type} ({formatMoney(program.cost)})
+                      {t("loop.trainButton", {
+                        type: t(`trainingType.${program.type}`),
+                        cost: formatMoney(program.cost),
+                      })}
                     </button>
                   ))}
                 </div>
@@ -263,7 +250,9 @@ export default function SeasonLoop() {
             setLastResult(null);
           }}
         >
-          {season.round >= season.totalRounds ? "Finish Season" : "Next Round"}
+          {season.round >= season.totalRounds
+            ? t("loop.finishSeason")
+            : t("loop.nextRound")}
         </button>
       </section>
     );
@@ -274,25 +263,27 @@ export default function SeasonLoop() {
   return (
     <section className="loop">
       {header}
-      <h2>Season {summary.season} Complete</h2>
+      <h2>{t("loop.seasonComplete", { n: summary.season })}</h2>
       <ul className="loop-summary">
         <li>
-          Rounds played: <strong>{summary.roundsPlayed}</strong>
+          {t("loop.roundsPlayed")}: <strong>{summary.roundsPlayed}</strong>
         </li>
         <li>
-          Wins: <strong>{summary.wins}</strong>
+          {t("loop.wins")}: <strong>{summary.wins}</strong>
         </li>
         <li>
-          Best finish:{" "}
+          {t("loop.bestFinish")}:{" "}
           <strong>
             {summary.bestPlacement ? `#${summary.bestPlacement}` : "—"}
           </strong>
         </li>
         <li>
-          Total earnings: <strong>{formatMoney(summary.totalEarnings)}</strong>
+          {t("loop.totalEarnings")}:{" "}
+          <strong>{formatMoney(summary.totalEarnings)}</strong>
         </li>
         <li>
-          Reputation gained: <strong>+{summary.totalReputation}</strong>
+          {t("loop.reputationGained")}:{" "}
+          <strong>+{summary.totalReputation}</strong>
         </li>
       </ul>
       <button
@@ -303,7 +294,7 @@ export default function SeasonLoop() {
           setLastResult(null);
         }}
       >
-        Start Next Season
+        {t("loop.startNextSeason")}
       </button>
     </section>
   );

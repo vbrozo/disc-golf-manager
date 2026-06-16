@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { DISCS, getDiscPrice } from "@/game";
 import type { Disc, DiscType, Player } from "@/types";
+import { useTranslation } from "@/hooks/useTranslation";
 
 /** Disc type slots, used to render each player's loadout in a fixed order. */
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
@@ -24,6 +25,8 @@ interface Notice {
  * Reads and drives the Zustand store; all rules live in the pure disc engine.
  */
 export default function DiscShop() {
+  const { t } = useTranslation();
+
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
   const inventory = useGameStore((s) => s.inventory);
@@ -43,13 +46,14 @@ export default function DiscShop() {
     if (!bought) {
       setNotice({
         tone: "bad",
-        text: `Not enough money to buy ${disc.name} (${formatMoney(
-          getDiscPrice(disc)
-        )}).`,
+        text: t("shop.noFunds", {
+          name: disc.name,
+          price: formatMoney(getDiscPrice(disc)),
+        }),
       });
       return;
     }
-    setNotice({ tone: "good", text: `Bought ${bought.name}.` });
+    setNotice({ tone: "good", text: t("shop.bought", { name: bought.name }) });
   };
 
   const onEquip = (player: Player, discId: string) => {
@@ -58,27 +62,33 @@ export default function DiscShop() {
     equipDisc(player.id, discId);
     setNotice({
       tone: "good",
-      text: `Equipped ${disc?.name ?? "disc"} on ${player.name}.`,
+      text: t("shop.equipped", {
+        name: disc?.name ?? "",
+        player: player.name,
+      }),
     });
   };
 
   const onUnequip = (player: Player, type: DiscType) => {
     unequipDisc(player.id, type);
-    setNotice({ tone: "good", text: `Unequipped ${type} from ${player.name}.` });
+    setNotice({
+      tone: "good",
+      text: t("shop.unequipped", {
+        type: t(`discType.${type}`),
+        player: player.name,
+      }),
+    });
   };
 
   return (
     <section className="loop">
-      <h2>🛒 Disc Shop</h2>
-      <p className="loop-lead">
-        Buy discs to boost your players. Each disc type raises one stat; equip
-        one disc per type per player.
-      </p>
+      <h2>{t("shop.title")}</h2>
+      <p className="loop-lead">{t("shop.lead")}</p>
       {notice ? (
         <p className={`loop-notice loop-notice-${notice.tone}`}>{notice.text}</p>
       ) : null}
 
-      <h3>Catalogue</h3>
+      <h3>{t("shop.catalogue")}</h3>
       <ul className="loop-tournaments">
         {DISCS.map((disc) => {
           const price = getDiscPrice(disc);
@@ -87,7 +97,12 @@ export default function DiscShop() {
               <div className="loop-tournament-info">
                 <strong>{disc.name}</strong>
                 <span className="loop-meta">
-                  {disc.type} · {disc.rarity} · +{disc.bonus} · {formatMoney(price)}
+                  {t("shop.discMeta", {
+                    type: t(`discType.${disc.type}`),
+                    rarity: t(`rarity.${disc.rarity}`),
+                    bonus: disc.bonus,
+                    price: formatMoney(price),
+                  })}
                 </span>
               </div>
               <button
@@ -95,14 +110,14 @@ export default function DiscShop() {
                 disabled={club.money < price}
                 onClick={() => onBuy(disc)}
               >
-                Buy
+                {t("shop.buy")}
               </button>
             </li>
           );
         })}
       </ul>
 
-      <h3>Loadouts</h3>
+      <h3>{t("shop.loadouts")}</h3>
       <div className="loop-roster">
         {players.map((player) => {
           const equipped = player.equipped ?? {};
@@ -116,14 +131,22 @@ export default function DiscShop() {
                 return (
                   <div key={type} className="loop-train-buttons">
                     <span className="loop-meta">
-                      {type}: {current ? `${current.name} (+${current.bonus})` : "—"}
+                      {t("shop.slot", {
+                        type: t(`discType.${type}`),
+                        value: current
+                          ? t("shop.slotEquipped", {
+                              name: current.name,
+                              bonus: current.bonus,
+                            })
+                          : t("shop.empty"),
+                      })}
                     </span>
                     <select
                       className="btn btn-small"
                       value=""
                       onChange={(e) => onEquip(player, e.target.value)}
                     >
-                      <option value="">Equip…</option>
+                      <option value="">{t("shop.equipPlaceholder")}</option>
                       {options.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name} (+{d.bonus})
@@ -135,7 +158,7 @@ export default function DiscShop() {
                         className="btn btn-small"
                         onClick={() => onUnequip(player, type)}
                       >
-                        Unequip
+                        {t("shop.unequip")}
                       </button>
                     ) : null}
                   </div>

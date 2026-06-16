@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { DEFAULT_LANGUAGE, type Language } from "@/i18n";
 import type {
   Club,
   Disc,
@@ -68,8 +69,12 @@ export interface GameState {
   inventory: Disc[];
   /** State of the season game loop (start → play → train → repeat). */
   season: SeasonState;
+  /** Active UI language. */
+  language: Language;
 
   // --- Actions ---
+  /** Switch the UI language. */
+  setLanguage: (language: Language) => void;
   /** Replace the club details (name / money / reputation). */
   setClub: (club: Club) => void;
   /** Adjust the club's money. Pass a negative amount to spend. */
@@ -175,6 +180,9 @@ export const useGameStore = create<GameState>()(
   tournaments: [],
   inventory: [],
   season: INITIAL_SEASON_STATE,
+  language: DEFAULT_LANGUAGE,
+
+  setLanguage: (language) => set({ language }),
 
   setClub: (club) => set({ club }),
 
@@ -405,6 +413,7 @@ export const useGameStore = create<GameState>()(
         tournaments: state.tournaments,
         inventory: state.inventory,
         season: state.season,
+        language: state.language,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

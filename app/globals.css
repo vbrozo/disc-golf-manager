@@ -15,14 +15,82 @@ body {
 .app-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
   background: #1e293b;
   border-bottom: 1px solid #334155;
 }
 
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .app-header h1 {
   font-size: 1.25rem;
+}
+
+/* --- Language switcher (top-right) --- */
+.lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.lang-switcher-select {
+  padding: 0.35rem 0.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* --- New game modal --- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 50;
+}
+
+.modal {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+}
+
+.modal fieldset.loop-field {
+  border: none;
+}
+
+.modal fieldset.loop-field legend {
+  margin-bottom: 0.4rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.loop-start {
+  align-items: flex-start;
 }
 
 .app-main {
