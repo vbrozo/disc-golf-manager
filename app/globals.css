@@ -618,6 +618,76 @@ body {
   }
 }
 
+/* --- Stage transitions --- */
+.loop {
+  animation: stage-fade-in 0.35s ease both;
+}
+
+@keyframes stage-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Tournament difficulty stars + reputation unlock --- */
+.tournament-stars {
+  color: #fbbf24;
+  letter-spacing: 0.1em;
+}
+
+.loop-tournament-unlocked {
+  animation: unlock-flash 1.6s ease;
+}
+
+@keyframes unlock-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(74, 222, 128, 0);
+    border-color: #334155;
+  }
+  20% {
+    box-shadow: 0 0 18px rgba(74, 222, 128, 0.85);
+    border-color: #4ade80;
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(74, 222, 128, 0);
+    border-color: #334155;
+  }
+}
+
+.unlocked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #052e16;
+  animation: unlock-pop 0.4s ease;
+}
+
+@keyframes unlock-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* --- Mobile (phones) --- */
 @media (max-width: 640px) {
   .app-header {

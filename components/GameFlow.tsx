@@ -90,7 +90,7 @@ export default function GameFlow() {
   // -- Stage: intro ------------------------------------------------------
   if (flowStage === "intro") {
     return (
-      <section className="loop">
+      <section className="loop" key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("intro.title")}</h2>
@@ -190,7 +190,7 @@ export default function GameFlow() {
     };
 
     return (
-      <section className="loop">
+      <section className="loop" key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("shop.title")}</h2>
@@ -352,12 +352,27 @@ export default function GameFlow() {
 
   // -- Stage: training (before each tournament) --------------------------
   if (flowStage === "training") {
-    return <TrainingStage stepper={stepper} noticeBar={noticeBar} setNotice={setNotice} />;
+    return (
+      <TrainingStage
+        key={flowStage}
+        stepper={stepper}
+        noticeBar={noticeBar}
+        setNotice={setNotice}
+      />
+    );
   }
 
   // -- Stage: tournament -------------------------------------------------
   if (flowStage === "tournament") {
     const available = getAvailableTournaments(club.reputation);
+    // Approximate the reputation the club had before its most recent result,
+    // so tournaments crossing the threshold this round can be flagged as
+    // newly unlocked.
+    const previousReputation =
+      club.reputation - (lastTournament?.clubReputation ?? 0);
+    const isNewlyUnlocked = (tournament: Tournament) =>
+      tournament.reputationRequired > previousReputation &&
+      tournament.reputationRequired <= club.reputation;
 
     const onEnter = (tournament: Tournament) => {
       const outcome = playTournamentRound(tournament.id);
@@ -379,7 +394,7 @@ export default function GameFlow() {
     };
 
     return (
-      <section className="loop">
+      <section className="loop" key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("loop.selectTitle")}</h2>
@@ -389,10 +404,26 @@ export default function GameFlow() {
           {available.map((tournament) => {
             const fee = getEntryFee(tournament);
             const eligibility = checkEntryEligibility(club, tournament);
+            const unlocked = isNewlyUnlocked(tournament);
             return (
-              <li key={tournament.id} className="loop-tournament">
+              <li
+                key={tournament.id}
+                className={`loop-tournament${
+                  unlocked ? " loop-tournament-unlocked" : ""
+                }`}
+              >
                 <div className="loop-tournament-info">
-                  <strong>{tournament.name}</strong>
+                  <strong>
+                    {tournament.name}{" "}
+                    <span className="tournament-stars">
+                      {"★".repeat(tournament.difficulty)}
+                    </span>
+                    {unlocked ? (
+                      <span className="unlocked-badge">
+                        ✓ {t("tournament.unlocked")}
+                      </span>
+                    ) : null}
+                  </strong>
                   <span className="loop-meta">
                     {t("loop.tournamentMeta", {
                       holes: tournament.holes,
@@ -427,7 +458,7 @@ export default function GameFlow() {
     };
 
     return (
-      <section className="loop">
+      <section className="loop" key={flowStage}>
         <StatusHeader />
         <h2>{t("results.title")}</h2>
         {lastTournament ? (
@@ -489,7 +520,7 @@ export default function GameFlow() {
   // -- Stage: complete (season summary) ----------------------------------
   const summary = summariseSeason(season);
   return (
-    <section className="loop">
+    <section className="loop" key={flowStage}>
       <StatusHeader />
       <h2>{t("loop.seasonComplete", { n: summary.season })}</h2>
       <ul className="loop-summary">
