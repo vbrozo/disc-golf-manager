@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
@@ -18,7 +18,18 @@ import { useTranslation } from "@/hooks/useTranslation";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
+import StatBar from "@/components/StatBar";
+import FloatingNumbers from "@/components/FloatingNumbers";
+import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney } from "@/utils/format";
+
+const STAT_KEYS: (keyof Player["stats"])[] = [
+  "Driving",
+  "Accuracy",
+  "Putting",
+  "Mental",
+  "Stamina",
+];
 
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
 
@@ -217,7 +228,14 @@ export default function GameFlow() {
             return (
               <li key={disc.id} className="loop-tournament">
                 <div className="loop-tournament-info">
-                  <strong>{disc.name}</strong>
+                  <strong>
+                    {disc.name}{" "}
+                    <span
+                      className={`rarity-badge rarity-${disc.rarity.toLowerCase()}`}
+                    >
+                      {t(`rarity.${disc.rarity}`)}
+                    </span>
+                  </strong>
                   <span className="loop-meta">
                     {t("shop.discMeta", {
                       type: t(`discType.${disc.type}`),
@@ -283,6 +301,13 @@ export default function GameFlow() {
                             : t("shop.empty"),
                         })}
                       </span>
+                      {current ? (
+                        <span
+                          className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
+                        >
+                          {t(`rarity.${current.rarity}`)}
+                        </span>
+                      ) : null}
                       <select
                         className="btn btn-small"
                         value=""
@@ -327,95 +352,7 @@ export default function GameFlow() {
 
   // -- Stage: training (before each tournament) --------------------------
   if (flowStage === "training") {
-    const onTrain = (player: Player, type: TrainingType) => {
-      const result = trainPlayer(player.id, type);
-      if (!result) {
-        setNotice({ tone: "bad", text: t("loop.noTrainFunds") });
-        return;
-      }
-      setNotice({
-        tone: "good",
-        text: t("loop.trained", {
-          player: player.name,
-          stat: t(`stat.${result.stat}`),
-          boost: result.boost,
-          newValue: result.newValue,
-          cost: formatMoney(result.cost),
-        }),
-      });
-    };
-
-    return (
-      <section className="loop">
-        <StatusHeader />
-        {stepper}
-        <h2>{t("loop.trainingTitle")}</h2>
-        <p className="loop-lead">{t("training.intro")}</p>
-        {noticeBar}
-        <div className="loop-roster">
-          {players.map((player) => {
-            const effective = effectivePlayerStats(player);
-            return (
-              <div key={player.id} className="loop-player">
-                <div className="loop-player-head">
-                  <strong>{player.name}</strong>
-                  <span
-                    className="player-rating"
-                    title={t("player.rating")}
-                  >
-                    {player.rating ?? t("player.unrated")}
-                  </span>
-                </div>
-                <span className="loop-meta">
-                  {t("dash.playerStats", {
-                    drv: effective.Driving,
-                    acc: effective.Accuracy,
-                    put: effective.Putting,
-                    men: effective.Mental,
-                    sta: effective.Stamina,
-                  })}
-                </span>
-                <div className="loop-train-buttons">
-                  {TRAINING_PROGRAMS.map((program) => (
-                    <button
-                      key={program.type}
-                      className="btn btn-small"
-                      disabled={club.money < program.cost}
-                      onClick={() => onTrain(player, program.type)}
-                    >
-                      {t("loop.trainButton", {
-                        type: t(`trainingType.${program.type}`),
-                        cost: formatMoney(program.cost),
-                      })}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="loop-train-buttons">
-          <button
-            className="btn"
-            onClick={() => {
-              setNotice(null);
-              setFlowStage("shop");
-            }}
-          >
-            {t("training.toShop")}
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setNotice(null);
-              setFlowStage("tournament");
-            }}
-          >
-            {t("training.toTournament")}
-          </button>
-        </div>
-      </section>
-    );
+    return <TrainingStage stepper={stepper} noticeBar={noticeBar} setNotice={setNotice} />;
   }
 
   // -- Stage: tournament -------------------------------------------------
@@ -585,6 +522,120 @@ export default function GameFlow() {
       >
         {t("loop.startNextSeason")}
       </button>
+    </section>
+  );
+}
+
+/** Pre-tournament training screen: stat bars per player plus floating "+N" feedback on each session. */
+function TrainingStage({
+  stepper,
+  noticeBar,
+  setNotice,
+}: {
+  stepper: ReactNode;
+  noticeBar: ReactNode;
+  setNotice: (notice: Notice | null) => void;
+}) {
+  const { t } = useTranslation();
+  const club = useGameStore((s) => s.club);
+  const players = useGameStore((s) => s.players);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
+  const trainPlayer = useGameStore((s) => s.trainPlayer);
+
+  const popups = useFloatingNumbers();
+
+  const onTrain = (player: Player, type: TrainingType) => {
+    const result = trainPlayer(player.id, type);
+    if (!result) {
+      setNotice({ tone: "bad", text: t("loop.noTrainFunds") });
+      return;
+    }
+    popups.push(`+${result.boost} ${t(`stat.${result.stat}`)}!`, "good", player.id);
+    setNotice({
+      tone: "good",
+      text: t("loop.trained", {
+        player: player.name,
+        stat: t(`stat.${result.stat}`),
+        boost: result.boost,
+        newValue: result.newValue,
+        cost: formatMoney(result.cost),
+      }),
+    });
+  };
+
+  return (
+    <section className="loop">
+      <StatusHeader />
+      {stepper}
+      <h2>{t("loop.trainingTitle")}</h2>
+      <p className="loop-lead">{t("training.intro")}</p>
+      {noticeBar}
+      <div className="loop-roster">
+        {players.map((player) => {
+          const effective = effectivePlayerStats(player);
+          return (
+            <div
+              key={player.id}
+              className="loop-player floating-number-host"
+            >
+              <div className="loop-player-head">
+                <strong>{player.name}</strong>
+                <span className="player-rating" title={t("player.rating")}>
+                  {player.rating ?? t("player.unrated")}
+                </span>
+              </div>
+              <div className="stat-bars">
+                {STAT_KEYS.map((stat) => (
+                  <StatBar
+                    key={stat}
+                    label={t(`stat.${stat}`)}
+                    value={player.stats[stat]}
+                    effectiveValue={effective[stat]}
+                  />
+                ))}
+              </div>
+              <div className="loop-train-buttons">
+                {TRAINING_PROGRAMS.map((program) => (
+                  <button
+                    key={program.type}
+                    className="btn btn-small"
+                    disabled={club.money < program.cost}
+                    onClick={() => onTrain(player, program.type)}
+                  >
+                    {t("loop.trainButton", {
+                      type: t(`trainingType.${program.type}`),
+                      cost: formatMoney(program.cost),
+                    })}
+                  </button>
+                ))}
+              </div>
+              <FloatingNumbers
+                items={popups.items.filter((item) => item.groupId === player.id)}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="loop-train-buttons">
+        <button
+          className="btn"
+          onClick={() => {
+            setNotice(null);
+            setFlowStage("shop");
+          }}
+        >
+          {t("training.toShop")}
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setNotice(null);
+            setFlowStage("tournament");
+          }}
+        >
+          {t("training.toTournament")}
+        </button>
+      </div>
     </section>
   );
 }
