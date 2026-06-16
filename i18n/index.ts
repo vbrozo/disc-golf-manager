@@ -64,6 +64,7 @@ const en: Dict = {
 
   // Flow — tournament step extras
   "tournament.intro": "Pick a tournament to enter this round.",
+  "tournament.unlocked": "Unlocked!",
 
   // Flow — results step
   "results.title": "Tournament Results",
@@ -229,6 +230,7 @@ const hr: Dict = {
 
   // Flow — tournament step extras
   "tournament.intro": "Odaberi turnir za ovo kolo.",
+  "tournament.unlocked": "Otključano!",
 
   // Flow — results step
   "results.title": "Rezultati turnira",
