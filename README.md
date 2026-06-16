@@ -41,7 +41,11 @@ Build a browser-based Disc Golf management simulator where the player:
   - hole outcomes: eagle, birdie, par, bogey
 
 ### Tournament System
-- 10 tournaments: ❌ not started
+- 10 tournaments: ✅ done
+  - static catalogue in `game/tournaments.ts` (no React, no Zustand)
+  - 10 tournaments, each: name, holes (9/18), difficulty (1–5), prizePool, reputationRequired
+  - scaled from beginner (rep 0) to elite (rep 275)
+  - functions: getAvailableTournaments(reputation), calculateRewards(position, tournament), getTournamentById(id)
 
 ### Training System
 - player training: ❌ not started
