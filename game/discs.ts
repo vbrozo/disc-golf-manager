@@ -43,6 +43,18 @@ export function bonusForRarity(rarity: DiscRarity): number {
 }
 
 /**
+ * Money cost to buy a disc in the shop. Derived from the disc's stat bonus so
+ * stronger (rarer) discs cost proportionally more, keeping the shop priced in
+ * line with {@link RARITY_BONUS} (Common ≈ 100 … Signature ≈ 450).
+ */
+export const DISC_PRICE_PER_BONUS = 50;
+
+/** The shop price of a disc, scaled by the stat bonus it grants. */
+export function getDiscPrice(disc: Disc): number {
+  return disc.bonus * DISC_PRICE_PER_BONUS;
+}
+
+/**
  * Build a {@link Disc}, deriving its `bonus` from its rarity so the catalogue
  * and any runtime-created discs stay consistent with {@link RARITY_BONUS}.
  */

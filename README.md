@@ -137,8 +137,9 @@ Stats (1–100):
 - Verified Vercel-ready: ✅
   - `npm run build` compiles, type-checks, and statically prerenders `/` (no SSR/runtime errors)
   - no server-only or Node.js-only APIs (`fs`, `path`, `child_process`, `process.env`) used in app code
-  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`) marked `"use client"`; game engine (`game/*`) stays pure TS with no React/Zustand/window/localStorage access
-  - no `window`/`localStorage` usage yet, so there are no hydration mismatches to guard against — persistence (see Architecture Rules) will need a client-only effect/guard when added
+  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`, `DiscShop.tsx`) marked `"use client"`; game engine (`game/*`) stays pure TS with no React/Zustand/window/localStorage access
+  - localStorage persistence is SSR-safe: the Zustand `persist` store uses `createJSONStorage(() => localStorage)` (lazy, never touched on the server) + `skipHydration`, and `components/GameClient.tsx` rehydrates in a client-only `useEffect` so server and first client render match (no hydration mismatch)
+- Tests: `npm test` (Vitest) — pure-engine unit tests run headless, no browser/DOM needed
 
 ### Dashboard UI
 - overview dashboard: ✅ done
@@ -147,9 +148,35 @@ Stats (1–100):
   - rendered above the interactive `SeasonLoop` on the home page
   - minimalist styling added to `app/globals.css` (`.dash-grid` / `.dash-card`), no UI framework
 
+### Persistence
+- localStorage save/load: ✅ done
+  - Zustand `persist` middleware (`store/gameStore.ts`), key `disc-golf-manager`
+  - `partialize` saves only game data (club, players, tournaments, inventory, season) — never action functions
+  - SSR-safe: `skipHydration` + client-only rehydrate in `components/GameClient.tsx`
+  - game survives a page refresh
+
+### Club Creation
+- new-game setup screen: ✅ done
+  - preseason phase of `components/SeasonLoop.tsx` now takes a club name + 3 player names
+  - `startNewGame(options?)` accepts `{ clubName?, playerNames? }`; blank fields fall back to defaults
+  - engine `createStarterRoster()` left untouched — names applied in the store
+
+### Disc Shop UI
+- buy + equip discs: ✅ done
+  - client component `components/DiscShop.tsx`: buy from the 12-disc catalogue, equip/unequip per player
+  - engine helper `getDiscPrice(disc)` prices discs from their rarity bonus (`DISC_PRICE_PER_BONUS` 50 → Common 100 … Signature 450)
+  - store action `buyDisc(discId)` charges club money and adds a uniquely-id'd copy to inventory
+  - finally surfaces the existing disc engine in the UI (bonuses flow into `effectivePlayerStats`)
+
+### Tests
+- engine unit tests: ✅ done
+  - Vitest (`npm test`), config in `vitest.config.ts` with the `@/` alias
+  - 24 tests across `tests/economy|discs|season|training.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, and deterministic training boosts
+
 ## 📌 Next Task
 (not set yet)
 
 All core systems are implemented and wired into the season game loop, with a
-read-only dashboard overview on top. Possible follow-ups: localStorage
-persistence, a roster/club-creation screen, and a disc shop UI.
+read-only dashboard, a disc shop, club creation, localStorage persistence, and
+engine unit tests. Possible follow-ups: a per-disc/per-player stat breakdown UI,
+multi-season player progression/aging, and richer tournament variety.

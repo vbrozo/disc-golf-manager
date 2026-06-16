@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type {
   Club,
   Disc,
@@ -17,6 +18,8 @@ import {
   checkEntryEligibility,
   createStarterRoster,
   equipDisc as equipDiscOnLoadout,
+  getDiscById,
+  getDiscPrice,
   getTournamentById,
   getTrainingProgram,
   INITIAL_SEASON_STATE,
@@ -42,6 +45,17 @@ export interface EnterTournamentResult {
   settlement: TournamentSettlement;
   result: TournamentResult;
   standings: TournamentStanding[];
+}
+
+/** Options for seeding a brand-new game from the club-creation screen. */
+export interface NewGameOptions {
+  /** Name for the new club (defaults to "New Club" if blank). */
+  clubName?: string;
+  /**
+   * Optional player names applied to the starter roster in order. Missing or
+   * blank entries keep the default starter name for that slot.
+   */
+  playerNames?: string[];
 }
 
 /** Shape of the persisted-in-memory game state. */
@@ -83,6 +97,13 @@ export interface GameState {
   /** Add a disc to the club's inventory. */
   addDisc: (disc: Disc) => void;
   /**
+   * Buy a disc from the shop catalogue: charges the club the disc's price and
+   * adds a fresh copy to the inventory. Returns the purchased {@link Disc}, or
+   * `null` if the disc id is unknown or the club cannot afford it (in which case
+   * nothing changes).
+   */
+  buyDisc: (discId: string) => Disc | null;
+  /**
    * Equip a disc the club owns onto a player. Equip rules allow one disc per
    * type, so it replaces whatever the player has in that type's slot. Returns
    * the player's new {@link DiscLoadout}, or `null` if the player or disc is
@@ -112,9 +133,10 @@ export interface GameState {
    * Start a brand-new game: reset the club to its starting money + zero
    * reputation, seed the default roster, clear inventory and tournament
    * history, and kick off season 1 in the "select" phase. This is the loop's
-   * entry point ("Start season").
+   * entry point ("Start season"). Optionally names the club and overrides the
+   * starter roster's player names.
    */
-  startNewGame: () => void;
+  startNewGame: (options?: NewGameOptions) => void;
   /**
    * Begin the next season, keeping the club, roster and progress earned so far
    * but resetting the round counter and per-season results. Use this once a
@@ -145,7 +167,9 @@ const initialClub: Club = {
   reputation: 0,
 };
 
-export const useGameStore = create<GameState>((set, get) => ({
+export const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
   club: initialClub,
   players: [],
   tournaments: [],
@@ -202,6 +226,30 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addDisc: (disc) =>
     set((state) => ({ inventory: [...state.inventory, disc] })),
+
+  buyDisc: (discId) => {
+    const state = get();
+    const catalogueDisc = getDiscById(discId);
+
+    // Reject an unknown disc or one the club cannot afford — no changes.
+    if (!catalogueDisc || state.club.money < getDiscPrice(catalogueDisc)) {
+      return null;
+    }
+
+    // Give the purchased disc a unique inventory id so a club can own several
+    // copies of the same catalogue disc without key collisions.
+    const owned: Disc = {
+      ...catalogueDisc,
+      id: `${catalogueDisc.id}-${Date.now()}`,
+    };
+
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - getDiscPrice(catalogueDisc) },
+      inventory: [...s.inventory, owned],
+    }));
+
+    return owned;
+  },
 
   equipDisc: (playerId, discId) => {
     const state = get();
@@ -290,14 +338,22 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // --- Game loop (season) ---
 
-  startNewGame: () =>
-    set((state) => ({
-      club: { ...state.club, money: STARTING_MONEY, reputation: 0 },
-      players: createStarterRoster(),
-      tournaments: [],
-      inventory: [],
-      season: startSeasonState(INITIAL_SEASON_STATE),
-    })),
+  startNewGame: (options) =>
+    set((state) => {
+      const clubName = options?.clubName?.trim() || "New Club";
+      const roster = createStarterRoster().map((player, index) => {
+        const customName = options?.playerNames?.[index]?.trim();
+        return customName ? { ...player, name: customName } : player;
+      });
+
+      return {
+        club: { ...state.club, name: clubName, money: STARTING_MONEY, reputation: 0 },
+        players: roster,
+        tournaments: [],
+        inventory: [],
+        season: startSeasonState(INITIAL_SEASON_STATE),
+      };
+    }),
 
   startSeason: () => {
     set((state) => ({ season: startSeasonState(state.season) }));
@@ -336,4 +392,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((state) => ({ season: advanceRound(state.season) }));
     return get().season;
   },
-}));
+    }),
+    {
+      name: "disc-golf-manager",
+      // localStorage only exists in the browser; createJSONStorage lazily
+      // resolves it so importing the store during SSR never touches it.
+      storage: createJSONStorage(() => localStorage),
+      // Persist only serialisable game data, never the action functions.
+      partialize: (state) => ({
+        club: state.club,
+        players: state.players,
+        tournaments: state.tournaments,
+        inventory: state.inventory,
+        season: state.season,
+      }),
+      // Skip automatic hydration so the server and first client render both use
+      // the default state (no mismatch). A client-only effect rehydrates after
+      // mount — see components/StoreHydrator.tsx.
+      skipHydration: true,
+    }
+  )
+);

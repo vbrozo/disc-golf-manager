@@ -41,19 +41,51 @@ export default function SeasonLoop() {
     null
   );
 
-  // -- Phase: preseason --------------------------------------------------
+  // Club-creation form state (only used on the preseason screen).
+  const [clubName, setClubName] = useState("");
+  const [playerNames, setPlayerNames] = useState(["", "", ""]);
+
+  // -- Phase: preseason (new game / club setup) --------------------------
   if (season.phase === "preseason") {
     return (
       <section className="loop">
-        <h2>🥏 New Season</h2>
+        <h2>🥏 New Game</h2>
         <p className="loop-lead">
-          Run a full season: pick a tournament, simulate it, bank the rewards,
-          train your players, and do it all again.
+          Name your club and players, then run a full season: pick a tournament,
+          simulate it, bank the rewards, train your players, and repeat.
         </p>
+        <div className="loop-setup">
+          <label className="loop-field">
+            <span>Club name</span>
+            <input
+              className="loop-input"
+              type="text"
+              placeholder="New Club"
+              value={clubName}
+              onChange={(e) => setClubName(e.target.value)}
+            />
+          </label>
+          {playerNames.map((name, index) => (
+            <label key={index} className="loop-field">
+              <span>Player {index + 1}</span>
+              <input
+                className="loop-input"
+                type="text"
+                placeholder={`Player ${index + 1}`}
+                value={name}
+                onChange={(e) =>
+                  setPlayerNames((prev) =>
+                    prev.map((n, i) => (i === index ? e.target.value : n))
+                  )
+                }
+              />
+            </label>
+          ))}
+        </div>
         <button
           className="btn btn-primary"
           onClick={() => {
-            startNewGame();
+            startNewGame({ clubName, playerNames });
             setNotice(null);
             setLastResult(null);
           }}
