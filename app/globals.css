@@ -517,8 +517,10 @@ body {
     width: 100%;
   }
 
-  /* Primary call-to-action spans the width and is easy to tap. */
-  .btn-primary {
+  /* Primary call-to-action spans the width and is easy to tap. Small toggle
+     buttons (e.g. the language picker) keep their natural width even when
+     selected, so they don't stretch across the row. */
+  .btn-primary:not(.btn-small) {
     align-self: stretch;
     width: 100%;
     text-align: center;
