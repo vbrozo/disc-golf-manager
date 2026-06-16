@@ -93,6 +93,57 @@ body {
   align-items: flex-start;
 }
 
+/* --- Flow stepper --- */
+.stepper {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #64748b;
+}
+
+.stepper-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: #334155;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stepper-active {
+  color: #e2e8f0;
+  border-color: #16a34a;
+}
+
+.stepper-active .stepper-num {
+  background: #16a34a;
+}
+
+.stepper-done {
+  color: #94a3b8;
+  border-color: #15803d;
+}
+
+.stepper-done .stepper-num {
+  background: #15803d;
+}
+
 .app-main {
   padding: 1.5rem;
 }

@@ -137,16 +137,26 @@ Stats (1–100):
 - Verified Vercel-ready: ✅
   - `npm run build` compiles, type-checks, and statically prerenders `/` (no SSR/runtime errors)
   - no server-only or Node.js-only APIs (`fs`, `path`, `child_process`, `process.env`) used in app code
-  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`, `DiscShop.tsx`, `NewGameModal.tsx`, `LanguageSwitcher.tsx`) marked `"use client"`; game engine (`game/*`) and i18n dictionary (`i18n/*`) stay pure TS with no React/Zustand/window/localStorage access
+  - all stateful UI (`GameFlow.tsx`, `StartScreen.tsx`, `NewGameModal.tsx`, `StatusHeader.tsx`, `FlowStepper.tsx`, `LanguageSwitcher.tsx`) marked `"use client"`; game engine (`game/*`) and i18n dictionary (`i18n/*`) stay pure TS with no React/Zustand/window/localStorage access
   - localStorage persistence is SSR-safe: the Zustand `persist` store uses `createJSONStorage(() => localStorage)` (lazy, never touched on the server) + `skipHydration`, and `components/GameClient.tsx` rehydrates in a client-only `useEffect` so server and first client render match (no hydration mismatch)
 - Tests: `npm test` (Vitest) — pure-engine unit tests run headless, no browser/DOM needed
 
-### Dashboard UI
-- overview dashboard: ✅ done
-  - client component `components/Dashboard.tsx` (UI only, reads from the Zustand store)
-  - 5 read-only sections: Club Overview, Players, Tournaments, Training, Inventory
-  - rendered above the interactive `SeasonLoop` on the home page
-  - minimalist styling added to `app/globals.css` (`.dash-grid` / `.dash-card`), no UI framework
+### Guided Game Flow
+- step-by-step onboarding + play loop: ✅ done
+  - `components/GameFlow.tsx` shows one focused screen at a time, driven by a
+    persisted `flowStage` in the store: `intro → shop → training → tournament →
+    training → … → complete`
+  - intro explains the 3-player roster and the goal of buying + equipping three
+    discs (one per type) for every player
+  - shop step gates "Continue to training" until every player is fully equipped
+    (progress shown as `equipped / total`); reachable again from training
+  - training comes **before** every tournament; after a tournament the season
+    advances and returns to training, or shows the season summary when complete
+  - `components/FlowStepper.tsx` shows progress (Discs → Training → Tournament);
+    `components/StatusHeader.tsx` shows club money / reputation / season / round
+  - the season engine (`game/season.ts`) is unchanged — the flow only sequences
+    the UI and calls the existing store actions
+  - replaces the earlier single-page Dashboard + SeasonLoop + DiscShop layout
 
 ### Persistence
 - localStorage save/load: ✅ done
@@ -157,13 +167,13 @@ Stats (1–100):
 
 ### Club Creation
 - new-game setup screen: ✅ done
-  - preseason phase of `components/SeasonLoop.tsx` now takes a club name + 3 player names
+  - `components/NewGameModal.tsx` (opened from the start screen) takes a language + club name
   - `startNewGame(options?)` accepts `{ clubName?, playerNames? }`; blank fields fall back to defaults
   - engine `createStarterRoster()` left untouched — names applied in the store
 
 ### Disc Shop UI
 - buy + equip discs: ✅ done
-  - client component `components/DiscShop.tsx`: buy from the 12-disc catalogue, equip/unequip per player
+  - the shop step of `components/GameFlow.tsx`: buy from the 12-disc catalogue, equip/unequip per player
   - engine helper `getDiscPrice(disc)` prices discs from their rarity bonus (`DISC_PRICE_PER_BONUS` 50 → Common 100 … Signature 450)
   - store action `buyDisc(discId)` charges club money and adds a uniquely-id'd copy to inventory
   - finally surfaces the existing disc engine in the UI (bonuses flow into `effectivePlayerStats`)
@@ -178,9 +188,10 @@ Stats (1–100):
 
 ### New Game flow
 - start screen + modal: ✅ done
-  - first load (preseason) shows a single **New Game** button
+  - first load (preseason) shows a single **New Game** button (`components/StartScreen.tsx`)
   - clicking opens `components/NewGameModal.tsx` asking for language + club name, then seeds the game
   - language chosen in the modal applies live to the whole app
+  - after starting, the player enters the Guided Game Flow (see above)
 
 ### Tests
 - engine + i18n unit tests: ✅ done

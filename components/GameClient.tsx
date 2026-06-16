@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
-import Dashboard from "@/components/Dashboard";
-import DiscShop from "@/components/DiscShop";
-import SeasonLoop from "@/components/SeasonLoop";
+import GameFlow from "@/components/GameFlow";
 
 /**
  * Client entry point for the game UI. The Zustand store persists to
@@ -29,11 +27,7 @@ export default function GameClient() {
       <h2>{t("dashboard.title")}</h2>
       <p>{t("dashboard.welcome")}</p>
       {hydrated ? (
-        <>
-          <Dashboard />
-          <SeasonLoop />
-          <DiscShop />
-        </>
+        <GameFlow />
       ) : (
         <p className="loop-lead">{t("app.loading")}</p>
       )}

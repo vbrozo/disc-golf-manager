@@ -48,6 +48,19 @@ export interface EnterTournamentResult {
   standings: TournamentStanding[];
 }
 
+/**
+ * Guided onboarding / play flow, layered on top of the season engine. It walks
+ * a new player through one focused screen at a time:
+ *   intro → shop (buy + equip discs) → training → tournament → training → …
+ * `complete` is reached when the season's rounds are all played.
+ */
+export type FlowStage =
+  | "intro"
+  | "shop"
+  | "training"
+  | "tournament"
+  | "complete";
+
 /** Options for seeding a brand-new game from the club-creation screen. */
 export interface NewGameOptions {
   /** Name for the new club (defaults to "New Club" if blank). */
@@ -71,10 +84,14 @@ export interface GameState {
   season: SeasonState;
   /** Active UI language. */
   language: Language;
+  /** Current step of the guided onboarding / play flow. */
+  flowStage: FlowStage;
 
   // --- Actions ---
   /** Switch the UI language. */
   setLanguage: (language: Language) => void;
+  /** Move the guided flow to a specific stage. */
+  setFlowStage: (stage: FlowStage) => void;
   /** Replace the club details (name / money / reputation). */
   setClub: (club: Club) => void;
   /** Adjust the club's money. Pass a negative amount to spend. */
@@ -181,8 +198,11 @@ export const useGameStore = create<GameState>()(
   inventory: [],
   season: INITIAL_SEASON_STATE,
   language: DEFAULT_LANGUAGE,
+  flowStage: "intro",
 
   setLanguage: (language) => set({ language }),
+
+  setFlowStage: (stage) => set({ flowStage: stage }),
 
   setClub: (club) => set({ club }),
 
@@ -360,11 +380,18 @@ export const useGameStore = create<GameState>()(
         tournaments: [],
         inventory: [],
         season: startSeasonState(INITIAL_SEASON_STATE),
+        // A brand-new game starts the guided onboarding at the intro.
+        flowStage: "intro" as FlowStage,
       };
     }),
 
   startSeason: () => {
-    set((state) => ({ season: startSeasonState(state.season) }));
+    // Later seasons skip onboarding (discs already owned) and go straight to
+    // pre-tournament training.
+    set((state) => ({
+      season: startSeasonState(state.season),
+      flowStage: "training",
+    }));
     return get().season;
   },
 
@@ -414,6 +441,7 @@ export const useGameStore = create<GameState>()(
         inventory: state.inventory,
         season: state.season,
         language: state.language,
+        flowStage: state.flowStage,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after
