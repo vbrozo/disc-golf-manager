@@ -2,10 +2,7 @@
 
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
-
-function formatMoney(amount: number): string {
-  return `$${amount.toLocaleString("en-US")}`;
-}
+import { formatMoney } from "@/utils/format";
 
 /** Persistent club status bar shown on every in-game flow step. */
 export default function StatusHeader() {

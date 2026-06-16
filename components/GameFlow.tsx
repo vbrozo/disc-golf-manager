@@ -18,12 +18,9 @@ import { useTranslation } from "@/hooks/useTranslation";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
+import { formatMoney } from "@/utils/format";
 
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
-
-function formatMoney(amount: number): string {
-  return `$${amount.toLocaleString("en-US")}`;
-}
 
 interface Notice {
   tone: "good" | "bad";
