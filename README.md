@@ -82,5 +82,12 @@ Stats (1–100):
 
 ---
 
+## 🚀 Deployment
+- Target: Vercel
+- Framework: Next.js (App Router)
+- Build: npm run build
+- No backend required
+- Must be fully client-side compatible
+
 ## 📌 Next Task
 (not set yet)
