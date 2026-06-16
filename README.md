@@ -67,7 +67,14 @@ Build a browser-based Disc Golf management simulator where the player:
   - store actions: addDisc(disc), equipDisc(playerId, discId), unequipDisc(playerId, type) — player loadout stored on `Player.equipped`
 
 ### Economy System
-- money + rewards: ❌ not started
+- money + rewards: ✅ done
+  - pure TypeScript engine in `game/economy.ts` (no React, no Zustand)
+  - entry fees: derived from prize pool (`ENTRY_FEE_RATE` 5%) and scaled by difficulty — `getEntryFee(tournament)`
+  - reputation unlock logic: `meetsReputationRequirement`, `getLockedTournaments`, `getNextUnlock`, `reputationToUnlock`
+  - entry eligibility: `checkEntryEligibility(club, tournament)` — reputation gate first, then entry-fee affordability (reason: `locked` | `insufficient-funds`)
+  - rewards system: `buildSettlement(tournament, earnings, reputationGained)` → net money (earnings − entry fee) + reputation
+  - money gain from tournaments: `settleClubEconomy(club, settlement)` — credits net prize money (floored at 0) and reputation
+  - store action: `enterTournament(id, options?)` — charges entry fee, simulates with the roster, settles prize money + reputation from the best finisher, records the result; returns `EnterTournamentResult` (or null if unknown/locked/unaffordable/no players)
 
 ### Game Loop
 - full season loop: ❌ not started

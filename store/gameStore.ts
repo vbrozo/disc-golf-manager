@@ -12,11 +12,30 @@ import type {
 } from "@/types";
 import {
   applyTraining,
+  buildSettlement,
+  checkEntryEligibility,
   equipDisc as equipDiscOnLoadout,
+  getTournamentById,
   getTrainingProgram,
+  settleClubEconomy,
+  simulateTournament,
   unequipDisc as unequipDiscFromLoadout,
+  type SimulationOptions,
+  type TournamentSettlement,
+  type TournamentStanding,
   type TrainingOptions,
 } from "@/game";
+
+/**
+ * Everything a UI needs after the club enters a tournament: the money +
+ * reputation {@link TournamentSettlement}, the {@link TournamentResult} that
+ * was appended to the club's record, and the full simulated standings.
+ */
+export interface EnterTournamentResult {
+  settlement: TournamentSettlement;
+  result: TournamentResult;
+  standings: TournamentStanding[];
+}
 
 /** Shape of the persisted-in-memory game state. */
 export interface GameState {
@@ -66,6 +85,18 @@ export interface GameState {
    * {@link DiscLoadout}, or `null` if the player is unknown.
    */
   unequipDisc: (playerId: string, type: DiscType) => DiscLoadout | null;
+  /**
+   * Enter a tournament with the club's roster. Charges the entry fee, simulates
+   * the event, then credits the club with the prize money (net of the fee) and
+   * reputation earned by its best finisher, and records the result. Returns an
+   * {@link EnterTournamentResult}, or `null` if the tournament is unknown, the
+   * club is locked out (reputation) or cannot afford the entry fee, or the club
+   * has no players — in which case nothing changes.
+   */
+  enterTournament: (
+    tournamentId: string,
+    options?: SimulationOptions
+  ) => EnterTournamentResult | null;
 }
 
 const initialClub: Club = {
@@ -169,5 +200,50 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
 
     return loadout;
+  },
+
+  enterTournament: (tournamentId, options) => {
+    const state = get();
+    const tournament = getTournamentById(tournamentId);
+
+    // Reject an unknown tournament or a club with no one to send.
+    if (!tournament || state.players.length === 0) {
+      return null;
+    }
+
+    // Reputation gate + entry-fee affordability — reject without changes.
+    const eligibility = checkEntryEligibility(state.club, tournament);
+    if (!eligibility.canEnter) {
+      return null;
+    }
+
+    const simulation = simulateTournament(state.players, tournament, options);
+    // The club's best finisher represents it for prize money and reputation.
+    const best = simulation.standings[0];
+    if (!best) {
+      return null;
+    }
+
+    const settlement = buildSettlement(
+      tournament,
+      best.earnings,
+      best.reputationGained
+    );
+
+    const result: TournamentResult = {
+      id: `result-${Date.now()}-${tournament.id}`,
+      tournamentId: tournament.id,
+      tournamentName: tournament.name,
+      placement: best.placement,
+      earnings: settlement.earnings,
+      reputationGained: settlement.reputationGained,
+    };
+
+    set((s) => ({
+      club: settleClubEconomy(s.club, settlement),
+      tournaments: [...s.tournaments, result],
+    }));
+
+    return { settlement, result, standings: simulation.standings };
   },
 }));
