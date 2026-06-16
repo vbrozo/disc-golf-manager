@@ -5,7 +5,10 @@ import type {
   Player,
   PlayerStats,
   TournamentResult,
+  TrainingResult,
+  TrainingType,
 } from "@/types";
+import { applyTraining, getTrainingProgram, type TrainingOptions } from "@/game";
 
 /** Shape of the persisted-in-memory game state. */
 export interface GameState {
@@ -30,6 +33,17 @@ export interface GameState {
   ) => void;
   /** Append a played tournament result to the club's record. */
   addTournamentResult: (result: TournamentResult) => void;
+  /**
+   * Run a training session on a player, charging the club for the program's
+   * cost and raising the trained stat by +1 to +5 (capped at 100). Returns the
+   * {@link TrainingResult}, or `null` if the player/program is unknown or the
+   * club cannot afford it (in which case nothing changes).
+   */
+  trainPlayer: (
+    id: string,
+    type: TrainingType,
+    options?: TrainingOptions
+  ) => TrainingResult | null;
 }
 
 const initialClub: Club = {
@@ -38,7 +52,7 @@ const initialClub: Club = {
   reputation: 0,
 };
 
-export const useGameStore = create<GameState>((set) => ({
+export const useGameStore = create<GameState>((set, get) => ({
   club: initialClub,
   players: [],
   tournaments: [],
@@ -68,4 +82,27 @@ export const useGameStore = create<GameState>((set) => ({
     set((state) => ({
       tournaments: [...state.tournaments, result],
     })),
+
+  trainPlayer: (id, type, options) => {
+    const state = get();
+    const program = getTrainingProgram(type);
+    const player = state.players.find((p) => p.id === id);
+
+    // Reject unknown program/player or an unaffordable session — no changes.
+    if (!program || !player || state.club.money < program.cost) {
+      return null;
+    }
+
+    const outcome = applyTraining(player, type, options);
+    if (!outcome) {
+      return null;
+    }
+
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - program.cost },
+      players: s.players.map((p) => (p.id === id ? outcome.player : p)),
+    }));
+
+    return outcome.result;
+  },
 }));

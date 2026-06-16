@@ -48,7 +48,13 @@ Build a browser-based Disc Golf management simulator where the player:
   - functions: getAvailableTournaments(reputation), calculateRewards(position, tournament), getTournamentById(id)
 
 ### Training System
-- player training: ❌ not started
+- player training: ✅ done
+  - pure TypeScript engine in `game/training.ts` (no React, no Zustand)
+  - 5 training types: Driving, Accuracy, Putting, Mental, Fitness (Fitness trains Stamina)
+  - static `TRAINING_PROGRAMS` catalogue: each program has type, name, target stat, cost
+  - each session costs money and gives a +1 to +5 stat boost (capped at 100)
+  - functions: getTrainingProgram(type), rollTrainingBoost(rng), applyTraining(player, type, options)
+  - store action: trainPlayer(id, type, options?) — charges club money, applies boost, returns TrainingResult (or null if unaffordable)
 
 ### Disc System
 - equipment + bonuses: ❌ not started

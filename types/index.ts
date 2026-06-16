@@ -41,6 +41,41 @@ export interface Tournament {
   reputationRequired: number;
 }
 
+/**
+ * The five training disciplines a player can practise. Each one improves a
+ * single {@link PlayerStats} value — "Fitness" maps to the player's Stamina.
+ */
+export type TrainingType =
+  | "Driving"
+  | "Accuracy"
+  | "Putting"
+  | "Mental"
+  | "Fitness";
+
+/** A purchasable training session and the stat it develops. */
+export interface TrainingProgram {
+  type: TrainingType;
+  /** Player-facing name of the session. */
+  name: string;
+  /** The player stat improved by this program. */
+  stat: keyof PlayerStats;
+  /** Cost in money to run one session. */
+  cost: number;
+}
+
+/** Outcome of running a training session on a player. */
+export interface TrainingResult {
+  type: TrainingType;
+  /** The stat that was trained. */
+  stat: keyof PlayerStats;
+  /** Stat points actually gained (1–5, less if the 100 cap was hit). */
+  boost: number;
+  /** Money spent on the session. */
+  cost: number;
+  /** The player's new value for the trained stat (capped at 100). */
+  newValue: number;
+}
+
 /** Outcome of a played tournament, stored on the club's record. */
 export interface TournamentResult {
   id: string;
