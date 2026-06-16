@@ -23,6 +23,8 @@ import StatBar from "@/components/StatBar";
 import FloatingNumbers from "@/components/FloatingNumbers";
 import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
+import HolePlayback from "@/components/HolePlayback";
+import type { TournamentSummary } from "@/store/gameStore";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
 import {
@@ -408,6 +410,8 @@ export default function GameFlow() {
       setFlowStage("results");
     };
 
+    const newlyUnlocked = available.filter(isNewlyUnlocked);
+
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
         <StatusHeader />
@@ -415,6 +419,16 @@ export default function GameFlow() {
         <h2>{t("loop.selectTitle")}</h2>
         <p className="loop-lead">{t("tournament.intro")}</p>
         {noticeBar}
+        {newlyUnlocked.length > 0 ? (
+          <div className="level-up-banner">
+            <span className="level-up-banner-title">
+              ⭐ {t("tournament.levelUpTitle")}
+            </span>
+            <span className="level-up-banner-body">
+              {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
+            </span>
+          </div>
+        ) : null}
         <ul className="loop-tournaments">
           {available.map((tournament) => {
             const fee = getEntryFee(tournament);
@@ -466,98 +480,18 @@ export default function GameFlow() {
 
   // -- Stage: results (tournament leaderboard) ---------------------------
   if (flowStage === "results") {
-    const onContinue = () => {
-      // Now advance the season: back to training, or the season summary.
-      const next = advanceSeason();
-      setNotice(null);
-      setFlowStage(isSeasonComplete(next) ? "complete" : "training");
-    };
-
-    const clubWon =
-      lastTournament?.rows.some(
-        (row) => row.isClubPlayer && row.placement === 1
-      ) ?? false;
-    const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
-
     return (
-      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        {clubWon ? <Confetti /> : null}
-        <StatusHeader />
-        <h2>{t("results.title")}</h2>
-        {lastTournament ? (
-          <>
-            <p className="loop-lead">
-              {t("results.subtitle", { name: lastTournament.tournamentName })}
-            </p>
-            <p className="loop-notice loop-notice-good">
-              {t("results.clubTotal", {
-                earnings: formatMoney(lastTournament.clubEarnings),
-                rep: lastTournament.clubReputation,
-              })}
-            </p>
-            <ol className="leaderboard">
-              <li className="leaderboard-head">
-                <span className="leaderboard-pos">{t("results.colPos")}</span>
-                <span className="leaderboard-name">
-                  {t("results.colPlayer")}
-                </span>
-                <span className="leaderboard-score">
-                  {t("results.colScore")}
-                </span>
-                <span className="leaderboard-rating">
-                  {t("results.colRating")}
-                </span>
-                <span className="leaderboard-earn">
-                  {t("results.colEarnings")}
-                </span>
-              </li>
-              {lastTournament.rows.map((row) => {
-                const resultClass = !row.isClubPlayer
-                  ? ""
-                  : row.placement === 1
-                  ? " leaderboard-win"
-                  : row.earnings > 0
-                  ? " leaderboard-good"
-                  : " leaderboard-bad";
-                const clubPlayer = playersByName.get(row.playerName);
-                const avatar = clubPlayer
-                  ? getPlayerAvatar(clubPlayer)
-                  : getNameAvatar(row.playerName);
-                const medal = getPlacementMedal(row.placement);
-                return (
-                <li
-                  key={`${row.placement}-${row.playerName}`}
-                  className={`leaderboard-row${resultClass}`}
-                >
-                  <span className="leaderboard-pos">
-                    {medal ?? row.placement}
-                  </span>
-                  <span className="leaderboard-name">
-                    <Avatar {...avatar} size="sm" />
-                    {row.playerName}
-                    {row.isClubPlayer ? (
-                      <span className="leaderboard-badge">
-                        {t("results.you")}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="leaderboard-score">
-                    {formatScoreToPar(row.totalScore)}
-                  </span>
-                  <span className="leaderboard-rating">{row.rating}</span>
-                  <span className="leaderboard-earn">
-                    {formatMoney(row.earnings)}
-                  </span>
-                </li>
-                );
-              })}
-            </ol>
-          </>
-        ) : null}
-        <button className="btn btn-primary" onClick={onContinue}>
-          {t("results.continue")}
-        </button>
-      </section>
+      <ResultsStage
+        key={lastTournament?.tournamentName ?? "results"}
+        lastTournament={lastTournament}
+        players={players}
+        onContinue={() => {
+          // Now advance the season: back to training, or the season summary.
+          const next = advanceSeason();
+          setNotice(null);
+          setFlowStage(isSeasonComplete(next) ? "complete" : "training");
+        }}
+      />
     );
   }
 
@@ -712,6 +646,125 @@ function TrainingStage({
           {t("training.toTournament")}
         </button>
       </div>
+    </section>
+  );
+}
+
+/**
+ * Tournament results screen. Plays the club's best finisher's round
+ * hole-by-hole first (skippable), then reveals the full leaderboard — gives
+ * the otherwise-instant simulation a sense of "watching it happen".
+ */
+function ResultsStage({
+  lastTournament,
+  players,
+  onContinue,
+}: {
+  lastTournament: TournamentSummary | null;
+  players: Player[];
+  onContinue: () => void;
+}) {
+  const { t } = useTranslation();
+  const [showLeaderboard, setShowLeaderboard] = useState(
+    !lastTournament || lastTournament.holeByHole.length === 0
+  );
+
+  const clubWon =
+    lastTournament?.rows.some(
+      (row) => row.isClubPlayer && row.placement === 1
+    ) ?? false;
+  const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
+
+  return (
+    <section className="loop loop-stage-results">
+      {clubWon && showLeaderboard ? <Confetti /> : null}
+      <StatusHeader />
+      <h2>{t("results.title")}</h2>
+      {lastTournament ? (
+        !showLeaderboard ? (
+          <HolePlayback
+            playerName={lastTournament.bestPlayerName}
+            holes={lastTournament.holeByHole}
+            onDone={() => setShowLeaderboard(true)}
+          />
+        ) : (
+          <>
+            <p className="loop-lead">
+              {t("results.subtitle", { name: lastTournament.tournamentName })}
+            </p>
+            <p className="loop-notice loop-notice-good">
+              {t("results.clubTotal", {
+                earnings: formatMoney(lastTournament.clubEarnings),
+                rep: lastTournament.clubReputation,
+              })}
+            </p>
+            <ol className="leaderboard">
+              <li className="leaderboard-head">
+                <span className="leaderboard-pos">{t("results.colPos")}</span>
+                <span className="leaderboard-name">
+                  {t("results.colPlayer")}
+                </span>
+                <span className="leaderboard-score">
+                  {t("results.colScore")}
+                </span>
+                <span className="leaderboard-rating">
+                  {t("results.colRating")}
+                </span>
+                <span className="leaderboard-earn">
+                  {t("results.colEarnings")}
+                </span>
+              </li>
+              {lastTournament.rows.map((row) => {
+                const resultClass = !row.isClubPlayer
+                  ? ""
+                  : row.placement === 1
+                  ? " leaderboard-win"
+                  : row.earnings > 0
+                  ? " leaderboard-good"
+                  : " leaderboard-bad";
+                const clubPlayer = playersByName.get(row.playerName);
+                const avatar = clubPlayer
+                  ? getPlayerAvatar(clubPlayer)
+                  : getNameAvatar(row.playerName);
+                const medal = getPlacementMedal(row.placement);
+                return (
+                  <li
+                    key={`${row.placement}-${row.playerName}`}
+                    className={`leaderboard-row${resultClass}`}
+                  >
+                    <span className="leaderboard-pos">
+                      {medal ?? row.placement}
+                    </span>
+                    <span className="leaderboard-name">
+                      <Avatar {...avatar} size="sm" />
+                      {row.playerName}
+                      {row.isClubPlayer ? (
+                        <span className="leaderboard-badge">
+                          {t("results.you")}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="leaderboard-score">
+                      {formatScoreToPar(row.totalScore)}
+                    </span>
+                    <span className="leaderboard-rating">{row.rating}</span>
+                    <span className="leaderboard-earn">
+                      {formatMoney(row.earnings)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+            <button className="btn btn-primary" onClick={onContinue}>
+              {t("results.continue")}
+            </button>
+          </>
+        )
+      ) : (
+        <button className="btn btn-primary" onClick={onContinue}>
+          {t("results.continue")}
+        </button>
+      )}
     </section>
   );
 }
