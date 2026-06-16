@@ -8,6 +8,7 @@ import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 import FloatingNumbers from "@/components/FloatingNumbers";
 import AchievementBadges from "@/components/AchievementBadges";
+import Icon from "@/components/Icon";
 import { getAchievements, getCurrentStreak } from "@/game/achievements";
 
 /** Persistent club status bar shown on every in-game flow step. */
@@ -37,7 +38,7 @@ export default function StatusHeader() {
   useEffect(() => {
     const diff = club.reputation - prevRep.current;
     if (diff !== 0) {
-      repFloats.push(`${diff > 0 ? "+" : ""}${diff} ⭐`, diff > 0 ? "good" : "bad");
+      repFloats.push(`${diff > 0 ? "+" : ""}${diff} ★`, diff > 0 ? "good" : "bad");
     }
     prevRep.current = club.reputation;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,21 +52,29 @@ export default function StatusHeader() {
     <>
       <header className="loop-status">
         <div>
-          <span className="loop-status-label">{t("loop.club")}</span>
+          <span className="loop-status-label">
+            <Icon name="flag" /> {t("loop.club")}
+          </span>
           <strong>{club.name}</strong>
         </div>
         <div className="floating-number-host">
-          <span className="loop-status-label">{t("loop.money")}</span>
+          <span className="loop-status-label">
+            <Icon name="coin" /> {t("loop.money")}
+          </span>
           <strong>{formatMoney(displayedMoney)}</strong>
           <FloatingNumbers items={moneyFloats.items} />
         </div>
         <div className="floating-number-host">
-          <span className="loop-status-label">{t("loop.reputation")}</span>
+          <span className="loop-status-label">
+            <Icon name="star" /> {t("loop.reputation")}
+          </span>
           <strong>{club.reputation}</strong>
           <FloatingNumbers items={repFloats.items} />
         </div>
         <div>
-          <span className="loop-status-label">{t("loop.season")}</span>
+          <span className="loop-status-label">
+            <Icon name="calendar" /> {t("loop.season")}
+          </span>
           <strong>{season.season}</strong>
         </div>
         <div>
@@ -76,9 +85,11 @@ export default function StatusHeader() {
         </div>
         {streak >= 2 ? (
           <div>
-            <span className="loop-status-label">{t("loop.streak")}</span>
+            <span className="loop-status-label">
+              <Icon name="flame" /> {t("loop.streak")}
+            </span>
             <strong className={`streak-chip${streak >= 3 ? " streak-hot" : ""}`}>
-              🔥 {streak}
+              {streak}
             </strong>
           </div>
         ) : null}

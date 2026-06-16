@@ -24,6 +24,7 @@ import FloatingNumbers from "@/components/FloatingNumbers";
 import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
 import HolePlayback from "@/components/HolePlayback";
+import Icon from "@/components/Icon";
 import type { TournamentSummary } from "@/store/gameStore";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
@@ -422,7 +423,7 @@ export default function GameFlow() {
         {newlyUnlocked.length > 0 ? (
           <div className="level-up-banner">
             <span className="level-up-banner-title">
-              ⭐ {t("tournament.levelUpTitle")}
+              <Icon name="star" size={15} /> {t("tournament.levelUpTitle")}
             </span>
             <span className="level-up-banner-body">
               {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
@@ -445,11 +446,13 @@ export default function GameFlow() {
                   <strong>
                     {tournament.name}{" "}
                     <span className="tournament-stars">
-                      {"★".repeat(tournament.difficulty)}
+                      {Array.from({ length: tournament.difficulty }).map((_, i) => (
+                        <Icon key={i} name="star" size={12} />
+                      ))}
                     </span>
                     {unlocked ? (
                       <span className="unlocked-badge">
-                        ✓ {t("tournament.unlocked")}
+                        <Icon name="check" size={12} /> {t("tournament.unlocked")}
                       </span>
                     ) : null}
                   </strong>
@@ -500,7 +503,9 @@ export default function GameFlow() {
   return (
     <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
       <StatusHeader />
-      <h2>{t("loop.seasonComplete", { n: summary.season })}</h2>
+      <h2>
+        <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
+      </h2>
       <ul className="loop-summary">
         <li>
           {t("loop.roundsPlayed")}: <strong>{summary.roundsPlayed}</strong>

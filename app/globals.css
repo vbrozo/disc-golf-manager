@@ -51,6 +51,11 @@ body {
   gap: 0.5rem;
 }
 
+.app-header-icon {
+  color: #4ade80;
+  flex-shrink: 0;
+}
+
 .app-header-actions {
   display: flex;
   align-items: center;
@@ -264,6 +269,9 @@ body {
 
 .loop h2 {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .loop-lead {
@@ -286,6 +294,9 @@ body {
 }
 
 .loop-status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -821,8 +832,10 @@ body {
 
 /* --- Tournament difficulty stars + reputation unlock --- */
 .tournament-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
   color: #fbbf24;
-  letter-spacing: 0.1em;
 }
 
 .loop-tournament-unlocked {
