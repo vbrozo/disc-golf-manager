@@ -3,6 +3,7 @@ import {
   appendRoundRating,
   averageRating,
   BASE_RATING,
+  calculateConsistency,
   calculateRoundRating,
   RATING_ROUNDS_WINDOW,
 } from "@/game";
@@ -42,5 +43,28 @@ describe("rating history", () => {
     expect(averageRating([900, 950, 1000])).toBe(950);
     expect(averageRating([])).toBeUndefined();
     expect(averageRating(undefined)).toBeUndefined();
+  });
+});
+
+describe("calculateConsistency", () => {
+  it("is undefined until at least two rated rounds exist", () => {
+    expect(calculateConsistency(undefined)).toBeUndefined();
+    expect(calculateConsistency([])).toBeUndefined();
+    expect(calculateConsistency([950])).toBeUndefined();
+  });
+
+  it("scores a player who rates the same every round at 100", () => {
+    expect(calculateConsistency([950, 950, 950])).toBe(100);
+  });
+
+  it("scores a wider spread lower than a tighter one", () => {
+    const tight = calculateConsistency([945, 950, 955])!;
+    const loose = calculateConsistency([850, 950, 1050])!;
+    expect(tight).toBeGreaterThan(loose);
+    expect(loose).toBeGreaterThanOrEqual(0);
+  });
+
+  it("floors very swingy players at 0", () => {
+    expect(calculateConsistency([700, 1100])).toBe(0);
   });
 });
