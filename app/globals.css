@@ -702,6 +702,66 @@ body {
   }
 }
 
+/* --- Achievement badges + streak --- */
+.achievement-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: -0.5rem;
+}
+
+.achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  cursor: default;
+}
+
+.achievement-locked {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.achievement-unlocked {
+  border-color: #f59e0b;
+  background: #422006;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.streak-hot {
+  color: #fbbf24;
+  animation: signature-glow 1.4s ease-in-out infinite;
+}
+
+/* --- Leaderboard win/lose feedback --- */
+.leaderboard-win {
+  background: #422006;
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+  animation: unlock-pop 0.5s ease;
+}
+
+.leaderboard-good {
+  background: #064e3b;
+  border-color: #16a34a;
+}
+
+.leaderboard-bad {
+  background: #1e293b;
+  border-color: #7f1d1d;
+}
+
 /* --- Mobile (phones) --- */
 @media (max-width: 640px) {
   .app-header {

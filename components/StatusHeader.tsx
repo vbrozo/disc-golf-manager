@@ -6,12 +6,15 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { formatMoney } from "@/utils/format";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import FloatingNumbers from "@/components/FloatingNumbers";
+import AchievementBadges from "@/components/AchievementBadges";
+import { getAchievements, getCurrentStreak } from "@/game/achievements";
 
 /** Persistent club status bar shown on every in-game flow step. */
 export default function StatusHeader() {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const season = useGameStore((s) => s.season);
+  const tournaments = useGameStore((s) => s.tournaments);
 
   const moneyFloats = useFloatingNumbers();
   const repFloats = useFloatingNumbers();
@@ -39,32 +42,46 @@ export default function StatusHeader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [club.reputation]);
 
+  const achievements = getAchievements(club, tournaments);
+  const streak = getCurrentStreak(tournaments);
+
   return (
-    <header className="loop-status">
-      <div>
-        <span className="loop-status-label">{t("loop.club")}</span>
-        <strong>{club.name}</strong>
-      </div>
-      <div className="floating-number-host">
-        <span className="loop-status-label">{t("loop.money")}</span>
-        <strong>{formatMoney(club.money)}</strong>
-        <FloatingNumbers items={moneyFloats.items} />
-      </div>
-      <div className="floating-number-host">
-        <span className="loop-status-label">{t("loop.reputation")}</span>
-        <strong>{club.reputation}</strong>
-        <FloatingNumbers items={repFloats.items} />
-      </div>
-      <div>
-        <span className="loop-status-label">{t("loop.season")}</span>
-        <strong>{season.season}</strong>
-      </div>
-      <div>
-        <span className="loop-status-label">{t("loop.round")}</span>
-        <strong>
-          {Math.min(season.round, season.totalRounds)} / {season.totalRounds}
-        </strong>
-      </div>
-    </header>
+    <>
+      <header className="loop-status">
+        <div>
+          <span className="loop-status-label">{t("loop.club")}</span>
+          <strong>{club.name}</strong>
+        </div>
+        <div className="floating-number-host">
+          <span className="loop-status-label">{t("loop.money")}</span>
+          <strong>{formatMoney(club.money)}</strong>
+          <FloatingNumbers items={moneyFloats.items} />
+        </div>
+        <div className="floating-number-host">
+          <span className="loop-status-label">{t("loop.reputation")}</span>
+          <strong>{club.reputation}</strong>
+          <FloatingNumbers items={repFloats.items} />
+        </div>
+        <div>
+          <span className="loop-status-label">{t("loop.season")}</span>
+          <strong>{season.season}</strong>
+        </div>
+        <div>
+          <span className="loop-status-label">{t("loop.round")}</span>
+          <strong>
+            {Math.min(season.round, season.totalRounds)} / {season.totalRounds}
+          </strong>
+        </div>
+        {streak >= 2 ? (
+          <div>
+            <span className="loop-status-label">{t("loop.streak")}</span>
+            <strong className={`streak-chip${streak >= 3 ? " streak-hot" : ""}`}>
+              🔥 {streak}
+            </strong>
+          </div>
+        ) : null}
+      </header>
+      <AchievementBadges achievements={achievements} />
+    </>
   );
 }
