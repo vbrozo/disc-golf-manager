@@ -134,6 +134,11 @@ Stats (1–100):
 - Build: npm run build
 - No backend required
 - Must be fully client-side compatible
+- Verified Vercel-ready: ✅
+  - `npm run build` compiles, type-checks, and statically prerenders `/` (no SSR/runtime errors)
+  - no server-only or Node.js-only APIs (`fs`, `path`, `child_process`, `process.env`) used in app code
+  - all stateful UI (`Dashboard.tsx`, `SeasonLoop.tsx`) marked `"use client"`; game engine (`game/*`) stays pure TS with no React/Zustand/window/localStorage access
+  - no `window`/`localStorage` usage yet, so there are no hydration mismatches to guard against — persistence (see Architecture Rules) will need a client-only effect/guard when added
 
 ### Dashboard UI
 - overview dashboard: ✅ done
