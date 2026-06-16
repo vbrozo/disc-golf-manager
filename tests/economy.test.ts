@@ -7,12 +7,14 @@ import {
   reputationToUnlock,
   settleClubEconomy,
 } from "@/game";
-import type { Club, Tournament } from "@/types";
+import type { Club } from "@/models/Club";
+import type { Tournament } from "@/models/Tournament";
 
 const tournament: Tournament = {
   id: "t1",
   name: "Test Open",
-  holes: 18,
+  courseId: "course-city",
+  rounds: 4,
   difficulty: 3,
   prizePool: 10000,
   reputationRequired: 50,
@@ -44,7 +46,7 @@ describe("reputation gating", () => {
 
 describe("entry eligibility", () => {
   it("blocks locked tournaments before checking funds", () => {
-    const club: Club = { name: "C", money: 0, reputation: 0 };
+    const club: Club = { id: "c1", name: "C", money: 0, reputation: 0 };
     expect(checkEntryEligibility(club, tournament)).toMatchObject({
       canEnter: false,
       reason: "locked",
@@ -52,7 +54,7 @@ describe("entry eligibility", () => {
   });
 
   it("blocks when funds are short despite enough reputation", () => {
-    const club: Club = { name: "C", money: 100, reputation: 100 };
+    const club: Club = { id: "c1", name: "C", money: 100, reputation: 100 };
     expect(checkEntryEligibility(club, tournament)).toMatchObject({
       canEnter: false,
       reason: "insufficient-funds",
@@ -60,7 +62,7 @@ describe("entry eligibility", () => {
   });
 
   it("allows entry when both gates are cleared", () => {
-    const club: Club = { name: "C", money: 5000, reputation: 100 };
+    const club: Club = { id: "c1", name: "C", money: 5000, reputation: 100 };
     expect(checkEntryEligibility(club, tournament).canEnter).toBe(true);
   });
 });
@@ -73,7 +75,7 @@ describe("settlement", () => {
   });
 
   it("floors a club's money at zero when settling a loss", () => {
-    const club: Club = { name: "C", money: 100, reputation: 5 };
+    const club: Club = { id: "c1", name: "C", money: 100, reputation: 5 };
     const s = buildSettlement(tournament, 0, 2); // netMoney = -600
     const after = settleClubEconomy(club, s);
     expect(after.money).toBe(0);

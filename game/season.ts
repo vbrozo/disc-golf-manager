@@ -10,7 +10,7 @@
 // existing simulation + economy + training actions, so this file stays free of
 // any framework or side effects and can be unit tested in isolation.
 
-import type { Player } from "@/types";
+import type { Player, ShotShape } from "@/models/Player";
 
 /** Phases of the season loop, in the order the player moves through them. */
 export type SeasonPhase =
@@ -162,22 +162,71 @@ export function summariseSeason(state: SeasonState): SeasonSummary {
  * run and the player has someone to train. These are plain {@link Player}
  * objects — no discs equipped — ready to drop into the store.
  */
+function starterPlayer(
+  id: string,
+  firstName: string,
+  lastName: string,
+  attrs: {
+    power: number;
+    accuracy: number;
+    putting: number;
+    scramble: number;
+    consistency: number;
+    mental: number;
+    fitness: number;
+  },
+  preferredShotShape: ShotShape
+): Player {
+  const overall = Math.round(
+    (attrs.power +
+      attrs.accuracy +
+      attrs.putting +
+      attrs.scramble +
+      attrs.consistency +
+      attrs.mental +
+      attrs.fitness) /
+      7
+  );
+  return {
+    id,
+    firstName,
+    lastName,
+    age: 24,
+    nationality: "Croatia",
+    overall,
+    ...attrs,
+    morale: 50,
+    potential: Math.min(100, overall + 10),
+    salary: 500,
+    form: 50,
+    popularity: 10,
+    preferredShotShape,
+    injuries: [],
+  };
+}
+
 export function createStarterRoster(): Player[] {
   return [
-    {
-      id: "player-1",
-      name: "Ivan Horvat",
-      stats: { Driving: 55, Accuracy: 52, Putting: 48, Mental: 50, Stamina: 60 },
-    },
-    {
-      id: "player-2",
-      name: "Marko Kovačević",
-      stats: { Driving: 48, Accuracy: 58, Putting: 54, Mental: 45, Stamina: 55 },
-    },
-    {
-      id: "player-3",
-      name: "Luka Babić",
-      stats: { Driving: 60, Accuracy: 45, Putting: 50, Mental: 48, Stamina: 52 },
-    },
+    starterPlayer(
+      "player-1",
+      "Ivan",
+      "Horvat",
+      { power: 55, accuracy: 52, putting: 48, scramble: 50, consistency: 50, mental: 50, fitness: 60 },
+      "Straight"
+    ),
+    starterPlayer(
+      "player-2",
+      "Marko",
+      "Kovačević",
+      { power: 48, accuracy: 58, putting: 54, scramble: 48, consistency: 52, mental: 45, fitness: 55 },
+      "Hyzer"
+    ),
+    starterPlayer(
+      "player-3",
+      "Luka",
+      "Babić",
+      { power: 60, accuracy: 45, putting: 50, scramble: 52, consistency: 48, mental: 48, fitness: 52 },
+      "Anhyzer"
+    ),
   ];
 }

@@ -4,26 +4,20 @@
 // static game data and the helpers are pure functions over the shared domain
 // types, so they can be unit tested and called from store actions or the UI.
 
-import type {
-  Disc,
-  DiscLoadout,
-  DiscRarity,
-  DiscType,
-  Player,
-  PlayerStats,
-} from "@/types";
+import type { Disc, DiscLoadout, DiscRarity, DiscType } from "@/models/Disc";
+import type { Player } from "@/models/Player";
 
-/** Player stats are capped at 100; disc bonuses can never push past this. */
+/** Player attributes are capped at 100; disc bonuses can never push past this. */
 const MAX_STAT = 100;
 
 /**
- * Which player stat each disc type improves. Stamina and Mental are not
- * influenced by discs — they are developed through training only.
+ * Which player attribute each disc type improves: Driver → power, Midrange →
+ * accuracy, Putter → putting.
  */
-export const DISC_TYPE_STAT: Record<DiscType, keyof PlayerStats> = {
-  Driver: "Driving",
-  Midrange: "Accuracy",
-  Putter: "Putting",
+export const DISC_TYPE_STAT: Record<DiscType, "power" | "accuracy" | "putting"> = {
+  Driver: "power",
+  Midrange: "accuracy",
+  Putter: "putting",
 };
 
 /**
@@ -37,7 +31,7 @@ export const RARITY_BONUS: Record<DiscRarity, number> = {
   Signature: 9,
 };
 
-/** The bonus a disc of the given rarity grants to its type's stat. */
+/** The bonus a disc of the given rarity grants to its type's attribute. */
 export function bonusForRarity(rarity: DiscRarity): number {
   return RARITY_BONUS[rarity];
 }
@@ -45,7 +39,7 @@ export function bonusForRarity(rarity: DiscRarity): number {
 /**
  * Money cost to buy a disc in the shop. Derived from the disc's stat bonus so
  * stronger (rarer) discs cost proportionally more, keeping the shop priced in
- * line with {@link RARITY_BONUS} (Common ≈ 100 … Signature ≈ 450).
+ * line with {@link RARITY_BONUS} (Common ~ 100 ... Signature ~ 450).
  */
 export const DISC_PRICE_PER_BONUS = 50;
 
@@ -72,19 +66,19 @@ export function createDisc(
  * type then ascending rarity so better discs sit lower in each group.
  */
 export const DISCS: readonly Disc[] = [
-  // Drivers (boost Driving)
+  // Drivers (boost power)
   createDisc("driver-common", "Beginner Driver", "Driver", "Common"),
   createDisc("driver-rare", "Tour Driver", "Driver", "Rare"),
   createDisc("driver-pro", "Pro Distance Driver", "Driver", "Pro"),
   createDisc("driver-signature", "Champion Signature Driver", "Driver", "Signature"),
 
-  // Midranges (boost Accuracy)
+  // Midranges (boost accuracy)
   createDisc("midrange-common", "Practice Midrange", "Midrange", "Common"),
   createDisc("midrange-rare", "Tour Midrange", "Midrange", "Rare"),
   createDisc("midrange-pro", "Pro Control Midrange", "Midrange", "Pro"),
   createDisc("midrange-signature", "Champion Signature Midrange", "Midrange", "Signature"),
 
-  // Putters (boost Putting)
+  // Putters (boost putting)
   createDisc("putter-common", "Practice Putter", "Putter", "Common"),
   createDisc("putter-rare", "Tour Putter", "Putter", "Rare"),
   createDisc("putter-pro", "Pro Approach Putter", "Putter", "Pro"),
@@ -116,13 +110,13 @@ export function unequipDisc(loadout: DiscLoadout, type: DiscType): DiscLoadout {
 }
 
 /**
- * Total stat bonuses provided by an equipped loadout, keyed by player stat.
- * Only stats touched by an equipped disc appear in the result.
+ * Total attribute bonuses provided by an equipped loadout, keyed by player
+ * attribute. Only attributes touched by an equipped disc appear in the result.
  */
 export function getLoadoutBonuses(
   loadout: DiscLoadout
-): Partial<PlayerStats> {
-  const bonuses: Partial<PlayerStats> = {};
+): Partial<Record<"power" | "accuracy" | "putting", number>> {
+  const bonuses: Partial<Record<"power" | "accuracy" | "putting", number>> = {};
   (Object.keys(DISC_TYPE_STAT) as DiscType[]).forEach((type) => {
     const disc = loadout[type];
     if (disc) {
@@ -134,30 +128,27 @@ export function getLoadoutBonuses(
 }
 
 /**
- * Apply a loadout's bonuses to a set of base stats, returning new stats with
- * each affected value raised by its disc bonus (capped at {@link MAX_STAT}).
- * Pure: the input stats are not mutated.
+ * Apply a loadout's bonuses to a player, returning a new {@link Player} with
+ * each affected attribute raised by its disc bonus (capped at {@link
+ * MAX_STAT}). Pure: the input player is not mutated.
  */
-export function applyDiscBonuses(
-  stats: PlayerStats,
-  loadout: DiscLoadout
-): PlayerStats {
+export function applyDiscBonuses(player: Player, loadout: DiscLoadout): Player {
   const bonuses = getLoadoutBonuses(loadout);
-  const result: PlayerStats = { ...stats };
-  (Object.keys(bonuses) as (keyof PlayerStats)[]).forEach((stat) => {
+  const result: Player = { ...player };
+  (Object.keys(bonuses) as ("power" | "accuracy" | "putting")[]).forEach((stat) => {
     result[stat] = Math.min(MAX_STAT, result[stat] + (bonuses[stat] ?? 0));
   });
   return result;
 }
 
 /**
- * A player's effective stats with their equipped discs applied. Use this for
- * simulation and UI so disc bonuses actually count toward performance. Players
- * with no equipped discs are returned unchanged.
+ * A player with their equipped discs applied. Use this for simulation and UI
+ * so disc bonuses actually count toward performance. Players with no
+ * equipped discs are returned unchanged.
  */
-export function effectivePlayerStats(player: Player): PlayerStats {
+export function effectivePlayer(player: Player): Player {
   if (!player.equipped) {
-    return player.stats;
+    return player;
   }
-  return applyDiscBonuses(player.stats, player.equipped);
+  return applyDiscBonuses(player, player.equipped);
 }

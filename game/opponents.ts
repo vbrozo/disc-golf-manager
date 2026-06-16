@@ -4,13 +4,13 @@
 // random Croatian names and stats to fill out a tournament field, so the club's
 // own players actually have to compete for placements instead of always winning.
 
-import type { Player, PlayerStats } from "@/types";
-import type { RandomFn } from "./simulation";
+import type { Player, ShotShape } from "@/models/Player";
+import type { RandomFn } from "./simulation/holeSimulator";
 
 /** Default total field size (club players + opponents) for a tournament. */
 export const DEFAULT_FIELD_SIZE = 8;
 
-/** Opponent stats are rolled in this inclusive range, around the starter level. */
+/** Opponent attributes are rolled in this inclusive range, around the starter level. */
 const MIN_STAT = 42;
 const MAX_STAT = 68;
 
@@ -25,6 +25,8 @@ const LAST_NAMES = [
   "Vuković", "Marković", "Petrović", "Tomić", "Matić", "Pavić", "Blažević",
   "Grgić", "Lovrić", "Perić", "Šimić", "Radić", "Barišić", "Vidović", "Bošnjak",
 ];
+
+const SHOT_SHAPES: readonly ShotShape[] = ["Hyzer", "Anhyzer", "Straight", "Spike"];
 
 /** Pick a uniformly-random element of a non-empty array. */
 function pick<T>(items: readonly T[], rng: RandomFn): T {
@@ -50,22 +52,51 @@ export function generateOpponents(
   const usedNames = new Set<string>();
 
   for (let i = 0; i < count; i++) {
-    let name = `${pick(FIRST_NAMES, rng)} ${pick(LAST_NAMES, rng)}`;
+    let firstName = pick(FIRST_NAMES, rng);
+    let lastName = pick(LAST_NAMES, rng);
+    let name = `${firstName} ${lastName}`;
     // A few retries to avoid duplicate names within the same field.
     for (let attempt = 0; attempt < 5 && usedNames.has(name); attempt++) {
-      name = `${pick(FIRST_NAMES, rng)} ${pick(LAST_NAMES, rng)}`;
+      firstName = pick(FIRST_NAMES, rng);
+      lastName = pick(LAST_NAMES, rng);
+      name = `${firstName} ${lastName}`;
     }
     usedNames.add(name);
 
-    const stats: PlayerStats = {
-      Driving: rollStat(rng),
-      Accuracy: rollStat(rng),
-      Putting: rollStat(rng),
-      Mental: rollStat(rng),
-      Stamina: rollStat(rng),
-    };
+    const power = rollStat(rng);
+    const accuracy = rollStat(rng);
+    const putting = rollStat(rng);
+    const scramble = rollStat(rng);
+    const consistency = rollStat(rng);
+    const mental = rollStat(rng);
+    const fitness = rollStat(rng);
+    const overall = Math.round(
+      (power + accuracy + putting + scramble + consistency + mental + fitness) / 7
+    );
 
-    opponents.push({ id: `opponent-${i + 1}`, name, stats, isOpponent: true });
+    opponents.push({
+      id: `opponent-${i + 1}`,
+      firstName,
+      lastName,
+      age: 20 + Math.floor(rng() * 20),
+      nationality: "Croatia",
+      overall,
+      power,
+      accuracy,
+      putting,
+      scramble,
+      consistency,
+      mental,
+      fitness,
+      morale: 50,
+      potential: overall,
+      salary: 0,
+      form: 50,
+      popularity: 0,
+      preferredShotShape: pick(SHOT_SHAPES, rng),
+      injuries: [],
+      isOpponent: true,
+    });
   }
 
   return opponents;

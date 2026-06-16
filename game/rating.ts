@@ -21,13 +21,12 @@ function clamp(value: number, min: number, max: number): number {
 
 /**
  * Rating for a single round. Better-than-par rounds rate above {@link
- * BASE_RATING}, worse-than-par below it. Scores are normalised to an 18-hole
- * basis so a 9-hole round counts proportionally. `totalScore` is strokes
- * relative to par (negative is good).
+ * BASE_RATING}, worse-than-par below it. `totalScore` is strokes relative to
+ * par across the round (negative is good); a full v2 tournament round is
+ * always 18 holes, so no per-round-length normalisation is needed.
  */
-export function calculateRoundRating(totalScore: number, holes: number): number {
-  const normalized = holes > 0 ? totalScore * (18 / holes) : totalScore;
-  const rating = BASE_RATING - normalized * RATING_PER_STROKE;
+export function calculateRoundRating(totalScore: number): number {
+  const rating = BASE_RATING - totalScore * RATING_PER_STROKE;
   return clamp(Math.round(rating), MIN_RATING, MAX_RATING);
 }
 
@@ -53,32 +52,3 @@ export function averageRating(history: number[] | undefined): number | undefined
   return Math.round(history.reduce((sum, r) => sum + r, 0) / history.length);
 }
 
-/**
- * How tightly a round rating spread maps onto the 0–100 consistency scale: a
- * standard deviation of this many rating points scores 0. Two strokes' worth of
- * swing (20 rating points) already costs 40 points, so only players who hover
- * near their average rating stay highly consistent.
- */
-export const CONSISTENCY_SPREAD_FLOOR = 50;
-
-/**
- * A player's consistency: a 0–100 measure of how close to their overall rating
- * they play, derived from the spread (population standard deviation) of their
- * recent round ratings. A player whose rounds all rate the same scores 100; the
- * wider they swing around their average, the lower the score. Returns
- * `undefined` until they have played at least two rated rounds, since a single
- * round has no spread to judge.
- */
-export function calculateConsistency(
-  history: number[] | undefined
-): number | undefined {
-  if (!history || history.length < 2) {
-    return undefined;
-  }
-  const mean = history.reduce((sum, r) => sum + r, 0) / history.length;
-  const variance =
-    history.reduce((sum, r) => sum + (r - mean) ** 2, 0) / history.length;
-  const stdDev = Math.sqrt(variance);
-  const score = 100 - (stdDev / CONSISTENCY_SPREAD_FLOOR) * 100;
-  return clamp(Math.round(score), 0, 100);
-}

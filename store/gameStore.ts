@@ -1,30 +1,22 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { DEFAULT_LANGUAGE, type Language } from "@/i18n";
-import type {
-  Club,
-  Disc,
-  DiscLoadout,
-  DiscType,
-  Player,
-  PlayerStats,
-  TournamentResult,
-  TrainingResult,
-  TrainingType,
-} from "@/types";
+import type { Club } from "@/models/Club";
+import type { Disc, DiscLoadout, DiscType } from "@/models/Disc";
+import type { Player } from "@/models/Player";
+import type { Tournament, TournamentResult } from "@/models/Tournament";
+import type { TrainingResult, TrainingType } from "@/types";
 import {
   advanceRound,
   applyTraining,
   buildSettlement,
   checkEntryEligibility,
-  appendRoundRating,
-  averageRating,
-  calculateConsistency,
   calculateRoundRating,
   createStarterRoster,
   DEFAULT_FIELD_SIZE,
   equipDisc as equipDiscOnLoadout,
   generateOpponents,
+  getCourseById,
   getDiscById,
   getDiscPrice,
   getTournamentById,
@@ -37,7 +29,7 @@ import {
   STARTING_MONEY,
   unequipDisc as unequipDiscFromLoadout,
   type SeasonState,
-  type SimulationOptions,
+  type TournamentSimulationOptions,
   type TournamentSettlement,
   type TournamentStanding,
   type TrainingOptions,
@@ -61,7 +53,7 @@ export interface LeaderboardRow {
   placement: number;
   earnings: number;
   reputationGained: number;
-  /** PDGA-style rating earned for this round. */
+  /** PDGA-style rating earned for this tournament. */
   rating: number;
   /** True for one of the club's own players, false for an AI opponent. */
   isClubPlayer: boolean;
@@ -128,20 +120,15 @@ export interface GameState {
   setClub: (club: Club) => void;
   /** Adjust the club's money. Pass a negative amount to spend. */
   addMoney: (amount: number) => void;
-  /** Patch a single player by id (top-level fields and/or stats). */
-  updatePlayer: (
-    id: string,
-    update: Partial<Omit<Player, "id" | "stats">> & {
-      stats?: Partial<PlayerStats>;
-    }
-  ) => void;
+  /** Patch a single player by id. */
+  updatePlayer: (id: string, update: Partial<Omit<Player, "id">>) => void;
   /** Append a played tournament result to the club's record. */
   addTournamentResult: (result: TournamentResult) => void;
   /**
    * Run a training session on a player, charging the club for the program's
-   * cost and raising the trained stat by +1 to +5 (capped at 100). Returns the
-   * {@link TrainingResult}, or `null` if the player/program is unknown or the
-   * club cannot afford it (in which case nothing changes).
+   * cost and raising the trained attribute by +1 to +5 (capped at 100).
+   * Returns the {@link TrainingResult}, or `null` if the player/program is
+   * unknown or the club cannot afford it (in which case nothing changes).
    */
   trainPlayer: (
     id: string,
@@ -181,13 +168,13 @@ export interface GameState {
    * Enter a tournament with the club's roster. Charges the entry fee, simulates
    * the event, then credits the club with the prize money (net of the fee) and
    * reputation earned by its best finisher, and records the result. Returns an
-   * {@link EnterTournamentResult}, or `null` if the tournament is unknown, the
-   * club is locked out (reputation) or cannot afford the entry fee, or the club
-   * has no players — in which case nothing changes.
+   * {@link EnterTournamentResult}, or `null` if the tournament/course is
+   * unknown, the club is locked out (reputation) or cannot afford the entry
+   * fee, or the club has no players — in which case nothing changes.
    */
   enterTournament: (
     tournamentId: string,
-    options?: SimulationOptions
+    options?: TournamentSimulationOptions
   ) => EnterTournamentResult | null;
 
   // --- Game loop (season) ---
@@ -213,7 +200,7 @@ export interface GameState {
    */
   playTournamentRound: (
     tournamentId: string,
-    options?: SimulationOptions
+    options?: TournamentSimulationOptions
   ) => EnterTournamentResult | null;
   /**
    * Finish the "training" phase and advance: move to the next round's "select"
@@ -224,10 +211,16 @@ export interface GameState {
 }
 
 const initialClub: Club = {
+  id: "club-1",
   name: "New Club",
   money: 0,
   reputation: 0,
 };
+
+/** Split a player's first/last name to build a display name for a given player. */
+function playerDisplayName(player: Player): string {
+  return `${player.firstName} ${player.lastName}`.trim();
+}
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -255,13 +248,7 @@ export const useGameStore = create<GameState>()(
   updatePlayer: (id, update) =>
     set((state) => ({
       players: state.players.map((player) =>
-        player.id === id
-          ? {
-              ...player,
-              ...update,
-              stats: { ...player.stats, ...(update.stats ?? {}) },
-            }
-          : player
+        player.id === id ? { ...player, ...update } : player
       ),
     })),
 
@@ -399,6 +386,11 @@ export const useGameStore = create<GameState>()(
       return null;
     }
 
+    const course = getCourseById(tournament.courseId);
+    if (!course) {
+      return null;
+    }
+
     // Reputation gate + entry-fee affordability — reject without changes.
     const eligibility = checkEntryEligibility(state.club, tournament);
     if (!eligibility.canEnter) {
@@ -412,7 +404,7 @@ export const useGameStore = create<GameState>()(
     );
     const field = [...state.players, ...opponents];
 
-    const simulation = simulateTournament(field, tournament, options);
+    const simulation = simulateTournament(field, tournament, course, options);
     const clubStandings = simulation.standings.filter(
       (s) => !s.player.isOpponent
     );
@@ -439,19 +431,19 @@ export const useGameStore = create<GameState>()(
       reputationGained: settlement.reputationGained,
     };
 
-    // Every player earns a PDGA-style rating for this round, from their score.
-    const roundRatingFor = (totalScore: number) =>
-      calculateRoundRating(totalScore, tournament.holes);
+    // Every player earns a PDGA-style rating for this tournament, from their
+    // total score across all rounds.
+    const roundRatingFor = (totalScore: number) => calculateRoundRating(totalScore);
 
     // Trim the standings into a serialisable leaderboard for the results screen.
     const summary: TournamentSummary = {
       tournamentName: tournament.name,
       rows: simulation.standings.map((s) => ({
-        playerName: s.player.name,
+        playerName: playerDisplayName(s.player),
         placement: s.placement,
         earnings: s.earnings,
         reputationGained: s.reputationGained,
-        rating: roundRatingFor(s.round.totalScore),
+        rating: roundRatingFor(s.totalScore),
         isClubPlayer: !s.player.isOpponent,
       })),
       clubEarnings: settlement.earnings,
@@ -460,10 +452,7 @@ export const useGameStore = create<GameState>()(
 
     // Map each club player's round rating by id so we can update their history.
     const roundRatingById = new Map(
-      clubStandings.map((s) => [
-        s.player.id,
-        roundRatingFor(s.round.totalScore),
-      ])
+      clubStandings.map((s) => [s.player.id, roundRatingFor(s.totalScore)])
     );
 
     set((s) => ({
@@ -475,12 +464,14 @@ export const useGameStore = create<GameState>()(
         if (roundRating === undefined) {
           return p;
         }
-        const ratingHistory = appendRoundRating(p.ratingHistory, roundRating);
+        const ratingHistory = [...(p.ratingHistory ?? []), roundRating].slice(-8);
+        const rating = Math.round(
+          ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
+        );
         return {
           ...p,
           ratingHistory,
-          rating: averageRating(ratingHistory),
-          consistency: calculateConsistency(ratingHistory),
+          rating,
         };
       }),
     }));
@@ -495,7 +486,15 @@ export const useGameStore = create<GameState>()(
       const clubName = options?.clubName?.trim() || "New Club";
       const roster = createStarterRoster().map((player, index) => {
         const customName = options?.playerNames?.[index]?.trim();
-        return customName ? { ...player, name: customName } : player;
+        if (!customName) {
+          return player;
+        }
+        const [firstName, ...rest] = customName.split(" ");
+        return {
+          ...player,
+          firstName: firstName || player.firstName,
+          lastName: rest.join(" ") || player.lastName,
+        };
       });
 
       return {
