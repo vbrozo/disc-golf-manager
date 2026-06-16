@@ -29,6 +29,7 @@ import {
   STARTING_MONEY,
   unequipDisc as unequipDiscFromLoadout,
   type SeasonState,
+  type HoleOutcome,
   type TournamentSimulationOptions,
   type TournamentSettlement,
   type TournamentStanding,
@@ -61,6 +62,12 @@ export interface LeaderboardRow {
   isClubPlayer: boolean;
 }
 
+/** One hole's outcome, trimmed down for the hole-by-hole results animation. */
+export interface HoleByHoleEntry {
+  outcome: HoleOutcome;
+  scoreToPar: number;
+}
+
 /** The full standings of the most recent tournament, kept for the results screen. */
 export interface TournamentSummary {
   tournamentName: string;
@@ -69,6 +76,10 @@ export interface TournamentSummary {
   clubEarnings: number;
   /** Reputation the club gained from its best finisher. */
   clubReputation: number;
+  /** The club's best finisher's name, for labelling the hole-by-hole playback. */
+  bestPlayerName: string;
+  /** Every hole the club's best finisher played, across all rounds, in order. */
+  holeByHole: HoleByHoleEntry[];
 }
 
 /**
@@ -456,6 +467,13 @@ export const useGameStore = create<GameState>()(
       })),
       clubEarnings: settlement.earnings,
       clubReputation: settlement.reputationGained,
+      bestPlayerName: playerDisplayName(best.player),
+      holeByHole: best.rounds.flatMap((round) =>
+        round.holes.map((hole) => ({
+          outcome: hole.outcome,
+          scoreToPar: hole.scoreToPar,
+        }))
+      ),
     };
 
     // Map each club player's round rating by id so we can update their history.

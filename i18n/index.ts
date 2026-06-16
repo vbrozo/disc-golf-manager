@@ -65,6 +65,7 @@ const en: Dict = {
   // Flow — tournament step extras
   "tournament.intro": "Pick a tournament to enter this round.",
   "tournament.unlocked": "Unlocked!",
+  "tournament.levelUpTitle": "Level up! New tournament unlocked:",
   "achievement.firstWin": "First Win",
   "achievement.threeTournaments": "3 Tournaments Played",
   "achievement.reputation100": "100 Reputation",
@@ -82,6 +83,8 @@ const en: Dict = {
   "results.you": "You",
   "results.clubTotal": "Your club earned {earnings} and +{rep} reputation.",
   "results.continue": "Continue",
+  "playback.watching": "Watching {name} play the round…",
+  "playback.skip": "Skip",
 
   // Season loop — status header
   "loop.club": "Club",
@@ -241,6 +244,7 @@ const hr: Dict = {
   // Flow — tournament step extras
   "tournament.intro": "Odaberi turnir za ovo kolo.",
   "tournament.unlocked": "Otključano!",
+  "tournament.levelUpTitle": "Level up! Novi turnir otključan:",
   "achievement.firstWin": "Prva pobjeda",
   "achievement.threeTournaments": "3 odigrana turnira",
   "achievement.reputation100": "100 reputacije",
@@ -258,6 +262,8 @@ const hr: Dict = {
   "results.you": "Vi",
   "results.clubTotal": "Tvoj klub zaradio je {earnings} i +{rep} ugleda.",
   "results.continue": "Nastavi",
+  "playback.watching": "Gledaš kako {name} igra rundu…",
+  "playback.skip": "Preskoči",
 
   // Season loop — status header
   "loop.club": "Klub",
