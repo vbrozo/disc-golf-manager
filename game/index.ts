@@ -4,3 +4,4 @@ export * from "./tournaments";
 export * from "./training";
 export * from "./discs";
 export * from "./economy";
+export * from "./season";

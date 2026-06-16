@@ -11,15 +11,22 @@ import type {
   TrainingType,
 } from "@/types";
 import {
+  advanceRound,
   applyTraining,
   buildSettlement,
   checkEntryEligibility,
+  createStarterRoster,
   equipDisc as equipDiscOnLoadout,
   getTournamentById,
   getTrainingProgram,
+  INITIAL_SEASON_STATE,
+  recordRoundResult,
   settleClubEconomy,
   simulateTournament,
+  startSeason as startSeasonState,
+  STARTING_MONEY,
   unequipDisc as unequipDiscFromLoadout,
+  type SeasonState,
   type SimulationOptions,
   type TournamentSettlement,
   type TournamentStanding,
@@ -45,6 +52,8 @@ export interface GameState {
   tournaments: TournamentResult[];
   /** Discs owned by the club. */
   inventory: Disc[];
+  /** State of the season game loop (start → play → train → repeat). */
+  season: SeasonState;
 
   // --- Actions ---
   /** Replace the club details (name / money / reputation). */
@@ -97,6 +106,37 @@ export interface GameState {
     tournamentId: string,
     options?: SimulationOptions
   ) => EnterTournamentResult | null;
+
+  // --- Game loop (season) ---
+  /**
+   * Start a brand-new game: reset the club to its starting money + zero
+   * reputation, seed the default roster, clear inventory and tournament
+   * history, and kick off season 1 in the "select" phase. This is the loop's
+   * entry point ("Start season").
+   */
+  startNewGame: () => void;
+  /**
+   * Begin the next season, keeping the club, roster and progress earned so far
+   * but resetting the round counter and per-season results. Use this once a
+   * season is "complete" to play on. Returns the new {@link SeasonState}.
+   */
+  startSeason: () => SeasonState;
+  /**
+   * Play this round's tournament: simulate it, settle the rewards and record
+   * the result, then advance the loop into the "training" phase. Only valid in
+   * the "select" phase — returns `null` (no changes) otherwise, or if the
+   * underlying entry is rejected (unknown/locked/unaffordable/no players).
+   */
+  playTournamentRound: (
+    tournamentId: string,
+    options?: SimulationOptions
+  ) => EnterTournamentResult | null;
+  /**
+   * Finish the "training" phase and advance: move to the next round's "select"
+   * phase, or mark the season "complete" if every round has been played.
+   * Returns the resulting {@link SeasonState}.
+   */
+  advanceSeason: () => SeasonState;
 }
 
 const initialClub: Club = {
@@ -110,6 +150,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   players: [],
   tournaments: [],
   inventory: [],
+  season: INITIAL_SEASON_STATE,
 
   setClub: (club) => set({ club }),
 
@@ -245,5 +286,54 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
 
     return { settlement, result, standings: simulation.standings };
+  },
+
+  // --- Game loop (season) ---
+
+  startNewGame: () =>
+    set((state) => ({
+      club: { ...state.club, money: STARTING_MONEY, reputation: 0 },
+      players: createStarterRoster(),
+      tournaments: [],
+      inventory: [],
+      season: startSeasonState(INITIAL_SEASON_STATE),
+    })),
+
+  startSeason: () => {
+    set((state) => ({ season: startSeasonState(state.season) }));
+    return get().season;
+  },
+
+  playTournamentRound: (tournamentId, options) => {
+    const state = get();
+
+    // Only playable while the loop is waiting for a tournament pick.
+    if (state.season.phase !== "select") {
+      return null;
+    }
+
+    // Reuse the standalone entry action for the simulate + settle + record
+    // economy work, then layer the season bookkeeping on top.
+    const outcome = state.enterTournament(tournamentId, options);
+    if (!outcome) {
+      return null;
+    }
+
+    set((s) => ({
+      season: recordRoundResult(s.season, {
+        tournamentId: outcome.result.tournamentId,
+        tournamentName: outcome.result.tournamentName,
+        placement: outcome.result.placement,
+        earnings: outcome.settlement.earnings,
+        reputationGained: outcome.settlement.reputationGained,
+      }),
+    }));
+
+    return outcome;
+  },
+
+  advanceSeason: () => {
+    set((state) => ({ season: advanceRound(state.season) }));
+    return get().season;
   },
 }));

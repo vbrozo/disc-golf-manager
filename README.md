@@ -77,7 +77,20 @@ Build a browser-based Disc Golf management simulator where the player:
   - store action: `enterTournament(id, options?)` — charges entry fee, simulates with the roster, settles prize money + reputation from the best finisher, records the result; returns `EnterTournamentResult` (or null if unknown/locked/unaffordable/no players)
 
 ### Game Loop
-- full season loop: ❌ not started
+- full season loop: ✅ done
+  - pure TypeScript engine in `game/season.ts` (no React, no Zustand)
+  - ties every system into one repeatable loop:
+    `start season → select tournament → simulate → earn rewards → training → repeat`
+  - `SeasonState` tracks season #, current round, rounds-per-season (default 5), phase + per-round results
+  - phase state machine: `preseason → select → training → (select…) → complete`
+  - functions: `startSeason`, `recordRoundResult`, `advanceRound`, `isSeasonComplete`, `summariseSeason`, `createStarterRoster`
+  - new-game bootstrap: `STARTING_MONEY` (2000) + a 3-player starter roster
+  - store state `season` + actions:
+    - `startNewGame()` — seed club money + roster, start season 1
+    - `playTournamentRound(id, options?)` — simulate + settle + record, then enter training (reuses `enterTournament`)
+    - `advanceSeason()` — next round or end the season
+    - `startSeason()` — begin the next season, keeping club/roster/progress
+  - playable UI: client component `components/SeasonLoop.tsx` drives the loop on the dashboard
 
 ---
 
@@ -124,3 +137,7 @@ Stats (1–100):
 
 ## 📌 Next Task
 (not set yet)
+
+All core systems are implemented and wired into the season game loop. Possible
+follow-ups: localStorage persistence, a roster/club-creation screen, and a disc
+shop UI.
