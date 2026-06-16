@@ -55,6 +55,8 @@ export interface LeaderboardRow {
   reputationGained: number;
   /** PDGA-style rating earned for this tournament. */
   rating: number;
+  /** Total strokes relative to par across the whole tournament (lower is better). */
+  totalScore: number;
   /** True for one of the club's own players, false for an AI opponent. */
   isClubPlayer: boolean;
 }
@@ -449,6 +451,7 @@ export const useGameStore = create<GameState>()(
         earnings: s.earnings,
         reputationGained: s.reputationGained,
         rating: roundRatingFor(s.totalScore),
+        totalScore: s.totalScore,
         isClubPlayer: !s.player.isOpponent,
       })),
       clubEarnings: settlement.earnings,

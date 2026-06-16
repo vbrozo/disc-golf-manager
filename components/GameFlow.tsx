@@ -24,7 +24,7 @@ import FloatingNumbers from "@/components/FloatingNumbers";
 import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
-import { formatMoney } from "@/utils/format";
+import { formatMoney, formatScoreToPar } from "@/utils/format";
 import {
   getDiscAvatar,
   getNameAvatar,
@@ -501,6 +501,9 @@ export default function GameFlow() {
                 <span className="leaderboard-name">
                   {t("results.colPlayer")}
                 </span>
+                <span className="leaderboard-score">
+                  {t("results.colScore")}
+                </span>
                 <span className="leaderboard-rating">
                   {t("results.colRating")}
                 </span>
@@ -537,6 +540,9 @@ export default function GameFlow() {
                         {t("results.you")}
                       </span>
                     ) : null}
+                  </span>
+                  <span className="leaderboard-score">
+                    {formatScoreToPar(row.totalScore)}
                   </span>
                   <span className="leaderboard-rating">{row.rating}</span>
                   <span className="leaderboard-earn">

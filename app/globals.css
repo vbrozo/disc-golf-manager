@@ -446,7 +446,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem 1fr 4rem 4.5rem;
+  grid-template-columns: 2rem 1fr 3.5rem 4rem 4.5rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
@@ -454,6 +454,12 @@ body {
 }
 
 .leaderboard-rating {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #94a3b8;
+}
+
+.leaderboard-score {
   font-variant-numeric: tabular-nums;
   text-align: right;
   color: #94a3b8;
