@@ -166,17 +166,17 @@ export function createStarterRoster(): Player[] {
   return [
     {
       id: "player-1",
-      name: "Alex Rivers",
+      name: "Ivan Horvat",
       stats: { Driving: 55, Accuracy: 52, Putting: 48, Mental: 50, Stamina: 60 },
     },
     {
       id: "player-2",
-      name: "Sam Torres",
+      name: "Marko Kovačević",
       stats: { Driving: 48, Accuracy: 58, Putting: 54, Mental: 45, Stamina: 55 },
     },
     {
       id: "player-3",
-      name: "Jordan Lee",
+      name: "Luka Babić",
       stats: { Driving: 60, Accuracy: 45, Putting: 50, Mental: 48, Stamina: 52 },
     },
   ];
