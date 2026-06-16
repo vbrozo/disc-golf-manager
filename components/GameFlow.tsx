@@ -85,7 +85,6 @@ export default function GameFlow() {
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   // No game in progress — show the start screen.
   if (season.phase === "preseason") {
@@ -115,7 +114,7 @@ export default function GameFlow() {
           })}
         </p>
         <p className="loop-lead">
-          {t("intro.body2", { total: players.length * DISC_TYPES.length })}
+          {t("intro.body2")}
         </p>
         <p className="loop-lead">{t("intro.body3")}</p>
         <button
@@ -140,39 +139,21 @@ export default function GameFlow() {
     const totalNeeded = players.length * DISC_TYPES.length;
     const allEquipped = players.every(isFullyEquipped);
 
-    const getQuantity = (discId: string) => quantities[discId] ?? 1;
-    const setQuantity = (discId: string, qty: number) =>
-      setQuantities((prev) => ({
-        ...prev,
-        [discId]: Math.max(1, Math.floor(qty) || 1),
-      }));
-
     const onBuy = (disc: Disc) => {
-      const qty = getQuantity(disc.id);
-      const bought = buyDiscs(disc.id, qty);
+      const bought = buyDiscs(disc.id, 1);
       if (!bought) {
         setNotice({
           tone: "bad",
-          text:
-            qty > 1
-              ? t("shop.noFundsMultiple", {
-                  qty,
-                  name: disc.name,
-                  price: formatMoney(getDiscPrice(disc) * qty),
-                })
-              : t("shop.noFunds", {
-                  name: disc.name,
-                  price: formatMoney(getDiscPrice(disc)),
-                }),
+          text: t("shop.noFunds", {
+            name: disc.name,
+            price: formatMoney(getDiscPrice(disc)),
+          }),
         });
         return;
       }
       setNotice({
         tone: "good",
-        text:
-          qty > 1
-            ? t("shop.boughtMultiple", { qty, name: disc.name })
-            : t("shop.bought", { name: disc.name }),
+        text: t("shop.bought", { name: disc.name }),
       });
     };
 
@@ -238,7 +219,6 @@ export default function GameFlow() {
         <ul className="loop-tournaments">
           {visibleDiscs.map((disc) => {
             const price = getDiscPrice(disc);
-            const qty = getQuantity(disc.id);
             return (
               <li key={disc.id} className="loop-tournament">
                 <div className="loop-tournament-info">
@@ -260,26 +240,12 @@ export default function GameFlow() {
                   </span>
                 </div>
                 <div className="loop-train-buttons">
-                  <label className="loop-field">
-                    <span>{t("shop.quantityLabel")}</span>
-                    <input
-                      className="loop-input"
-                      type="number"
-                      min={1}
-                      value={qty}
-                      onChange={(e) =>
-                        setQuantity(disc.id, Number(e.target.value))
-                      }
-                    />
-                  </label>
                   <button
                     className="btn"
-                    disabled={club.money < price * qty}
+                    disabled={club.money < price}
                     onClick={() => onBuy(disc)}
                   >
-                    {qty > 1
-                      ? t("shop.buyTotal", { total: formatMoney(price * qty) })
-                      : t("shop.buy")}
+                    {t("shop.buy")}
                   </button>
                 </div>
               </li>
