@@ -110,6 +110,20 @@ Stats (1–100):
 - Putter → Putting bonus
 - Rarity affects bonus strength: Common / Rare / Pro / Signature
 - Equip rule: 1 disc per type per player
+- Equipped discs apply through `effectivePlayerStats` inside the tournament
+  simulation itself (`simulateTournament` in `game/simulation.ts`), so buying
+  and equipping better discs measurably improves results, not just the shop UI.
+
+---
+
+## 🔋 Stamina & Fatigue
+- Each hole's performance is reduced by a fatigue penalty that grows with
+  hole index and shrinks with the player's Stamina stat — a player with 100
+  Stamina never loses anything to fatigue, a 0-Stamina player fades steadily
+  over the round.
+- Fatigue accumulates per hole played (not normalised to round length), so
+  18-hole tournaments punish low Stamina far more than 9-hole ones — making
+  "Fitness" training and round length a real tactical tradeoff.
 
 ---
 

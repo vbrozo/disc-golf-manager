@@ -5,6 +5,7 @@
 // tested in isolation and called from anywhere (store actions, UI, scripts).
 
 import type { Player, PlayerStats, Tournament } from "@/types";
+import { effectivePlayerStats } from "./discs";
 
 /** Per-hole outcome relative to par. */
 export type HoleOutcome = "eagle" | "birdie" | "par" | "bogey";
@@ -44,6 +45,12 @@ export interface SimulationOptions {
    * good outcomes rarer. Defaults to 1 (no penalty).
    */
   difficulty?: number;
+  /**
+   * Performance points to subtract for fatigue on this hole (0+). Used by
+   * `simulateRound` to model Stamina-driven decline over a round; not
+   * normally set directly.
+   */
+  fatiguePenalty?: number;
 }
 
 export interface HoleResult {
@@ -82,6 +89,12 @@ export interface TournamentSimulationResult {
 const RANDOM_SPREAD = 25;
 /** Performance points lost per difficulty level above 1. */
 const DIFFICULTY_PENALTY = 5;
+/**
+ * Largest possible fatigue penalty (performance points) at the very last
+ * hole for a player with 0 Stamina. A player with 100 Stamina never loses
+ * any performance to fatigue, regardless of round length.
+ */
+const MAX_FATIGUE_PENALTY = 14;
 
 /** Clamp a number to the inclusive [min, max] range. */
 function clamp(value: number, min: number, max: number): number {
@@ -123,8 +136,13 @@ export function simulateHole(
   // Random factor in the range [-RANDOM_SPREAD, +RANDOM_SPREAD].
   const randomFactor = (rng() * 2 - 1) * RANDOM_SPREAD;
   const difficultyPenalty = (difficulty - 1) * DIFFICULTY_PENALTY;
+  const fatiguePenalty = options.fatiguePenalty ?? 0;
 
-  const performance = clamp(skill + randomFactor - difficultyPenalty, 0, 100);
+  const performance = clamp(
+    skill + randomFactor - difficultyPenalty - fatiguePenalty,
+    0,
+    100
+  );
   const outcome = outcomeForPerformance(performance);
 
   return {
@@ -139,9 +157,25 @@ function emptyCounts(): Record<HoleOutcome, number> {
   return { eagle: 0, birdie: 0, par: 0, bogey: 0 };
 }
 
+/** Reference round length (holes) at which a 0-Stamina player hits `MAX_FATIGUE_PENALTY`. */
+const FATIGUE_REFERENCE_HOLES = 18;
+
+/**
+ * Fatigue penalty (performance points) for a given hole index in a round.
+ * Penalty accumulates per hole played (not normalised by round length), so
+ * an 18-hole round fatigues a low-Stamina player far more than a 9-hole
+ * round does. A player with 100 Stamina never loses anything to fatigue.
+ */
+function fatigueForHole(stats: PlayerStats, holeIndex: number): number {
+  const staminaDeficit = clamp(100 - stats.Stamina, 0, 100) / 100;
+  const perHole = MAX_FATIGUE_PENALTY / (FATIGUE_REFERENCE_HOLES - 1);
+  return holeIndex * perHole * staminaDeficit;
+}
+
 /**
  * Simulate a full round of `holes` holes for a player, aggregating the total
- * score relative to par and the count of each outcome.
+ * score relative to par and the count of each outcome. Performance fades
+ * across the round depending on the player's Stamina (see `fatigueForHole`).
  */
 export function simulateRound(
   playerStats: PlayerStats,
@@ -153,7 +187,8 @@ export function simulateRound(
   let totalScore = 0;
 
   for (let i = 0; i < holes; i++) {
-    const hole = simulateHole(playerStats, options);
+    const fatiguePenalty = fatigueForHole(playerStats, i);
+    const hole = simulateHole(playerStats, { ...options, fatiguePenalty });
     results.push(hole);
     counts[hole.outcome] += 1;
     totalScore += hole.scoreToPar;
@@ -203,7 +238,11 @@ export function simulateTournament(
 
   const rounds = players.map((player) => ({
     player,
-    round: simulateRound(player.stats, tournament.holes, roundOptions),
+    round: simulateRound(
+      effectivePlayerStats(player),
+      tournament.holes,
+      roundOptions
+    ),
   }));
 
   // Lowest total score wins; stable for ties.
