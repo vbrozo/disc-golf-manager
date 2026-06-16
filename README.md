@@ -140,6 +140,7 @@ Stats (1–100):
   - all stateful UI (`GameFlow.tsx`, `StartScreen.tsx`, `NewGameModal.tsx`, `StatusHeader.tsx`, `FlowStepper.tsx`, `LanguageSwitcher.tsx`) marked `"use client"`; game engine (`game/*`) and i18n dictionary (`i18n/*`) stay pure TS with no React/Zustand/window/localStorage access
   - localStorage persistence is SSR-safe: the Zustand `persist` store uses `createJSONStorage(() => localStorage)` (lazy, never touched on the server) + `skipHydration`, and `components/GameClient.tsx` rehydrates in a client-only `useEffect` so server and first client render match (no hydration mismatch)
 - Tests: `npm test` (Vitest) — pure-engine unit tests run headless, no browser/DOM needed
+- Mobile-optimised: `viewport` export in `app/layout.tsx` (device-width, theme colour) + responsive CSS in `app/globals.css` — ≥2.75rem tap targets, full-width buttons, stacked tournament/disc rows, 16px inputs (no iOS zoom), and a `@media (max-width: 640px)` layout
 
 ### Guided Game Flow
 - step-by-step onboarding + play loop: ✅ done
