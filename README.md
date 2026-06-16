@@ -175,8 +175,10 @@ Stats (1–100):
 ### Disc Shop UI
 - buy + equip discs: ✅ done
   - the shop step of `components/GameFlow.tsx`: buy from the 12-disc catalogue, equip/unequip per player
+  - **filter by type** dropdown (All / Driver / Midrange / Putter) narrows the catalogue list
+  - **bulk purchase**: a quantity input per disc row lets the player buy several copies in one purchase; the button shows the total price for qty > 1
   - engine helper `getDiscPrice(disc)` prices discs from their rarity bonus (`DISC_PRICE_PER_BONUS` 50 → Common 100 … Signature 450)
-  - store action `buyDisc(discId)` charges club money and adds a uniquely-id'd copy to inventory
+  - store action `buyDiscs(discId, quantity)` charges the total (price × quantity) and adds that many uniquely-id'd copies to inventory, all-or-nothing if unaffordable (`buyDisc(discId)` still exists for single purchases)
   - finally surfaces the existing disc engine in the UI (bonuses flow into `effectivePlayerStats`)
 
 ### Localization (i18n)
@@ -195,9 +197,9 @@ Stats (1–100):
   - after starting, the player enters the Guided Game Flow (see above)
 
 ### Tests
-- engine + i18n unit tests: ✅ done
+- engine + i18n + store unit tests: ✅ done
   - Vitest (`npm test`), config in `vitest.config.ts` with the `@/` alias
-  - 27 tests across `tests/economy|discs|season|training|i18n.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, deterministic training boosts, and translation lookup/interpolation
+  - 31 tests across `tests/economy|discs|season|training|i18n|store.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, deterministic training boosts, translation lookup/interpolation, and bulk disc purchases (`buyDiscs`)
 
 ## 📌 Next Task
 (not set yet)

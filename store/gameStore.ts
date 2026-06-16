@@ -126,6 +126,14 @@ export interface GameState {
    */
   buyDisc: (discId: string) => Disc | null;
   /**
+   * Buy several copies of the same catalogue disc in one purchase: charges the
+   * club the total price (disc price × quantity) and adds that many uniquely-id'd
+   * copies to the inventory. Returns the purchased {@link Disc} copies, or `null`
+   * if the disc id is unknown, the quantity is not a positive integer, or the
+   * club cannot afford the full purchase (in which case nothing changes).
+   */
+  buyDiscs: (discId: string, quantity: number) => Disc[] | null;
+  /**
    * Equip a disc the club owns onto a player. Equip rules allow one disc per
    * type, so it replaces whatever the player has in that type's slot. Returns
    * the player's new {@link DiscLoadout}, or `null` if the player or disc is
@@ -274,6 +282,36 @@ export const useGameStore = create<GameState>()(
     set((s) => ({
       club: { ...s.club, money: s.club.money - getDiscPrice(catalogueDisc) },
       inventory: [...s.inventory, owned],
+    }));
+
+    return owned;
+  },
+
+  buyDiscs: (discId, quantity) => {
+    const state = get();
+    const catalogueDisc = getDiscById(discId);
+    const qty = Math.floor(quantity);
+
+    // Reject an unknown disc, a non-positive quantity, or a purchase the club
+    // cannot fully afford — no changes.
+    if (!catalogueDisc || qty < 1) {
+      return null;
+    }
+    const totalPrice = getDiscPrice(catalogueDisc) * qty;
+    if (state.club.money < totalPrice) {
+      return null;
+    }
+
+    // Give each purchased disc a unique inventory id so a club can own several
+    // copies of the same catalogue disc without key collisions.
+    const owned: Disc[] = Array.from({ length: qty }, (_, i) => ({
+      ...catalogueDisc,
+      id: `${catalogueDisc.id}-${Date.now()}-${i}`,
+    }));
+
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - totalPrice },
+      inventory: [...s.inventory, ...owned],
     }));
 
     return owned;

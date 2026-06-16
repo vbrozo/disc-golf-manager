@@ -53,11 +53,13 @@ export default function GameFlow() {
   const playTournamentRound = useGameStore((s) => s.playTournamentRound);
   const advanceSeason = useGameStore((s) => s.advanceSeason);
   const trainPlayer = useGameStore((s) => s.trainPlayer);
-  const buyDisc = useGameStore((s) => s.buyDisc);
+  const buyDiscs = useGameStore((s) => s.buyDiscs);
   const equipDisc = useGameStore((s) => s.equipDisc);
   const unequipDisc = useGameStore((s) => s.unequipDisc);
 
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   // No game in progress — show the start screen.
   if (season.phase === "preseason") {
@@ -110,20 +112,44 @@ export default function GameFlow() {
     const totalNeeded = players.length * DISC_TYPES.length;
     const allEquipped = players.every(isFullyEquipped);
 
+    const getQuantity = (discId: string) => quantities[discId] ?? 1;
+    const setQuantity = (discId: string, qty: number) =>
+      setQuantities((prev) => ({
+        ...prev,
+        [discId]: Math.max(1, Math.floor(qty) || 1),
+      }));
+
     const onBuy = (disc: Disc) => {
-      const bought = buyDisc(disc.id);
-      setNotice(
-        bought
-          ? { tone: "good", text: t("shop.bought", { name: bought.name }) }
-          : {
-              tone: "bad",
-              text: t("shop.noFunds", {
-                name: disc.name,
-                price: formatMoney(getDiscPrice(disc)),
-              }),
-            }
-      );
+      const qty = getQuantity(disc.id);
+      const bought = buyDiscs(disc.id, qty);
+      if (!bought) {
+        setNotice({
+          tone: "bad",
+          text:
+            qty > 1
+              ? t("shop.noFundsMultiple", {
+                  qty,
+                  name: disc.name,
+                  price: formatMoney(getDiscPrice(disc) * qty),
+                })
+              : t("shop.noFunds", {
+                  name: disc.name,
+                  price: formatMoney(getDiscPrice(disc)),
+                }),
+        });
+        return;
+      }
+      setNotice({
+        tone: "good",
+        text:
+          qty > 1
+            ? t("shop.boughtMultiple", { qty, name: disc.name })
+            : t("shop.bought", { name: disc.name }),
+      });
     };
+
+    const visibleDiscs =
+      typeFilter === "All" ? DISCS : DISCS.filter((d) => d.type === typeFilter);
 
     const onEquip = (player: Player, discId: string) => {
       if (!discId) return;
@@ -164,9 +190,27 @@ export default function GameFlow() {
         {noticeBar}
 
         <h3>{t("shop.catalogue")}</h3>
+        <label className="loop-field">
+          <span>{t("shop.filterLabel")}</span>
+          <select
+            className="btn btn-small"
+            value={typeFilter}
+            onChange={(e) =>
+              setTypeFilter(e.target.value as DiscType | "All")
+            }
+          >
+            <option value="All">{t("shop.filterAll")}</option>
+            {DISC_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {t(`discType.${type}`)}
+              </option>
+            ))}
+          </select>
+        </label>
         <ul className="loop-tournaments">
-          {DISCS.map((disc) => {
+          {visibleDiscs.map((disc) => {
             const price = getDiscPrice(disc);
+            const qty = getQuantity(disc.id);
             return (
               <li key={disc.id} className="loop-tournament">
                 <div className="loop-tournament-info">
@@ -180,13 +224,29 @@ export default function GameFlow() {
                     })}
                   </span>
                 </div>
-                <button
-                  className="btn"
-                  disabled={club.money < price}
-                  onClick={() => onBuy(disc)}
-                >
-                  {t("shop.buy")}
-                </button>
+                <div className="loop-train-buttons">
+                  <label className="loop-field">
+                    <span>{t("shop.quantityLabel")}</span>
+                    <input
+                      className="loop-input"
+                      type="number"
+                      min={1}
+                      value={qty}
+                      onChange={(e) =>
+                        setQuantity(disc.id, Number(e.target.value))
+                      }
+                    />
+                  </label>
+                  <button
+                    className="btn"
+                    disabled={club.money < price * qty}
+                    onClick={() => onBuy(disc)}
+                  >
+                    {qty > 1
+                      ? t("shop.buyTotal", { total: formatMoney(price * qty) })
+                      : t("shop.buy")}
+                  </button>
+                </div>
               </li>
             );
           })}
