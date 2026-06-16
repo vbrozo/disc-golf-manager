@@ -163,8 +163,14 @@ Stats (1–100):
 - AI opponents + leaderboard: ✅ done
   - `game/opponents.ts` generates AI players with random Croatian names and stats (`generateOpponents`, `DEFAULT_FIELD_SIZE` 8) to fill out the field, so the club's players actually compete instead of always sweeping
   - `enterTournament` (store) builds the field (club players + opponents), ranks the whole field, banks the **sum** of the club players' prize money (net of entry fee) and the best finisher's reputation
-  - a new `results` flow step shows the full leaderboard — every player's placement and earnings, with the club's own players highlighted — before continuing to the next training round
+  - a new `results` flow step shows the full leaderboard — every player's placement, **rating** and earnings, with the club's own players highlighted — before continuing to the next training round
   - the leaderboard is stored as `lastTournament` (persisted) so a refresh on the results screen keeps it
+
+### Player Ratings
+- PDGA-style ratings: ✅ done
+  - `game/rating.ts` rates each round from its score relative to par (`calculateRoundRating`, par = `BASE_RATING` 950, ±`RATING_PER_STROKE` 10/stroke on an 18-hole basis, clamped 600–1100); 9-hole rounds are normalised to 18
+  - every tournament round gives each player a round rating; a player's overall `rating` is the average of their last `RATING_ROUNDS_WINDOW` (8) rounds (`appendRoundRating` / `averageRating`)
+  - `enterTournament` updates each club player's `ratingHistory` + `rating`; the value shows on the player's card (training + shop loadout) and per-round in the results leaderboard
 
 ### Persistence
 - localStorage save/load: ✅ done
@@ -207,7 +213,7 @@ Stats (1–100):
 ### Tests
 - engine + i18n + store unit tests: ✅ done
   - Vitest (`npm test`), config in `vitest.config.ts` with the `@/` alias
-  - 36 tests across `tests/economy|discs|season|training|i18n|store|opponents.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, deterministic training boosts, translation lookup/interpolation, bulk disc purchases (`buyDiscs`), opponent generation, and the tournament field + earnings split (`enterTournament`)
+  - 43 tests across `tests/economy|discs|season|training|i18n|store|opponents|rating.test.ts` covering fees, gating, settlement, equip rules + bonus caps, the season state machine, deterministic training boosts, translation lookup/interpolation, bulk disc purchases (`buyDiscs`), opponent generation, the tournament field + earnings split (`enterTournament`), and PDGA-style round ratings
 
 ## 📌 Next Task
 (not set yet)

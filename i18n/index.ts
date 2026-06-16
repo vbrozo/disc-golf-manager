@@ -71,6 +71,7 @@ const en: Dict = {
   "results.colPos": "#",
   "results.colPlayer": "Player",
   "results.colEarnings": "Earnings",
+  "results.colRating": "Rating",
   "results.you": "You",
   "results.clubTotal": "Your club earned {earnings} and +{rep} reputation.",
   "results.continue": "Continue",
@@ -148,6 +149,8 @@ const en: Dict = {
   "dash.playerStats":
     "DRV {drv} · ACC {acc} · PUT {put} · MEN {men} · STA {sta}",
   "dash.tournamentResult": "#{placement} · {earnings} · +{rep} rep",
+  "player.rating": "Rating",
+  "player.unrated": "Unrated",
   "dash.trainingItem": "trains {stat} · {cost}",
   "dash.inventoryItem": "{type} · {rarity} · +{bonus}",
 
@@ -231,6 +234,7 @@ const hr: Dict = {
   "results.colPos": "#",
   "results.colPlayer": "Igrač",
   "results.colEarnings": "Zarada",
+  "results.colRating": "Rating",
   "results.you": "Vi",
   "results.clubTotal": "Tvoj klub zaradio je {earnings} i +{rep} ugleda.",
   "results.continue": "Nastavi",
@@ -308,6 +312,8 @@ const hr: Dict = {
   "dash.playerStats":
     "DRV {drv} · ACC {acc} · PUT {put} · MEN {men} · STA {sta}",
   "dash.tournamentResult": "#{placement} · {earnings} · +{rep} ugleda",
+  "player.rating": "Rating",
+  "player.unrated": "Bez ratinga",
   "dash.trainingItem": "trenira {stat} · {cost}",
   "dash.inventoryItem": "{type} · {rarity} · +{bonus}",
 

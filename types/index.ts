@@ -22,6 +22,10 @@ export interface Player {
    * computer's in the standings.
    */
   isOpponent?: boolean;
+  /** PDGA-style ratings from the player's most recent rated rounds. */
+  ratingHistory?: number[];
+  /** Current overall rating: the average of {@link ratingHistory}. */
+  rating?: number;
 }
 
 /**

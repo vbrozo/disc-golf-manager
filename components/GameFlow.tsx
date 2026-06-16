@@ -261,7 +261,12 @@ export default function GameFlow() {
             const equipped = player.equipped ?? {};
             return (
               <div key={player.id} className="loop-player">
-                <strong>{player.name}</strong>
+                <div className="loop-player-head">
+                  <strong>{player.name}</strong>
+                  <span className="player-rating" title={t("player.rating")}>
+                    {player.rating ?? t("player.unrated")}
+                  </span>
+                </div>
                 {DISC_TYPES.map((type) => {
                   const current = equipped[type];
                   const options = inventory.filter((d) => d.type === type);
@@ -352,7 +357,15 @@ export default function GameFlow() {
             const effective = effectivePlayerStats(player);
             return (
               <div key={player.id} className="loop-player">
-                <strong>{player.name}</strong>
+                <div className="loop-player-head">
+                  <strong>{player.name}</strong>
+                  <span
+                    className="player-rating"
+                    title={t("player.rating")}
+                  >
+                    {player.rating ?? t("player.unrated")}
+                  </span>
+                </div>
                 <span className="loop-meta">
                   {t("dash.playerStats", {
                     drv: effective.Driving,
@@ -497,6 +510,9 @@ export default function GameFlow() {
                 <span className="leaderboard-name">
                   {t("results.colPlayer")}
                 </span>
+                <span className="leaderboard-rating">
+                  {t("results.colRating")}
+                </span>
                 <span className="leaderboard-earn">
                   {t("results.colEarnings")}
                 </span>
@@ -517,6 +533,7 @@ export default function GameFlow() {
                       </span>
                     ) : null}
                   </span>
+                  <span className="leaderboard-rating">{row.rating}</span>
                   <span className="leaderboard-earn">
                     {formatMoney(row.earnings)}
                   </span>

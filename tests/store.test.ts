@@ -91,4 +91,16 @@ describe("enterTournament", () => {
       .reduce((sum, r) => sum + r.earnings, 0);
     expect(outcome.settlement.earnings).toBe(clubEarnings);
   });
+
+  it("gives each club player a rating after the round", () => {
+    useGameStore.getState().enterTournament("local-open");
+    const players = useGameStore.getState().players;
+    players.forEach((p) => {
+      expect(p.ratingHistory).toHaveLength(1);
+      expect(typeof p.rating).toBe("number");
+    });
+    // A second tournament adds another rated round to the history.
+    useGameStore.getState().enterTournament("local-open");
+    expect(useGameStore.getState().players[0].ratingHistory).toHaveLength(2);
+  });
 });

@@ -17,6 +17,9 @@ import {
   applyTraining,
   buildSettlement,
   checkEntryEligibility,
+  appendRoundRating,
+  averageRating,
+  calculateRoundRating,
   createStarterRoster,
   DEFAULT_FIELD_SIZE,
   equipDisc as equipDiscOnLoadout,
@@ -57,6 +60,8 @@ export interface LeaderboardRow {
   placement: number;
   earnings: number;
   reputationGained: number;
+  /** PDGA-style rating earned for this round. */
+  rating: number;
   /** True for one of the club's own players, false for an AI opponent. */
   isClubPlayer: boolean;
 }
@@ -433,6 +438,10 @@ export const useGameStore = create<GameState>()(
       reputationGained: settlement.reputationGained,
     };
 
+    // Every player earns a PDGA-style rating for this round, from their score.
+    const roundRatingFor = (totalScore: number) =>
+      calculateRoundRating(totalScore, tournament.holes);
+
     // Trim the standings into a serialisable leaderboard for the results screen.
     const summary: TournamentSummary = {
       tournamentName: tournament.name,
@@ -441,16 +450,33 @@ export const useGameStore = create<GameState>()(
         placement: s.placement,
         earnings: s.earnings,
         reputationGained: s.reputationGained,
+        rating: roundRatingFor(s.round.totalScore),
         isClubPlayer: !s.player.isOpponent,
       })),
       clubEarnings: settlement.earnings,
       clubReputation: settlement.reputationGained,
     };
 
+    // Map each club player's round rating by id so we can update their history.
+    const roundRatingById = new Map(
+      clubStandings.map((s) => [
+        s.player.id,
+        roundRatingFor(s.round.totalScore),
+      ])
+    );
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
+      players: s.players.map((p) => {
+        const roundRating = roundRatingById.get(p.id);
+        if (roundRating === undefined) {
+          return p;
+        }
+        const ratingHistory = appendRoundRating(p.ratingHistory, roundRating);
+        return { ...p, ratingHistory, rating: averageRating(ratingHistory) };
+      }),
     }));
 
     return { settlement, result, standings: simulation.standings };
