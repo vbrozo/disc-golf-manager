@@ -57,7 +57,14 @@ Build a browser-based Disc Golf management simulator where the player:
   - store action: trainPlayer(id, type, options?) — charges club money, applies boost, returns TrainingResult (or null if unaffordable)
 
 ### Disc System
-- equipment + bonuses: ❌ not started
+- equipment + bonuses: ✅ done
+  - pure TypeScript engine in `game/discs.ts` (no React, no Zustand)
+  - 3 disc types → stats: Driver → Driving, Midrange → Accuracy, Putter → Putting
+  - 4 rarity tiers with scaling bonus: Common +2 / Rare +4 / Pro +6 / Signature +9
+  - static `DISCS` catalogue: one disc per type per rarity (12 total)
+  - equip rule enforced: max 1 disc per type (equipping replaces that type's slot)
+  - functions: getDiscById(id), bonusForRarity(rarity), createDisc(...), equipDisc(loadout, disc), unequipDisc(loadout, type), getLoadoutBonuses(loadout), applyDiscBonuses(stats, loadout), effectivePlayerStats(player)
+  - store actions: addDisc(disc), equipDisc(playerId, discId), unequipDisc(playerId, type) — player loadout stored on `Player.equipped`
 
 ### Economy System
 - money + rewards: ❌ not started
@@ -77,11 +84,12 @@ Stats (1–100):
 
 ---
 
-## 🥏 Disc System (planned)
+## 🥏 Disc System
 - Driver → Driving bonus
 - Midrange → Accuracy bonus
 - Putter → Putting bonus
-- Rarity affects bonus strength
+- Rarity affects bonus strength: Common / Rare / Pro / Signature
+- Equip rule: 1 disc per type per player
 
 ---
 

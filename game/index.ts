@@ -2,3 +2,4 @@
 export * from "./simulation";
 export * from "./tournaments";
 export * from "./training";
+export * from "./discs";

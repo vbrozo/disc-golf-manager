@@ -14,11 +14,18 @@ export interface Player {
   id: string;
   name: string;
   stats: PlayerStats;
+  /** Discs the player has equipped (max one per type). */
+  equipped?: DiscLoadout;
 }
 
+/**
+ * The three disc categories. Each type improves a single {@link PlayerStats}
+ * value: Driver → Driving, Midrange → Accuracy, Putter → Putting.
+ */
 export type DiscType = "Driver" | "Midrange" | "Putter";
 
-export type DiscRarity = "Common" | "Rare" | "Epic" | "Legendary";
+/** Disc rarity tiers, from weakest to strongest stat bonus. */
+export type DiscRarity = "Common" | "Rare" | "Pro" | "Signature";
 
 export interface Disc {
   id: string;
@@ -27,6 +34,16 @@ export interface Disc {
   rarity: DiscRarity;
   /** Stat bonus granted by the disc (strength scales with rarity). */
   bonus: number;
+}
+
+/**
+ * A player's equipped discs. Equip rules allow at most one disc per type, so
+ * each slot is optional and holds a single {@link Disc}.
+ */
+export interface DiscLoadout {
+  Driver?: Disc;
+  Midrange?: Disc;
+  Putter?: Disc;
 }
 
 export interface Tournament {

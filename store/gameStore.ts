@@ -2,13 +2,21 @@ import { create } from "zustand";
 import type {
   Club,
   Disc,
+  DiscLoadout,
+  DiscType,
   Player,
   PlayerStats,
   TournamentResult,
   TrainingResult,
   TrainingType,
 } from "@/types";
-import { applyTraining, getTrainingProgram, type TrainingOptions } from "@/game";
+import {
+  applyTraining,
+  equipDisc as equipDiscOnLoadout,
+  getTrainingProgram,
+  unequipDisc as unequipDiscFromLoadout,
+  type TrainingOptions,
+} from "@/game";
 
 /** Shape of the persisted-in-memory game state. */
 export interface GameState {
@@ -44,6 +52,20 @@ export interface GameState {
     type: TrainingType,
     options?: TrainingOptions
   ) => TrainingResult | null;
+  /** Add a disc to the club's inventory. */
+  addDisc: (disc: Disc) => void;
+  /**
+   * Equip a disc the club owns onto a player. Equip rules allow one disc per
+   * type, so it replaces whatever the player has in that type's slot. Returns
+   * the player's new {@link DiscLoadout}, or `null` if the player or disc is
+   * unknown (in which case nothing changes).
+   */
+  equipDisc: (playerId: string, discId: string) => DiscLoadout | null;
+  /**
+   * Unequip the disc in a player's given type slot. Returns the player's new
+   * {@link DiscLoadout}, or `null` if the player is unknown.
+   */
+  unequipDisc: (playerId: string, type: DiscType) => DiscLoadout | null;
 }
 
 const initialClub: Club = {
@@ -104,5 +126,48 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
 
     return outcome.result;
+  },
+
+  addDisc: (disc) =>
+    set((state) => ({ inventory: [...state.inventory, disc] })),
+
+  equipDisc: (playerId, discId) => {
+    const state = get();
+    const player = state.players.find((p) => p.id === playerId);
+    const disc = state.inventory.find((d) => d.id === discId);
+
+    // Reject unknown player or a disc the club does not own — no changes.
+    if (!player || !disc) {
+      return null;
+    }
+
+    const loadout = equipDiscOnLoadout(player.equipped ?? {}, disc);
+
+    set((s) => ({
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, equipped: loadout } : p
+      ),
+    }));
+
+    return loadout;
+  },
+
+  unequipDisc: (playerId, type) => {
+    const state = get();
+    const player = state.players.find((p) => p.id === playerId);
+
+    if (!player) {
+      return null;
+    }
+
+    const loadout = unequipDiscFromLoadout(player.equipped ?? {}, type);
+
+    set((s) => ({
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, equipped: loadout } : p
+      ),
+    }));
+
+    return loadout;
   },
 }));
