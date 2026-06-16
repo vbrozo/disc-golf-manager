@@ -20,8 +20,16 @@ import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
 import StatBar from "@/components/StatBar";
 import FloatingNumbers from "@/components/FloatingNumbers";
+import Avatar from "@/components/Avatar";
+import Confetti from "@/components/Confetti";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney } from "@/utils/format";
+import {
+  getDiscAvatar,
+  getNameAvatar,
+  getPlacementMedal,
+  getPlayerAvatar,
+} from "@/utils/avatar";
 
 const STAT_KEYS: (keyof Player["stats"])[] = [
   "Driving",
@@ -229,7 +237,7 @@ export default function GameFlow() {
               <li key={disc.id} className="loop-tournament">
                 <div className="loop-tournament-info">
                   <strong>
-                    {disc.name}{" "}
+                    <Avatar {...getDiscAvatar(disc)} size="sm" /> {disc.name}{" "}
                     <span
                       className={`rarity-badge rarity-${disc.rarity.toLowerCase()}`}
                     >
@@ -280,6 +288,7 @@ export default function GameFlow() {
             return (
               <div key={player.id} className="loop-player">
                 <div className="loop-player-head">
+                  <Avatar {...getPlayerAvatar(player)} />
                   <strong>{player.name}</strong>
                   <span className="player-rating" title={t("player.rating")}>
                     {player.rating ?? t("player.unrated")}
@@ -312,11 +321,14 @@ export default function GameFlow() {
                         })}
                       </span>
                       {current ? (
-                        <span
-                          className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
-                        >
-                          {t(`rarity.${current.rarity}`)}
-                        </span>
+                        <>
+                          <Avatar {...getDiscAvatar(current)} size="sm" />
+                          <span
+                            className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
+                          >
+                            {t(`rarity.${current.rarity}`)}
+                          </span>
+                        </>
                       ) : null}
                       <select
                         className="btn btn-small"
@@ -467,8 +479,15 @@ export default function GameFlow() {
       setFlowStage(isSeasonComplete(next) ? "complete" : "training");
     };
 
+    const clubWon =
+      lastTournament?.rows.some(
+        (row) => row.isClubPlayer && row.placement === 1
+      ) ?? false;
+    const playersByName = new Map(players.map((p) => [p.name, p]));
+
     return (
       <section className="loop" key={flowStage}>
+        {clubWon ? <Confetti /> : null}
         <StatusHeader />
         <h2>{t("results.title")}</h2>
         {lastTournament ? (
@@ -503,13 +522,21 @@ export default function GameFlow() {
                   : row.earnings > 0
                   ? " leaderboard-good"
                   : " leaderboard-bad";
+                const clubPlayer = playersByName.get(row.playerName);
+                const avatar = clubPlayer
+                  ? getPlayerAvatar(clubPlayer)
+                  : getNameAvatar(row.playerName);
+                const medal = getPlacementMedal(row.placement);
                 return (
                 <li
                   key={`${row.placement}-${row.playerName}`}
                   className={`leaderboard-row${resultClass}`}
                 >
-                  <span className="leaderboard-pos">{row.placement}</span>
+                  <span className="leaderboard-pos">
+                    {medal ?? row.placement}
+                  </span>
                   <span className="leaderboard-name">
+                    <Avatar {...avatar} size="sm" />
                     {row.playerName}
                     {row.isClubPlayer ? (
                       <span className="leaderboard-badge">
@@ -627,6 +654,7 @@ function TrainingStage({
               className="loop-player floating-number-host"
             >
               <div className="loop-player-head">
+                <Avatar {...getPlayerAvatar(player)} />
                 <strong>{player.name}</strong>
                 <span className="player-rating" title={t("player.rating")}>
                   {player.rating ?? t("player.unrated")}
