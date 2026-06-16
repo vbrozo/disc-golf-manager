@@ -495,12 +495,18 @@ export default function GameFlow() {
                   {t("results.colEarnings")}
                 </span>
               </li>
-              {lastTournament.rows.map((row) => (
+              {lastTournament.rows.map((row) => {
+                const resultClass = !row.isClubPlayer
+                  ? ""
+                  : row.placement === 1
+                  ? " leaderboard-win"
+                  : row.earnings > 0
+                  ? " leaderboard-good"
+                  : " leaderboard-bad";
+                return (
                 <li
                   key={`${row.placement}-${row.playerName}`}
-                  className={`leaderboard-row${
-                    row.isClubPlayer ? " leaderboard-you" : ""
-                  }`}
+                  className={`leaderboard-row${resultClass}`}
                 >
                   <span className="leaderboard-pos">{row.placement}</span>
                   <span className="leaderboard-name">
@@ -516,7 +522,8 @@ export default function GameFlow() {
                     {formatMoney(row.earnings)}
                   </span>
                 </li>
-              ))}
+                );
+              })}
             </ol>
           </>
         ) : null}

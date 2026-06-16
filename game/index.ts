@@ -7,3 +7,4 @@ export * from "./economy";
 export * from "./season";
 export * from "./opponents";
 export * from "./rating";
+export * from "./achievements";

@@ -65,6 +65,11 @@ const en: Dict = {
   // Flow — tournament step extras
   "tournament.intro": "Pick a tournament to enter this round.",
   "tournament.unlocked": "Unlocked!",
+  "achievement.firstWin": "First Win",
+  "achievement.threeTournaments": "3 Tournaments Played",
+  "achievement.reputation100": "100 Reputation",
+  "achievement.locked": "Locked",
+  "loop.streak": "Streak",
 
   // Flow — results step
   "results.title": "Tournament Results",
@@ -231,6 +236,11 @@ const hr: Dict = {
   // Flow — tournament step extras
   "tournament.intro": "Odaberi turnir za ovo kolo.",
   "tournament.unlocked": "Otključano!",
+  "achievement.firstWin": "Prva pobjeda",
+  "achievement.threeTournaments": "3 odigrana turnira",
+  "achievement.reputation100": "100 reputacije",
+  "achievement.locked": "Zaključano",
+  "loop.streak": "Niz",
 
   // Flow — results step
   "results.title": "Rezultati turnira",
