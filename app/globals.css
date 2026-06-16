@@ -424,7 +424,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem 1fr 3rem auto;
+  grid-template-columns: 2rem 1fr 4rem 4.5rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
