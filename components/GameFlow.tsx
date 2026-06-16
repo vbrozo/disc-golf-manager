@@ -671,7 +671,7 @@ function ResultsStage({
 }) {
   const { t } = useTranslation();
   const [showLeaderboard, setShowLeaderboard] = useState(
-    !lastTournament || lastTournament.holeByHole.length === 0
+    !lastTournament || lastTournament.playerTracks.length === 0
   );
 
   const clubWon =
@@ -688,8 +688,7 @@ function ResultsStage({
       {lastTournament ? (
         !showLeaderboard ? (
           <HolePlayback
-            playerName={lastTournament.bestPlayerName}
-            holes={lastTournament.holeByHole}
+            tracks={lastTournament.playerTracks}
             onDone={() => setShowLeaderboard(true)}
           />
         ) : (
