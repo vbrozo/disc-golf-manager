@@ -19,6 +19,7 @@ import {
   checkEntryEligibility,
   appendRoundRating,
   averageRating,
+  calculateConsistency,
   calculateRoundRating,
   createStarterRoster,
   DEFAULT_FIELD_SIZE,
@@ -475,7 +476,12 @@ export const useGameStore = create<GameState>()(
           return p;
         }
         const ratingHistory = appendRoundRating(p.ratingHistory, roundRating);
-        return { ...p, ratingHistory, rating: averageRating(ratingHistory) };
+        return {
+          ...p,
+          ratingHistory,
+          rating: averageRating(ratingHistory),
+          consistency: calculateConsistency(ratingHistory),
+        };
       }),
     }));
 

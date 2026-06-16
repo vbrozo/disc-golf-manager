@@ -26,6 +26,13 @@ export interface Player {
   ratingHistory?: number[];
   /** Current overall rating: the average of {@link ratingHistory}. */
   rating?: number;
+  /**
+   * 0–100 measure of how close to their {@link rating} the player tends to
+   * perform: the tighter their recent round ratings cluster, the higher this
+   * value. Derived from {@link ratingHistory}; unset until at least two rated
+   * rounds have been played.
+   */
+  consistency?: number;
 }
 
 /**

@@ -151,6 +151,8 @@ const en: Dict = {
   "dash.tournamentResult": "#{placement} · {earnings} · +{rep} rep",
   "player.rating": "Rating",
   "player.unrated": "Unrated",
+  "player.consistency": "Consistency: how close to their rating the player performs",
+  "player.consistencyValue": "CON {value}",
   "dash.trainingItem": "trains {stat} · {cost}",
   "dash.inventoryItem": "{type} · {rarity} · +{bonus}",
 
@@ -314,6 +316,8 @@ const hr: Dict = {
   "dash.tournamentResult": "#{placement} · {earnings} · +{rep} ugleda",
   "player.rating": "Rating",
   "player.unrated": "Bez ratinga",
+  "player.consistency": "Konzistentnost: koliko blizu svog ratinga igrač igra",
+  "player.consistencyValue": "KON {value}",
   "dash.trainingItem": "trenira {stat} · {cost}",
   "dash.inventoryItem": "{type} · {rarity} · +{bonus}",
 
