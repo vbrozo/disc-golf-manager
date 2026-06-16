@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { useGameStore } from "@/store/gameStore";
 import { DISCS, getDiscPrice } from "@/game";
+import { makePlayer } from "./helpers";
 
 const driver = DISCS.find((d) => d.type === "Driver" && d.rarity === "Common")!;
 
@@ -8,7 +9,7 @@ describe("buyDiscs", () => {
   beforeEach(() => {
     // Reset to a known club balance before each test.
     useGameStore.setState({
-      club: { name: "Test Club", money: 1000, reputation: 0 },
+      club: { id: "c1", name: "Test Club", money: 1000, reputation: 0 },
       inventory: [],
     });
   });
@@ -30,7 +31,7 @@ describe("buyDiscs", () => {
 
   it("rejects the whole purchase if the club can't afford it all", () => {
     useGameStore.setState({
-      club: { name: "Test Club", money: getDiscPrice(driver), reputation: 0 },
+      club: { id: "c1", name: "Test Club", money: getDiscPrice(driver), reputation: 0 },
       inventory: [],
     });
     const bought = useGameStore.getState().buyDiscs(driver.id, 2);
@@ -49,18 +50,32 @@ describe("buyDiscs", () => {
 describe("enterTournament", () => {
   beforeEach(() => {
     useGameStore.setState({
-      club: { name: "Test Club", money: 100000, reputation: 1000 },
+      club: { id: "c1", name: "Test Club", money: 100000, reputation: 1000 },
       players: [
-        {
+        makePlayer({
           id: "p1",
-          name: "Ivan",
-          stats: { Driving: 60, Accuracy: 60, Putting: 60, Mental: 60, Stamina: 60 },
-        },
-        {
+          firstName: "Ivan",
+          lastName: "Horvat",
+          power: 60,
+          accuracy: 60,
+          putting: 60,
+          scramble: 60,
+          consistency: 60,
+          mental: 60,
+          fitness: 60,
+        }),
+        makePlayer({
           id: "p2",
-          name: "Marko",
-          stats: { Driving: 55, Accuracy: 55, Putting: 55, Mental: 55, Stamina: 55 },
-        },
+          firstName: "Marko",
+          lastName: "Kovačević",
+          power: 55,
+          accuracy: 55,
+          putting: 55,
+          scramble: 55,
+          consistency: 55,
+          mental: 55,
+          fitness: 55,
+        }),
       ],
       tournaments: [],
       lastTournament: null,
@@ -92,14 +107,14 @@ describe("enterTournament", () => {
     expect(outcome.settlement.earnings).toBe(clubEarnings);
   });
 
-  it("gives each club player a rating after the round", () => {
+  it("gives each club player a rating after the tournament", () => {
     useGameStore.getState().enterTournament("local-open");
     const players = useGameStore.getState().players;
     players.forEach((p) => {
       expect(p.ratingHistory).toHaveLength(1);
       expect(typeof p.rating).toBe("number");
     });
-    // A second tournament adds another rated round to the history.
+    // A second tournament adds another rated entry to the history.
     useGameStore.getState().enterTournament("local-open");
     expect(useGameStore.getState().players[0].ratingHistory).toHaveLength(2);
   });

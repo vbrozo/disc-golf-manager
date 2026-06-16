@@ -1,6 +1,9 @@
 // Barrel exports for the game engine.
-export * from "./simulation";
+export * from "./simulation/holeSimulator";
+export * from "./simulation/roundSimulator";
+export * from "./simulation/tournamentSimulator";
 export * from "./tournaments";
+export * from "./courses";
 export * from "./training";
 export * from "./discs";
 export * from "./economy";

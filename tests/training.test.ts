@@ -1,16 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { applyTraining, getTrainingProgram, rollTrainingBoost } from "@/game";
-import type { Player } from "@/types";
+import { makePlayer } from "./helpers";
 
-const player: Player = {
-  id: "p1",
-  name: "P",
-  stats: { Driving: 50, Accuracy: 50, Putting: 50, Mental: 50, Stamina: 99 },
-};
+const player = makePlayer({ fitness: 99 });
 
 describe("training", () => {
-  it("maps Fitness to the Stamina stat", () => {
-    expect(getTrainingProgram("Fitness")?.stat).toBe("Stamina");
+  it("maps Fitness to the fitness attribute", () => {
+    expect(getTrainingProgram("Fitness")?.stat).toBe("fitness");
   });
 
   it("rolls a boost in the +1..+5 range", () => {
@@ -19,13 +15,13 @@ describe("training", () => {
   });
 
   it("applies a deterministic boost without mutating the input", () => {
-    const out = applyTraining(player, "Driving", { rng: () => 0.99 });
+    const out = applyTraining(player, "Power", { rng: () => 0.99 });
     expect(out?.result.boost).toBe(5);
-    expect(out?.player.stats.Driving).toBe(55);
-    expect(player.stats.Driving).toBe(50); // original untouched
+    expect(out?.player.power).toBe(55);
+    expect(player.power).toBe(50); // original untouched
   });
 
-  it("caps the trained stat at 100", () => {
+  it("caps the trained attribute at 100", () => {
     const out = applyTraining(player, "Fitness", { rng: () => 0.99 });
     expect(out?.result.newValue).toBe(100); // 99 + 5 capped
     expect(out?.result.boost).toBe(1);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getAchievements, getCurrentStreak } from "@/game/achievements";
 import type { Club, TournamentResult } from "@/types";
 
-const club: Club = { name: "Test Club", money: 0, reputation: 0 };
+const club: Club = { id: "c1", name: "Test Club", money: 0, reputation: 0 };
 
 function result(placement: number): TournamentResult {
   return {

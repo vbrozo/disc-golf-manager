@@ -1,23 +1,37 @@
-import type { Disc, DiscRarity, Player } from "@/types";
+import type { Disc, DiscRarity } from "@/models/Disc";
+import type { Player } from "@/models/Player";
 
 export interface AvatarStyle {
   emoji: string;
   color: string;
 }
 
-const STAT_AVATARS: Record<keyof Player["stats"], AvatarStyle> = {
-  Driving: { emoji: "🚀", color: "#38bdf8" },
-  Accuracy: { emoji: "🎯", color: "#4ade80" },
-  Putting: { emoji: "🥏", color: "#a78bfa" },
-  Mental: { emoji: "🧠", color: "#f472b6" },
-  Stamina: { emoji: "💪", color: "#fb923c" },
+type TrainableStat = "power" | "accuracy" | "putting" | "scramble" | "consistency" | "mental" | "fitness";
+
+const STAT_AVATARS: Record<TrainableStat, AvatarStyle> = {
+  power: { emoji: "🚀", color: "#38bdf8" },
+  accuracy: { emoji: "🎯", color: "#4ade80" },
+  putting: { emoji: "🥏", color: "#a78bfa" },
+  scramble: { emoji: "🌀", color: "#22d3ee" },
+  consistency: { emoji: "🧭", color: "#34d399" },
+  mental: { emoji: "🧠", color: "#f472b6" },
+  fitness: { emoji: "💪", color: "#fb923c" },
 };
 
-/** Avatar keyed off a player's strongest stat, so it reflects their playstyle. */
+const STAT_KEYS: TrainableStat[] = [
+  "power",
+  "accuracy",
+  "putting",
+  "scramble",
+  "consistency",
+  "mental",
+  "fitness",
+];
+
+/** Avatar keyed off a player's strongest attribute, so it reflects their playstyle. */
 export function getPlayerAvatar(player: Player): AvatarStyle {
-  const statKeys = Object.keys(player.stats) as (keyof Player["stats"])[];
-  const dominant = statKeys.reduce((best, key) =>
-    player.stats[key] > player.stats[best] ? key : best
+  const dominant = STAT_KEYS.reduce((best, key) =>
+    player[key] > player[best] ? key : best
   );
   return STAT_AVATARS[dominant];
 }

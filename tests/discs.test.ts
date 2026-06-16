@@ -2,20 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   applyDiscBonuses,
   createDisc,
-  effectivePlayerStats,
+  effectivePlayer,
   equipDisc,
   getDiscPrice,
   unequipDisc,
 } from "@/game";
-import type { Player, PlayerStats } from "@/types";
-
-const baseStats: PlayerStats = {
-  Driving: 50,
-  Accuracy: 50,
-  Putting: 98,
-  Mental: 50,
-  Stamina: 50,
-};
+import { makePlayer } from "./helpers";
 
 describe("disc pricing", () => {
   it("scales price with the disc's bonus", () => {
@@ -45,13 +37,14 @@ describe("equip rules", () => {
 
 describe("bonus application", () => {
   it("caps boosted stats at 100", () => {
+    const player = makePlayer({ putting: 98 });
     const putter = createDisc("d1", "Putter", "Putter", "Signature"); // +9
-    const boosted = applyDiscBonuses(baseStats, { Putter: putter });
-    expect(boosted.Putting).toBe(100); // 98 + 9 capped
+    const boosted = applyDiscBonuses(player, { Putter: putter });
+    expect(boosted.putting).toBe(100); // 98 + 9 capped
   });
 
-  it("effectivePlayerStats returns base stats when nothing is equipped", () => {
-    const player: Player = { id: "p1", name: "P", stats: baseStats };
-    expect(effectivePlayerStats(player)).toEqual(baseStats);
+  it("effectivePlayer returns the same player when nothing is equipped", () => {
+    const player = makePlayer();
+    expect(effectivePlayer(player)).toEqual(player);
   });
 });

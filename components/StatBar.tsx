@@ -15,20 +15,16 @@ export default function StatBar({
   max = 100,
 }: StatBarProps) {
   const effective = effectiveValue ?? value;
-  const basePct = Math.min(100, (value / max) * 100);
   const effectivePct = Math.min(100, (effective / max) * 100);
 
   return (
     <div className="stat-bar-row">
       <span className="stat-bar-label">{label}</span>
       <span className="stat-bar-track">
-        <span className="stat-bar-fill" style={{ width: `${basePct}%` }} />
-        {effective > value ? (
-          <span
-            className="stat-bar-bonus"
-            style={{ left: `${basePct}%`, width: `${effectivePct - basePct}%` }}
-          />
-        ) : null}
+        <span
+          className="stat-bar-marker"
+          style={{ left: `${effectivePct}%` }}
+        />
       </span>
       <span className="stat-bar-value">{effective}</span>
     </div>

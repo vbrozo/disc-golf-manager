@@ -446,7 +446,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem 1fr 4rem 4.5rem;
+  grid-template-columns: 2rem 1fr 3.5rem 4rem 4.5rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
@@ -454,6 +454,12 @@ body {
 }
 
 .leaderboard-rating {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #94a3b8;
+}
+
+.leaderboard-score {
   font-variant-numeric: tabular-nums;
   text-align: right;
   color: #94a3b8;
@@ -527,18 +533,15 @@ body {
   overflow: hidden;
 }
 
-.stat-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #16a34a, #4ade80);
-  border-radius: 999px 0 0 999px;
-  transition: width 0.4s ease;
-}
-
-.stat-bar-bonus {
+.stat-bar-marker {
   position: absolute;
-  top: 0;
-  height: 100%;
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  top: 50%;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+  transition: left 0.4s ease;
 }
 
 .stat-bar-value {

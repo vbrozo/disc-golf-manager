@@ -5,7 +5,7 @@ import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
   DISCS,
-  effectivePlayerStats,
+  effectivePlayer,
   getAvailableTournaments,
   getDiscPrice,
   getEntryFee,
@@ -14,6 +14,7 @@ import {
   TRAINING_PROGRAMS,
 } from "@/game";
 import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
+import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
@@ -23,7 +24,7 @@ import FloatingNumbers from "@/components/FloatingNumbers";
 import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
-import { formatMoney } from "@/utils/format";
+import { formatMoney, formatScoreToPar } from "@/utils/format";
 import {
   getDiscAvatar,
   getNameAvatar,
@@ -31,12 +32,14 @@ import {
   getPlayerAvatar,
 } from "@/utils/avatar";
 
-const STAT_KEYS: (keyof Player["stats"])[] = [
-  "Driving",
-  "Accuracy",
-  "Putting",
-  "Mental",
-  "Stamina",
+const STAT_KEYS: ("power" | "accuracy" | "putting" | "scramble" | "consistency" | "mental" | "fitness")[] = [
+  "power",
+  "accuracy",
+  "putting",
+  "scramble",
+  "consistency",
+  "mental",
+  "fitness",
 ];
 
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
@@ -105,7 +108,7 @@ export default function GameFlow() {
         <p className="loop-lead">
           {t("intro.body1", {
             count: players.length,
-            names: players.map((p) => p.name).join(", "),
+            names: players.map((p) => playerFullName(p)).join(", "),
           })}
         </p>
         <p className="loop-lead">
@@ -181,7 +184,7 @@ export default function GameFlow() {
         tone: "good",
         text: t("shop.equipped", {
           name: disc?.name ?? "",
-          player: player.name,
+          player: playerFullName(player),
         }),
       });
     };
@@ -192,7 +195,7 @@ export default function GameFlow() {
         tone: "good",
         text: t("shop.unequipped", {
           type: t(`discType.${type}`),
-          player: player.name,
+          player: playerFullName(player),
         }),
       });
     };
@@ -289,20 +292,10 @@ export default function GameFlow() {
               <div key={player.id} className="loop-player">
                 <div className="loop-player-head">
                   <Avatar {...getPlayerAvatar(player)} />
-                  <strong>{player.name}</strong>
+                  <strong>{playerFullName(player)}</strong>
                   <span className="player-rating" title={t("player.rating")}>
                     {player.rating ?? t("player.unrated")}
                   </span>
-                  {player.consistency !== undefined && (
-                    <span
-                      className="player-consistency"
-                      title={t("player.consistency")}
-                    >
-                      {t("player.consistencyValue", {
-                        value: player.consistency,
-                      })}
-                    </span>
-                  )}
                 </div>
                 {DISC_TYPES.map((type) => {
                   const current = equipped[type];
@@ -448,7 +441,8 @@ export default function GameFlow() {
                   </strong>
                   <span className="loop-meta">
                     {t("loop.tournamentMeta", {
-                      holes: tournament.holes,
+                      rounds: tournament.rounds,
+                      holes: tournament.holesPerRound,
                       difficulty: tournament.difficulty,
                       pool: formatMoney(tournament.prizePool),
                       fee: formatMoney(fee),
@@ -483,7 +477,7 @@ export default function GameFlow() {
       lastTournament?.rows.some(
         (row) => row.isClubPlayer && row.placement === 1
       ) ?? false;
-    const playersByName = new Map(players.map((p) => [p.name, p]));
+    const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
 
     return (
       <section className="loop" key={flowStage}>
@@ -506,6 +500,9 @@ export default function GameFlow() {
                 <span className="leaderboard-pos">{t("results.colPos")}</span>
                 <span className="leaderboard-name">
                   {t("results.colPlayer")}
+                </span>
+                <span className="leaderboard-score">
+                  {t("results.colScore")}
                 </span>
                 <span className="leaderboard-rating">
                   {t("results.colRating")}
@@ -543,6 +540,9 @@ export default function GameFlow() {
                         {t("results.you")}
                       </span>
                     ) : null}
+                  </span>
+                  <span className="leaderboard-score">
+                    {formatScoreToPar(row.totalScore)}
                   </span>
                   <span className="leaderboard-rating">{row.rating}</span>
                   <span className="leaderboard-earn">
@@ -629,7 +629,7 @@ function TrainingStage({
     setNotice({
       tone: "good",
       text: t("loop.trained", {
-        player: player.name,
+        player: playerFullName(player),
         stat: t(`stat.${result.stat}`),
         boost: result.boost,
         newValue: result.newValue,
@@ -647,7 +647,7 @@ function TrainingStage({
       {noticeBar}
       <div className="loop-roster">
         {players.map((player) => {
-          const effective = effectivePlayerStats(player);
+          const effective = effectivePlayer(player);
           return (
             <div
               key={player.id}
@@ -655,27 +655,17 @@ function TrainingStage({
             >
               <div className="loop-player-head">
                 <Avatar {...getPlayerAvatar(player)} />
-                <strong>{player.name}</strong>
+                <strong>{playerFullName(player)}</strong>
                 <span className="player-rating" title={t("player.rating")}>
                   {player.rating ?? t("player.unrated")}
                 </span>
-                {player.consistency !== undefined && (
-                  <span
-                    className="player-consistency"
-                    title={t("player.consistency")}
-                  >
-                    {t("player.consistencyValue", {
-                      value: player.consistency,
-                    })}
-                  </span>
-                )}
               </div>
               <div className="stat-bars">
                 {STAT_KEYS.map((stat) => (
                   <StatBar
                     key={stat}
                     label={t(`stat.${stat}`)}
-                    value={player.stats[stat]}
+                    value={player[stat]}
                     effectiveValue={effective[stat]}
                   />
                 ))}

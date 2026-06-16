@@ -10,6 +10,16 @@ function seededRng(seed = 0.5): () => number {
   };
 }
 
+const STAT_KEYS = [
+  "power",
+  "accuracy",
+  "putting",
+  "scramble",
+  "consistency",
+  "mental",
+  "fitness",
+] as const;
+
 describe("generateOpponents", () => {
   it("creates the requested number of opponents flagged as AI", () => {
     const opponents = generateOpponents(5, { rng: seededRng() });
@@ -20,12 +30,12 @@ describe("generateOpponents", () => {
     });
   });
 
-  it("rolls every stat within the opponent range", () => {
+  it("rolls every attribute within the opponent range", () => {
     const opponents = generateOpponents(10, { rng: seededRng(0.1) });
     opponents.forEach((o) => {
-      Object.values(o.stats).forEach((value) => {
-        expect(value).toBeGreaterThanOrEqual(42);
-        expect(value).toBeLessThanOrEqual(68);
+      STAT_KEYS.forEach((key) => {
+        expect(o[key]).toBeGreaterThanOrEqual(42);
+        expect(o[key]).toBeLessThanOrEqual(68);
       });
     });
   });
