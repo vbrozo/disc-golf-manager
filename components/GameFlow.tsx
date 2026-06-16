@@ -266,6 +266,16 @@ export default function GameFlow() {
                   <span className="player-rating" title={t("player.rating")}>
                     {player.rating ?? t("player.unrated")}
                   </span>
+                  {player.consistency !== undefined && (
+                    <span
+                      className="player-consistency"
+                      title={t("player.consistency")}
+                    >
+                      {t("player.consistencyValue", {
+                        value: player.consistency,
+                      })}
+                    </span>
+                  )}
                 </div>
                 {DISC_TYPES.map((type) => {
                   const current = equipped[type];
@@ -365,6 +375,16 @@ export default function GameFlow() {
                   >
                     {player.rating ?? t("player.unrated")}
                   </span>
+                  {player.consistency !== undefined && (
+                    <span
+                      className="player-consistency"
+                      title={t("player.consistency")}
+                    >
+                      {t("player.consistencyValue", {
+                        value: player.consistency,
+                      })}
+                    </span>
+                  )}
                 </div>
                 <span className="loop-meta">
                   {t("dash.playerStats", {

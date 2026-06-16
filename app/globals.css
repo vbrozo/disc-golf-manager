@@ -324,6 +324,10 @@ body {
   gap: 0.5rem;
 }
 
+.loop-player-head strong {
+  margin-right: auto;
+}
+
 .player-rating {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
@@ -332,6 +336,16 @@ body {
   border-radius: 999px;
   background: #334155;
   color: #e2e8f0;
+}
+
+.player-consistency {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #14532d;
+  color: #dcfce7;
 }
 
 .loop-train-buttons {
