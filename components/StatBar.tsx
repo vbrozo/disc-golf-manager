@@ -21,6 +21,7 @@ export default function StatBar({
     <div className="stat-bar-row">
       <span className="stat-bar-label">{label}</span>
       <span className="stat-bar-track">
+        <span className="stat-bar-fill" style={{ width: `${effectivePct}%` }} />
         <span
           className="stat-bar-marker"
           style={{ left: `${effectivePct}%` }}
