@@ -101,7 +101,7 @@ export default function GameFlow() {
   // -- Stage: intro ------------------------------------------------------
   if (flowStage === "intro") {
     return (
-      <section className="loop" key={flowStage}>
+      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("intro.title")}</h2>
@@ -201,7 +201,7 @@ export default function GameFlow() {
     };
 
     return (
-      <section className="loop" key={flowStage}>
+      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("shop.title")}</h2>
@@ -409,7 +409,7 @@ export default function GameFlow() {
     };
 
     return (
-      <section className="loop" key={flowStage}>
+      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
         <StatusHeader />
         {stepper}
         <h2>{t("loop.selectTitle")}</h2>
@@ -480,7 +480,7 @@ export default function GameFlow() {
     const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
 
     return (
-      <section className="loop" key={flowStage}>
+      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
         {clubWon ? <Confetti /> : null}
         <StatusHeader />
         <h2>{t("results.title")}</h2>
@@ -564,7 +564,7 @@ export default function GameFlow() {
   // -- Stage: complete (season summary) ----------------------------------
   const summary = summariseSeason(season);
   return (
-    <section className="loop" key={flowStage}>
+    <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
       <StatusHeader />
       <h2>{t("loop.seasonComplete", { n: summary.season })}</h2>
       <ul className="loop-summary">
@@ -639,7 +639,7 @@ function TrainingStage({
   };
 
   return (
-    <section className="loop">
+    <section className="loop loop-stage-training">
       <StatusHeader />
       {stepper}
       <h2>{t("loop.trainingTitle")}</h2>

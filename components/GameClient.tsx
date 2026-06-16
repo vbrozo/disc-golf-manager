@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useClickSound } from "@/hooks/useClickSound";
 import GameFlow from "@/components/GameFlow";
 
 /**
@@ -15,6 +16,8 @@ import GameFlow from "@/components/GameFlow";
 export default function GameClient() {
   const { t } = useTranslation();
   const [hydrated, setHydrated] = useState(false);
+
+  useClickSound();
 
   useEffect(() => {
     // Pull any saved game out of localStorage, then render.
