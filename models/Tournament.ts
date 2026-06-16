@@ -3,10 +3,12 @@
 export interface Tournament {
   id: string;
   name: string;
-  /** Course played for all 4 rounds. */
+  /** Course played for every round. */
   courseId: string;
-  /** Number of 18-hole rounds played (always 4 for a full tournament). */
-  rounds: number;
+  /** Number of rounds played. */
+  rounds: 3 | 4;
+  /** Holes played per round, taken from the front of the course's layout. */
+  holesPerRound: 9 | 18;
   /** Difficulty rating 1-5, used for entry fees and reputation rewards. */
   difficulty: number;
   prizePool: number;

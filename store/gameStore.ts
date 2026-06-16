@@ -432,8 +432,13 @@ export const useGameStore = create<GameState>()(
     };
 
     // Every player earns a PDGA-style rating for this tournament, from their
-    // total score across all rounds.
-    const roundRatingFor = (totalScore: number) => calculateRoundRating(totalScore);
+    // total score across all rounds. Tournaments vary in length (3-4 rounds
+    // of 9-18 holes), so the score is normalised to a standard 4x18 (72
+    // hole) basis before rating, keeping ratings comparable across events.
+    const STANDARD_HOLES = 4 * 18;
+    const holesPlayed = tournament.rounds * tournament.holesPerRound;
+    const roundRatingFor = (totalScore: number) =>
+      calculateRoundRating((totalScore * STANDARD_HOLES) / holesPlayed);
 
     // Trim the standings into a serialisable leaderboard for the results screen.
     const summary: TournamentSummary = {

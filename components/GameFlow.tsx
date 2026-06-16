@@ -442,6 +442,7 @@ export default function GameFlow() {
                   <span className="loop-meta">
                     {t("loop.tournamentMeta", {
                       rounds: tournament.rounds,
+                      holes: tournament.holesPerRound,
                       difficulty: tournament.difficulty,
                       pool: formatMoney(tournament.prizePool),
                       fee: formatMoney(fee),

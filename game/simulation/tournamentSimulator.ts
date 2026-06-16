@@ -1,4 +1,6 @@
-// Pure tournament-level (4 x 18-hole rounds) simulator for Disc Golf Manager v2.
+// Pure tournament-level simulator for Disc Golf Manager v2. A tournament is
+// `tournament.rounds` (3 or 4) rounds of `tournament.holesPerRound` (9 or 18)
+// holes, taken from the front of the course's full 18-hole layout.
 
 import type { Player } from "@/models/Player";
 import type { Course } from "@/models/Course";
@@ -29,9 +31,6 @@ export interface TournamentSimulationResult {
   standings: TournamentStanding[];
 }
 
-/** Number of 18-hole rounds in a full tournament. */
-export const ROUNDS_PER_TOURNAMENT = 4;
-
 /**
  * Split a prize pool across placements with a linear, rank-weighted scheme:
  * a field of `n` players shares the pool by weight (n - placement + 1), so
@@ -57,10 +56,10 @@ export function reputationForPlacement(difficulty: number, placement: number): n
 }
 
 /**
- * Simulate a tournament: every player plays {@link ROUNDS_PER_TOURNAMENT}
- * rounds of 18 holes on the tournament's course, summing strokes across all
- * rounds. Players are ranked by total strokes (lowest wins) and awarded
- * earnings + reputation by placement.
+ * Simulate a tournament: every player plays `tournament.rounds` rounds of
+ * `tournament.holesPerRound` holes on the tournament's course, summing
+ * strokes across all rounds. Players are ranked by total strokes (lowest
+ * wins) and awarded earnings + reputation by placement.
  */
 export function simulateTournament(
   players: Player[],
@@ -69,6 +68,7 @@ export function simulateTournament(
   options: TournamentSimulationOptions = {}
 ): TournamentSimulationResult {
   const rng = options.rng ?? Math.random;
+  const holes = course.holes.slice(0, tournament.holesPerRound);
 
   const entries: PlayerTournamentResult[] = players.map((player) => {
     const effective = effectivePlayer(player);
@@ -76,8 +76,8 @@ export function simulateTournament(
     let totalStrokes = 0;
     let totalScore = 0;
 
-    for (let i = 0; i < ROUNDS_PER_TOURNAMENT; i++) {
-      const round = simulateRound(effective, course, { rng });
+    for (let i = 0; i < tournament.rounds; i++) {
+      const round = simulateRound(effective, holes, { rng });
       rounds.push(round);
       totalStrokes += round.totalStrokes;
       totalScore += round.totalScore;

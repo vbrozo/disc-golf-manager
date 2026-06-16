@@ -15,6 +15,7 @@ const tournament: Tournament = {
   name: "Test Open",
   courseId: "course-city",
   rounds: 4,
+  holesPerRound: 18,
   difficulty: 3,
   prizePool: 10000,
   reputationRequired: 50,

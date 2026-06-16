@@ -1,7 +1,12 @@
-// Pure round-level (18-hole) simulator for Disc Golf Manager v2.
+// Pure round-level simulator for Disc Golf Manager v2.
+//
+// Simulates a round as a batch over a list of holes. Each hole result is
+// still computed individually via simulateHole, so a future hole-by-hole
+// presentation (e.g. animating one hole at a time in the UI) can reuse the
+// same per-hole results this already produces.
 
 import type { Player } from "@/models/Player";
-import type { Course } from "@/models/Course";
+import type { Hole } from "@/models/Course";
 import {
   simulateHole,
   type HoleOutcome,
@@ -36,8 +41,8 @@ const SLUMP_PENALTY = -4;
 const GOOD_OUTCOMES: HoleOutcome[] = ["Eagle", "Birdie"];
 
 /**
- * Simulate a full 18-hole round for a player on a {@link Course}, tracking a
- * momentum modifier: 3 birdies-or-better in a row grants a +2 bonus to
+ * Simulate a full round for a player over the given list of holes, tracking
+ * a momentum modifier: 3 birdies-or-better in a row grants a +2 bonus to
  * subsequent holes in the round, and 2 double-bogeys in a row applies a -4
  * penalty. This is intentionally scoped to the round only — it never mutates
  * the player's persistent `morale`/`mental` fields, since season-level
@@ -45,7 +50,7 @@ const GOOD_OUTCOMES: HoleOutcome[] = ["Eagle", "Birdie"];
  */
 export function simulateRound(
   player: Player,
-  course: Course,
+  holes: Hole[],
   options: RoundSimulationOptions = {}
 ): RoundResult {
   const rng = options.rng ?? Math.random;
@@ -58,7 +63,7 @@ export function simulateRound(
   let badStreak = 0;
   let momentumBonus = 0;
 
-  for (const hole of course.holes) {
+  for (const hole of holes) {
     const result = simulateHole(player, hole, { rng, momentumBonus });
     results.push(result);
     counts[result.outcome] += 1;

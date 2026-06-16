@@ -5,21 +5,22 @@
 // types so they can be unit tested and called from store actions or the UI.
 
 import type { Tournament } from "@/models/Tournament";
-import { ROUNDS_PER_TOURNAMENT } from "./simulation/tournamentSimulator";
 
 /**
  * The 10 tournaments available in the game, ordered roughly from beginner
  * (no reputation required) to elite (high reputation gate). Reputation
  * requirement, difficulty and prize pool all scale together so that better
- * events are both harder to enter and more rewarding. Every tournament is
- * {@link ROUNDS_PER_TOURNAMENT} rounds of 18 holes on its course.
+ * events are both harder to enter and more rewarding. Smaller local events
+ * are shorter (3 rounds of 9 holes); majors are the full 4 rounds of 18
+ * holes.
  */
 export const TOURNAMENTS: readonly Tournament[] = [
   {
     id: "local-open",
     name: "Local Park Open",
     courseId: "course-local-park",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 3,
+    holesPerRound: 9,
     difficulty: 1,
     prizePool: 500,
     reputationRequired: 0,
@@ -28,7 +29,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "weekend-warmup",
     name: "Weekend Warm-Up",
     courseId: "course-local-park",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 3,
+    holesPerRound: 9,
     difficulty: 1,
     prizePool: 800,
     reputationRequired: 5,
@@ -37,7 +39,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "riverside-classic",
     name: "Riverside Classic",
     courseId: "course-riverside",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 3,
+    holesPerRound: 18,
     difficulty: 2,
     prizePool: 1500,
     reputationRequired: 15,
@@ -46,7 +49,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "forest-challenge",
     name: "Forest Challenge",
     courseId: "course-forest",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 9,
     difficulty: 2,
     prizePool: 2200,
     reputationRequired: 30,
@@ -55,7 +59,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "city-cup",
     name: "City Cup",
     courseId: "course-city",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 3,
     prizePool: 3500,
     reputationRequired: 50,
@@ -64,7 +69,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "mountain-masters",
     name: "Mountain Masters",
     courseId: "course-mountain",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 3,
     prizePool: 5000,
     reputationRequired: 75,
@@ -73,7 +79,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "national-invitational",
     name: "National Invitational",
     courseId: "course-national",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 4,
     prizePool: 8000,
     reputationRequired: 110,
@@ -82,7 +89,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "continental-series",
     name: "Continental Series",
     courseId: "course-continental",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 4,
     prizePool: 12000,
     reputationRequired: 150,
@@ -91,7 +99,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "world-championship",
     name: "World Championship",
     courseId: "course-world",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 5,
     prizePool: 20000,
     reputationRequired: 200,
@@ -100,7 +109,8 @@ export const TOURNAMENTS: readonly Tournament[] = [
     id: "grand-masters-final",
     name: "Grand Masters Final",
     courseId: "course-grand-masters",
-    rounds: ROUNDS_PER_TOURNAMENT,
+    rounds: 4,
+    holesPerRound: 18,
     difficulty: 5,
     prizePool: 35000,
     reputationRequired: 275,

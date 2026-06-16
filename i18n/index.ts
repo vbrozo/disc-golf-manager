@@ -92,7 +92,7 @@ const en: Dict = {
   // Season loop — select phase
   "loop.selectTitle": "Select a Tournament",
   "loop.tournamentMeta":
-    "{rounds} rounds · difficulty {difficulty} · pool {pool} · entry {fee}",
+    "{rounds} rounds of {holes} holes · difficulty {difficulty} · pool {pool} · entry {fee}",
   "loop.enter": "Enter",
   "loop.noFunds": "Not enough money for the {fee} entry fee.",
   "loop.cantEnter": "Could not enter that tournament.",
@@ -267,7 +267,7 @@ const hr: Dict = {
   // Season loop — select phase
   "loop.selectTitle": "Odaberi turnir",
   "loop.tournamentMeta":
-    "{rounds} kola · težina {difficulty} · fond {pool} · kotizacija {fee}",
+    "{rounds} kola od {holes} rupa · težina {difficulty} · fond {pool} · kotizacija {fee}",
   "loop.enter": "Prijavi se",
   "loop.noFunds": "Nedovoljno novca za kotizaciju od {fee}.",
   "loop.cantEnter": "Nije moguće prijaviti se na taj turnir.",

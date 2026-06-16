@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { simulateRound } from "@/game/simulation/roundSimulator";
-import type { Course, Hole } from "@/models/Course";
+import type { Hole } from "@/models/Course";
 import { makePlayer } from "./helpers";
 
 function fixedRng(value: number) {
   return () => value;
 }
 
-function flatCourse(par: Hole["par"] = 3): Course {
+function flatHoles(par: Hole["par"] = 3): Hole[] {
   const hole: Hole = {
     par,
     distance: 250,
@@ -16,13 +16,13 @@ function flatCourse(par: Hole["par"] = 3): Course {
     elevation: 10,
     obRisk: 10,
   };
-  return { id: "test-course", name: "Test Course", holes: Array.from({ length: 18 }, () => hole) };
+  return Array.from({ length: 18 }, () => hole);
 }
 
 describe("simulateRound", () => {
   it("sums strokes and score across all 18 holes", () => {
     const player = makePlayer();
-    const round = simulateRound(player, flatCourse(), { rng: fixedRng(0.5) });
+    const round = simulateRound(player, flatHoles(), { rng: fixedRng(0.5) });
     expect(round.holes).toHaveLength(18);
     const summedStrokes = round.holes.reduce((sum, h) => sum + h.strokes, 0);
     expect(round.totalStrokes).toBe(summedStrokes);
@@ -32,7 +32,7 @@ describe("simulateRound", () => {
 
   it("tallies outcome counts that add up to 18", () => {
     const player = makePlayer();
-    const round = simulateRound(player, flatCourse(), { rng: fixedRng(0.4) });
+    const round = simulateRound(player, flatHoles(), { rng: fixedRng(0.4) });
     const total = Object.values(round.counts).reduce((sum, c) => sum + c, 0);
     expect(total).toBe(18);
   });
@@ -51,7 +51,7 @@ describe("simulateRound", () => {
       form: 90,
       morale: 90,
     });
-    const round = simulateRound(strongPlayer, flatCourse(), { rng: fixedRng(0.9) });
+    const round = simulateRound(strongPlayer, flatHoles(), { rng: fixedRng(0.9) });
     // With consistently strong rolls, expect at least one good streak to form.
     const goodCount = round.counts.Eagle + round.counts.Birdie;
     expect(goodCount).toBeGreaterThanOrEqual(3);
@@ -68,13 +68,13 @@ describe("simulateRound", () => {
       form: 5,
       morale: 5,
     });
-    const round = simulateRound(weakPlayer, flatCourse(), { rng: fixedRng(0.1) });
+    const round = simulateRound(weakPlayer, flatHoles(), { rng: fixedRng(0.1) });
     expect(round.counts.DoubleBogey).toBeGreaterThanOrEqual(2);
   });
 
   it("does not mutate the player's persistent morale field", () => {
     const player = makePlayer({ morale: 50 });
-    simulateRound(player, flatCourse(), { rng: fixedRng(0.1) });
+    simulateRound(player, flatHoles(), { rng: fixedRng(0.1) });
     expect(player.morale).toBe(50);
   });
 });

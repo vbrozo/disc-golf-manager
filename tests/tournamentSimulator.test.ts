@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   earningsForPlacement,
   reputationForPlacement,
-  ROUNDS_PER_TOURNAMENT,
   simulateTournament,
 } from "@/game/simulation/tournamentSimulator";
 import type { Course, Hole } from "@/models/Course";
@@ -29,7 +28,8 @@ const tournament: Tournament = {
   id: "test-tournament",
   name: "Test Open",
   courseId: "test-course",
-  rounds: ROUNDS_PER_TOURNAMENT,
+  rounds: 4,
+  holesPerRound: 18,
   difficulty: 1,
   prizePool: 1000,
   reputationRequired: 0,
@@ -42,8 +42,19 @@ describe("simulateTournament", () => {
       rng: fixedRng(0.5),
     });
     const standing = result.standings[0];
-    expect(standing.rounds).toHaveLength(ROUNDS_PER_TOURNAMENT);
+    expect(standing.rounds).toHaveLength(tournament.rounds);
     standing.rounds.forEach((round) => expect(round.holes).toHaveLength(18));
+  });
+
+  it("plays a shorter 3-round, 9-hole tournament using the front nine", () => {
+    const shortTournament: Tournament = { ...tournament, rounds: 3, holesPerRound: 9 };
+    const player = makePlayer();
+    const result = simulateTournament([player], shortTournament, flatCourse(), {
+      rng: fixedRng(0.5),
+    });
+    const standing = result.standings[0];
+    expect(standing.rounds).toHaveLength(3);
+    standing.rounds.forEach((round) => expect(round.holes).toHaveLength(9));
   });
 
   it("ranks players by total strokes across all rounds, lowest first", () => {
