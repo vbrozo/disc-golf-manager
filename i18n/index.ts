@@ -63,6 +63,16 @@ const en: Dict = {
   // Flow — tournament step extras
   "tournament.intro": "Pick a tournament to enter this round.",
 
+  // Flow — results step
+  "results.title": "Tournament Results",
+  "results.subtitle": "{name} — final standings",
+  "results.colPos": "#",
+  "results.colPlayer": "Player",
+  "results.colEarnings": "Earnings",
+  "results.you": "You",
+  "results.clubTotal": "Your club earned {earnings} and +{rep} reputation.",
+  "results.continue": "Continue",
+
   // Season loop — status header
   "loop.club": "Club",
   "loop.money": "Money",
@@ -210,6 +220,16 @@ const hr: Dict = {
 
   // Flow — tournament step extras
   "tournament.intro": "Odaberi turnir za ovo kolo.",
+
+  // Flow — results step
+  "results.title": "Rezultati turnira",
+  "results.subtitle": "{name} — konačni poredak",
+  "results.colPos": "#",
+  "results.colPlayer": "Igrač",
+  "results.colEarnings": "Zarada",
+  "results.you": "Vi",
+  "results.clubTotal": "Tvoj klub zaradio je {earnings} i +{rep} ugleda.",
+  "results.continue": "Nastavi",
 
   // Season loop — status header
   "loop.club": "Klub",

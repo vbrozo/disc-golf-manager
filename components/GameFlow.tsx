@@ -47,6 +47,7 @@ export default function GameFlow() {
   const season = useGameStore((s) => s.season);
   const inventory = useGameStore((s) => s.inventory);
   const flowStage = useGameStore((s) => s.flowStage);
+  const lastTournament = useGameStore((s) => s.lastTournament);
 
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const startSeason = useGameStore((s) => s.startSeason);
@@ -71,7 +72,9 @@ export default function GameFlow() {
   ) : null;
 
   const stepper =
-    flowStage === "complete" ? null : <FlowStepper current={flowStage} />;
+    flowStage === "complete" || flowStage === "results" ? null : (
+      <FlowStepper current={flowStage} />
+    );
 
   // -- Stage: intro ------------------------------------------------------
   if (flowStage === "intro") {
@@ -419,19 +422,10 @@ export default function GameFlow() {
         });
         return;
       }
-      // Tournament played → advance the season and move to the next step:
-      // training again, or the season summary if every round is done.
-      const next = advanceSeason();
-      const { result, settlement } = outcome;
-      setNotice({
-        tone: "good",
-        text: t("loop.entered", {
-          placement: result.placement,
-          earnings: formatMoney(settlement.earnings),
-          rep: settlement.reputationGained,
-        }),
-      });
-      setFlowStage(isSeasonComplete(next) ? "complete" : "training");
+      // Tournament played → show the full leaderboard on the results screen.
+      // The season is advanced later, from the results "Continue" button.
+      setNotice(null);
+      setFlowStage("results");
     };
 
     return (
@@ -469,6 +463,71 @@ export default function GameFlow() {
             );
           })}
         </ul>
+      </section>
+    );
+  }
+
+  // -- Stage: results (tournament leaderboard) ---------------------------
+  if (flowStage === "results") {
+    const onContinue = () => {
+      // Now advance the season: back to training, or the season summary.
+      const next = advanceSeason();
+      setNotice(null);
+      setFlowStage(isSeasonComplete(next) ? "complete" : "training");
+    };
+
+    return (
+      <section className="loop">
+        <StatusHeader />
+        <h2>{t("results.title")}</h2>
+        {lastTournament ? (
+          <>
+            <p className="loop-lead">
+              {t("results.subtitle", { name: lastTournament.tournamentName })}
+            </p>
+            <p className="loop-notice loop-notice-good">
+              {t("results.clubTotal", {
+                earnings: formatMoney(lastTournament.clubEarnings),
+                rep: lastTournament.clubReputation,
+              })}
+            </p>
+            <ol className="leaderboard">
+              <li className="leaderboard-head">
+                <span className="leaderboard-pos">{t("results.colPos")}</span>
+                <span className="leaderboard-name">
+                  {t("results.colPlayer")}
+                </span>
+                <span className="leaderboard-earn">
+                  {t("results.colEarnings")}
+                </span>
+              </li>
+              {lastTournament.rows.map((row) => (
+                <li
+                  key={`${row.placement}-${row.playerName}`}
+                  className={`leaderboard-row${
+                    row.isClubPlayer ? " leaderboard-you" : ""
+                  }`}
+                >
+                  <span className="leaderboard-pos">{row.placement}</span>
+                  <span className="leaderboard-name">
+                    {row.playerName}
+                    {row.isClubPlayer ? (
+                      <span className="leaderboard-badge">
+                        {t("results.you")}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="leaderboard-earn">
+                    {formatMoney(row.earnings)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : null}
+        <button className="btn btn-primary" onClick={onContinue}>
+          {t("results.continue")}
+        </button>
       </section>
     );
   }

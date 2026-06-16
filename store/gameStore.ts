@@ -18,7 +18,9 @@ import {
   buildSettlement,
   checkEntryEligibility,
   createStarterRoster,
+  DEFAULT_FIELD_SIZE,
   equipDisc as equipDiscOnLoadout,
+  generateOpponents,
   getDiscById,
   getDiscPrice,
   getTournamentById,
@@ -48,6 +50,27 @@ export interface EnterTournamentResult {
   standings: TournamentStanding[];
 }
 
+/** A single row of a tournament's final leaderboard, for the results screen. */
+export interface LeaderboardRow {
+  playerName: string;
+  /** Finishing position (1 = winner). */
+  placement: number;
+  earnings: number;
+  reputationGained: number;
+  /** True for one of the club's own players, false for an AI opponent. */
+  isClubPlayer: boolean;
+}
+
+/** The full standings of the most recent tournament, kept for the results screen. */
+export interface TournamentSummary {
+  tournamentName: string;
+  rows: LeaderboardRow[];
+  /** Total prize money the club's players earned (gross, before the entry fee). */
+  clubEarnings: number;
+  /** Reputation the club gained from its best finisher. */
+  clubReputation: number;
+}
+
 /**
  * Guided onboarding / play flow, layered on top of the season engine. It walks
  * a new player through one focused screen at a time:
@@ -59,6 +82,7 @@ export type FlowStage =
   | "shop"
   | "training"
   | "tournament"
+  | "results"
   | "complete";
 
 /** Options for seeding a brand-new game from the club-creation screen. */
@@ -86,6 +110,8 @@ export interface GameState {
   language: Language;
   /** Current step of the guided onboarding / play flow. */
   flowStage: FlowStage;
+  /** Final standings of the most recent tournament, shown on the results step. */
+  lastTournament: TournamentSummary | null;
 
   // --- Actions ---
   /** Switch the UI language. */
@@ -207,6 +233,7 @@ export const useGameStore = create<GameState>()(
   season: INITIAL_SEASON_STATE,
   language: DEFAULT_LANGUAGE,
   flowStage: "intro",
+  lastTournament: null,
 
   setLanguage: (language) => set({ language }),
 
@@ -372,16 +399,28 @@ export const useGameStore = create<GameState>()(
       return null;
     }
 
-    const simulation = simulateTournament(state.players, tournament, options);
-    // The club's best finisher represents it for prize money and reputation.
-    const best = simulation.standings[0];
+    // Fill the field with AI opponents so the club's players actually compete
+    // for placements instead of always sweeping the podium.
+    const opponents = generateOpponents(
+      Math.max(0, DEFAULT_FIELD_SIZE - state.players.length)
+    );
+    const field = [...state.players, ...opponents];
+
+    const simulation = simulateTournament(field, tournament, options);
+    const clubStandings = simulation.standings.filter(
+      (s) => !s.player.isOpponent
+    );
+    // The club's best finisher represents it for placement + reputation.
+    const best = clubStandings[0];
     if (!best) {
       return null;
     }
 
+    // The club banks the prize money earned by every one of its players.
+    const clubEarnings = clubStandings.reduce((sum, s) => sum + s.earnings, 0);
     const settlement = buildSettlement(
       tournament,
-      best.earnings,
+      clubEarnings,
       best.reputationGained
     );
 
@@ -394,9 +433,24 @@ export const useGameStore = create<GameState>()(
       reputationGained: settlement.reputationGained,
     };
 
+    // Trim the standings into a serialisable leaderboard for the results screen.
+    const summary: TournamentSummary = {
+      tournamentName: tournament.name,
+      rows: simulation.standings.map((s) => ({
+        playerName: s.player.name,
+        placement: s.placement,
+        earnings: s.earnings,
+        reputationGained: s.reputationGained,
+        isClubPlayer: !s.player.isOpponent,
+      })),
+      clubEarnings: settlement.earnings,
+      clubReputation: settlement.reputationGained,
+    };
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
+      lastTournament: summary,
     }));
 
     return { settlement, result, standings: simulation.standings };
@@ -420,6 +474,7 @@ export const useGameStore = create<GameState>()(
         season: startSeasonState(INITIAL_SEASON_STATE),
         // A brand-new game starts the guided onboarding at the intro.
         flowStage: "intro" as FlowStage,
+        lastTournament: null,
       };
     }),
 
@@ -480,6 +535,7 @@ export const useGameStore = create<GameState>()(
         season: state.season,
         language: state.language,
         flowStage: state.flowStage,
+        lastTournament: state.lastTournament,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

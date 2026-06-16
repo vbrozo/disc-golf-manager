@@ -16,6 +16,12 @@ export interface Player {
   stats: PlayerStats;
   /** Discs the player has equipped (max one per type). */
   equipped?: DiscLoadout;
+  /**
+   * True for AI-generated opponents that fill out a tournament field. Club
+   * players leave this unset. Used to tell the club's results apart from the
+   * computer's in the standings.
+   */
+  isOpponent?: boolean;
 }
 
 /**

@@ -5,3 +5,4 @@ export * from "./training";
 export * from "./discs";
 export * from "./economy";
 export * from "./season";
+export * from "./opponents";
