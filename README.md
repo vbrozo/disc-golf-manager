@@ -135,9 +135,16 @@ Stats (1–100):
 - No backend required
 - Must be fully client-side compatible
 
+### Dashboard UI
+- overview dashboard: ✅ done
+  - client component `components/Dashboard.tsx` (UI only, reads from the Zustand store)
+  - 5 read-only sections: Club Overview, Players, Tournaments, Training, Inventory
+  - rendered above the interactive `SeasonLoop` on the home page
+  - minimalist styling added to `app/globals.css` (`.dash-grid` / `.dash-card`), no UI framework
+
 ## 📌 Next Task
 (not set yet)
 
-All core systems are implemented and wired into the season game loop. Possible
-follow-ups: localStorage persistence, a roster/club-creation screen, and a disc
-shop UI.
+All core systems are implemented and wired into the season game loop, with a
+read-only dashboard overview on top. Possible follow-ups: localStorage
+persistence, a roster/club-creation screen, and a disc shop UI.
