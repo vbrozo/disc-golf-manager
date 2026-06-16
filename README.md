@@ -194,6 +194,7 @@ Stats (1–100):
   - active language lives in the store (`language` + `setLanguage`) and is persisted with the save
   - `useTranslation()` hook (`hooks/useTranslation.ts`) binds `t` to the store language so the whole app re-renders on switch
   - `components/LanguageSwitcher.tsx` is fixed to the top-right of the header (English / Hrvatski)
+  - `components/ResetButton.tsx` sits beside it: a hard-reset (🔄 New game) that clears the persisted save via `persist.clearStorage()` and reloads, so testing a new build / starting fresh on the same URL is one click
   - all UI strings (dashboard, season loop, disc shop, modal, enum labels) are translated
 
 ### New Game flow

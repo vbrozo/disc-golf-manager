@@ -20,6 +20,8 @@ const en: Dict = {
   // Chrome
   "app.title": "Disc Golf Manager",
   "language.label": "Language",
+  "reset.label": "New game",
+  "reset.confirm": "Reset the saved game and start over?",
   "dashboard.title": "Dashboard",
   "dashboard.welcome": "Welcome to Disc Golf Manager.",
   "app.loading": "Loading saved game…",
@@ -178,6 +180,8 @@ const hr: Dict = {
   // Chrome
   "app.title": "Disc Golf Manager",
   "language.label": "Jezik",
+  "reset.label": "Nova igra",
+  "reset.confirm": "Resetirati spremljenu igru i početi ispočetka?",
   "dashboard.title": "Nadzorna ploča",
   "dashboard.welcome": "Dobrodošli u Disc Golf Manager.",
   "app.loading": "Učitavanje spremljene igre…",

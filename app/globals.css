@@ -43,6 +43,18 @@ body {
   gap: 0.5rem;
 }
 
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .app-header h1 {
   font-size: 1.25rem;
 }
@@ -510,7 +522,12 @@ body {
     text-align: center;
   }
 
-  .lang-switcher-label {
+  .lang-switcher-label,
+  .reset-btn-text {
     display: none;
+  }
+
+  .app-header-actions {
+    gap: 0.5rem;
   }
 }
