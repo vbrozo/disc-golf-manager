@@ -644,8 +644,6 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
   return (
     <section className="loop loop-stage-tournament">
       <StatusHeader />
-      <FlowStepper current="tournament" />
-      <h2>{t("loop.selectTitle")}</h2>
       <p className="loop-lead">{t("tournament.intro")}</p>
       {noticeBar}
       {newlyUnlocked.length > 0 ? (
