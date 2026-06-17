@@ -46,15 +46,15 @@ const en: Dict = {
   "intro.title": "Welcome, manager!",
   "intro.body1": "Your club has {count} players: {names}.",
   "intro.body2":
-    "First, buy three discs for each player — one Driver, one Midrange and one Putter — and equip them.",
+    "Each player already has a starter Common disc for every type. Head to the shop to upgrade them or go straight to training.",
   "intro.body3":
-    "After that you'll train your players before every tournament. Win prize money and reputation to unlock bigger events. Good luck!",
+    "Train your players before every tournament. Win prize money and reputation to unlock bigger events. Good luck!",
   "intro.continue": "Go to the disc shop",
 
   // Flow — shop step extras
   "shop.progress": "Equipped {done} / {total} discs",
   "shop.hint":
-    "Equip a Driver, Midrange and Putter on every player to continue.",
+    "Players start with Common discs. Upgrade them from the catalogue to improve their stats.",
   "shop.continue": "Continue to training",
 
   // Flow — training step extras
@@ -155,6 +155,9 @@ const en: Dict = {
   "shop.bought": "Bought {name}.",
   "shop.equipped": "Equipped {name} on {player}.",
   "shop.unequipped": "Unequipped {type} from {player}.",
+  "shop.boughtAndEquipped": "Bought {name} and equipped on {player}.",
+  "shop.buyAndEquip": "Buy & equip…",
+  "shop.upgradePlaceholder": "Upgrade…",
   "shop.nextUnlock": "Reach {required} reputation to unlock {rarity} discs.",
   "shop.allUnlocked": "All disc tiers unlocked.",
 
@@ -330,15 +333,15 @@ const hr: Dict = {
   "intro.title": "Dobrodošao, menadžeru!",
   "intro.body1": "Tvoj klub ima {count} igrača: {names}.",
   "intro.body2":
-    "Najprije svakom igraču kupi tri diska — Driver, Midrange i Putter — i opremi ih.",
+    "Svaki igrač već ima starter Common diskove za svaki tip. U trgovini ih možeš nadograditi ili odmah prijeći na trening.",
   "intro.body3":
-    "Nakon toga prije svakog turnira treniraš igrače. Osvajaj nagrade i ugled da otključaš veće turnire. Sretno!",
+    "Treniraš igrače prije svakog turnira. Osvajaj nagrade i ugled da otključaš veće turnire. Sretno!",
   "intro.continue": "Idi u trgovinu diskova",
 
   // Flow — shop step extras
   "shop.progress": "Opremljeno {done} / {total} diskova",
   "shop.hint":
-    "Opremi Driver, Midrange i Putter svakom igraču za nastavak.",
+    "Igrači imaju starter Common diskove. Nadogradi ih iz kataloga za bolje statistike.",
   "shop.continue": "Nastavi na trening",
 
   // Flow — training step extras
@@ -439,6 +442,9 @@ const hr: Dict = {
   "shop.bought": "Kupljeno: {name}.",
   "shop.equipped": "Opremljen {name} na {player}.",
   "shop.unequipped": "Skinut {type} s igrača {player}.",
+  "shop.boughtAndEquipped": "Kupljeno {name} i opremljeno na {player}.",
+  "shop.buyAndEquip": "Kupi i opremi…",
+  "shop.upgradePlaceholder": "Nadogradi…",
   "shop.nextUnlock": "Dostignite {required} ugleda za otključavanje {rarity} diskova.",
   "shop.allUnlocked": "Svi nivoi diskova su otključani.",
 
