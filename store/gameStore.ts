@@ -24,6 +24,7 @@ import {
   trainingBoostBonus,
   injuryRecoveryBonus,
   entryFeeMultiplier,
+  DISCS,
   getDiscById,
   getDiscPrice,
   getTournamentById,
@@ -213,6 +214,12 @@ export interface GameState {
    * {@link DiscLoadout}, or `null` if the player is unknown.
    */
   unequipDisc: (playerId: string, type: DiscType) => DiscLoadout | null;
+  /**
+   * Buy a catalogue disc and immediately equip it on a player in one step.
+   * Returns the purchased disc, or `null` if the player/disc is unknown or the
+   * club cannot afford it (in which case nothing changes).
+   */
+  buyAndEquipDisc: (playerId: string, catalogueDiscId: string) => Disc | null;
   /**
    * Enter a tournament with the club's roster. Charges the entry fee, simulates
    * the event, then credits the club with the prize money (net of the fee) and
@@ -502,6 +509,33 @@ export const useGameStore = create<GameState>()(
     return loadout;
   },
 
+  buyAndEquipDisc: (playerId, catalogueDiscId) => {
+    const state = get();
+    const player = state.players.find((p) => p.id === playerId);
+    const catalogueDisc = getDiscById(catalogueDiscId);
+
+    if (!player || !catalogueDisc) return null;
+
+    const price = getDiscPrice(catalogueDisc);
+    if (state.club.money < price) return null;
+
+    const ownedDisc: Disc = {
+      ...catalogueDisc,
+      id: `${catalogueDisc.id}-${Date.now()}`,
+    };
+    const loadout = equipDiscOnLoadout(player.equipped ?? {}, ownedDisc);
+
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - price },
+      inventory: [...s.inventory, ownedDisc],
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, equipped: loadout } : p
+      ),
+    }));
+
+    return ownedDisc;
+  },
+
   enterTournament: (tournamentId, options) => {
     const state = get();
     const tournament = getTournamentById(tournamentId);
@@ -685,9 +719,22 @@ export const useGameStore = create<GameState>()(
         };
       });
 
+      // Equip each starter player with one Common disc of every type at no cost.
+      const commonDriver = DISCS.find((d) => d.id === "driver-common")!;
+      const commonMidrange = DISCS.find((d) => d.id === "midrange-common")!;
+      const commonPutter = DISCS.find((d) => d.id === "putter-common")!;
+      const rosterWithDiscs = roster.map((player, i) => ({
+        ...player,
+        equipped: {
+          Driver: { ...commonDriver, id: `driver-common-starter-${i}` },
+          Midrange: { ...commonMidrange, id: `midrange-common-starter-${i}` },
+          Putter: { ...commonPutter, id: `putter-common-starter-${i}` },
+        },
+      }));
+
       return {
         club: { ...state.club, name: clubName, money: STARTING_MONEY, reputation: 0 },
-        players: roster,
+        players: rosterWithDiscs,
         tournaments: [],
         inventory: [],
         season: startSeasonState(INITIAL_SEASON_STATE),

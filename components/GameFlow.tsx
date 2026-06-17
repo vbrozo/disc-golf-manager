@@ -154,6 +154,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   const buyDiscs = useGameStore((s) => s.buyDiscs);
   const equipDisc = useGameStore((s) => s.equipDisc);
   const unequipDisc = useGameStore((s) => s.unequipDisc);
+  const buyAndEquipDisc = useGameStore((s) => s.buyAndEquipDisc);
 
   const { setNotice, noticeBar } = useNotice();
   const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
@@ -191,6 +192,18 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   const onUnequip = (player: Player, type: DiscType) => {
     unequipDisc(player.id, type);
     setNotice({ tone: "good", text: t("shop.unequipped", { type: t(`discType.${type}`), player: playerFullName(player) }) });
+  };
+
+  const onBuyAndEquip = (player: Player, catalogueDiscId: string) => {
+    if (!catalogueDiscId) return;
+    const catalogueDisc = availableDiscs.find((d) => d.id === catalogueDiscId);
+    if (!catalogueDisc) return;
+    const disc = buyAndEquipDisc(player.id, catalogueDiscId);
+    if (!disc) {
+      setNotice({ tone: "bad", text: t("shop.noFunds", { name: catalogueDisc.name, price: formatMoney(getDiscPrice(catalogueDisc)) }) });
+      return;
+    }
+    setNotice({ tone: "good", text: t("shop.boughtAndEquipped", { name: disc.name, player: playerFullName(player) }) });
   };
 
   return (
@@ -301,21 +314,57 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                               ×
                             </button>
                           </div>
+                          {(() => {
+                            const upgrades = availableDiscs.filter((d) => d.type === type);
+                            return upgrades.length > 0 ? (
+                              <select
+                                className="btn btn-small equip-slot-select"
+                                value=""
+                                onChange={(e) => { onBuyAndEquip(player, e.target.value); e.currentTarget.value = ""; }}
+                              >
+                                <option value="">{t("shop.upgradePlaceholder")}</option>
+                                {upgrades.map((d) => (
+                                  <option key={d.id} value={d.id} disabled={club.money < getDiscPrice(d)}>
+                                    {d.name} (+{d.bonus}) – {formatMoney(getDiscPrice(d))}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : null;
+                          })()}
                         </>
                       ) : (
-                        <select
-                          className="btn btn-small equip-slot-select"
-                          value=""
-                          onChange={(e) => onEquip(player, e.target.value)}
-                          disabled={options.length === 0}
-                        >
-                          <option value="">
-                            {options.length === 0 ? t("shop.empty") : t("shop.equipPlaceholder")}
-                          </option>
-                          {options.map((d) => (
-                            <option key={d.id} value={d.id}>{d.name} (+{d.bonus})</option>
-                          ))}
-                        </select>
+                        <>
+                          <select
+                            className="btn btn-small equip-slot-select"
+                            value=""
+                            onChange={(e) => onEquip(player, e.target.value)}
+                            disabled={options.length === 0}
+                          >
+                            <option value="">
+                              {options.length === 0 ? t("shop.empty") : t("shop.equipPlaceholder")}
+                            </option>
+                            {options.map((d) => (
+                              <option key={d.id} value={d.id}>{d.name} (+{d.bonus})</option>
+                            ))}
+                          </select>
+                          {(() => {
+                            const catalogueOptions = availableDiscs.filter((d) => d.type === type);
+                            return catalogueOptions.length > 0 ? (
+                              <select
+                                className="btn btn-small equip-slot-select"
+                                value=""
+                                onChange={(e) => { onBuyAndEquip(player, e.target.value); e.currentTarget.value = ""; }}
+                              >
+                                <option value="">{t("shop.buyAndEquip")}</option>
+                                {catalogueOptions.map((d) => (
+                                  <option key={d.id} value={d.id} disabled={club.money < getDiscPrice(d)}>
+                                    {d.name} (+{d.bonus}) – {formatMoney(getDiscPrice(d))}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : null;
+                          })()}
+                        </>
                       )}
                     </div>
                   );
