@@ -49,6 +49,20 @@ export const OUTCOME_THRESHOLDS = {
   bogey: -15,
 } as const;
 
+/**
+ * Contribution of each hole attribute to {@link holeDifficultyScore}.
+ * `difficulty` is weighted heaviest as it is the course designer's summary
+ * judgement; the terrain factors (obRisk, distance, wooded, elevation) are
+ * secondary modifiers.
+ */
+export const HOLE_DIFFICULTY_WEIGHTS = {
+  difficulty: 0.4,
+  obRisk: 0.25,
+  distance: 0.15,
+  wooded: 0.1,
+  elevation: 0.1,
+} as const;
+
 /** Contribution of each player attribute to {@link basePerformance}. */
 export const STAT_WEIGHTS = {
   accuracy: 0.3,
@@ -100,11 +114,11 @@ export function moraleBonus(morale: number): number {
 export function holeDifficultyScore(hole: Hole): number {
   const distanceFactor = Math.min(100, (hole.distance / 500) * 100);
   return (
-    hole.difficulty * 0.4 +
-    hole.obRisk * 0.25 +
-    distanceFactor * 0.15 +
-    hole.wooded * 0.1 +
-    hole.elevation * 0.1
+    hole.difficulty * HOLE_DIFFICULTY_WEIGHTS.difficulty +
+    hole.obRisk * HOLE_DIFFICULTY_WEIGHTS.obRisk +
+    distanceFactor * HOLE_DIFFICULTY_WEIGHTS.distance +
+    hole.wooded * HOLE_DIFFICULTY_WEIGHTS.wooded +
+    hole.elevation * HOLE_DIFFICULTY_WEIGHTS.elevation
   );
 }
 

@@ -29,6 +29,7 @@ import HolePlayback from "@/components/HolePlayback";
 import Icon from "@/components/Icon";
 import RankingList from "@/components/RankingList";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
+import { useNotice } from "@/hooks/useNotice";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
 import {
   getDiscAvatar,
@@ -48,19 +49,6 @@ const STAT_KEYS: ("power" | "accuracy" | "putting" | "scramble" | "consistency" 
 ];
 
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
-
-interface Notice {
-  tone: "good" | "bad";
-  text: string;
-}
-
-function useNotice() {
-  const [notice, setNotice] = useState<Notice | null>(null);
-  const noticeBar = notice ? (
-    <p className={`loop-notice loop-notice-${notice.tone}`}>{notice.text}</p>
-  ) : null;
-  return { notice, setNotice, noticeBar };
-}
 
 /** Whether a player has a disc equipped in every type slot. */
 function isFullyEquipped(player: Player): boolean {
@@ -475,7 +463,7 @@ function TournamentStage({ onRankings }: { onRankings: () => void }) {
             <Icon name="star" size={15} /> {t("tournament.levelUpTitle")}
           </span>
           <span className="level-up-banner-body">
-            {newlyUnlocked.map((t) => t.name).join(", ")}
+            {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
           </span>
         </div>
       ) : null}

@@ -23,7 +23,6 @@ import {
   getTournamentById,
   getTrainingProgram,
   INITIAL_SEASON_STATE,
-  NPC_ROSTER_SIZE,
   recordRoundResult,
   sampleNpcsForTournament,
   settleClubEconomy,
@@ -254,6 +253,48 @@ function applyRoundRating(player: Player, roundRating: number): Player {
   return { ...player, ratingHistory, rating };
 }
 
+/** Normalise a raw total score to a standard 4×18 basis and compute a PDGA-style rating. */
+function normaliseAndRate(totalScore: number, rounds: number, holesPerRound: number): number {
+  const STANDARD_HOLES = 4 * 18;
+  return calculateRoundRating((totalScore * STANDARD_HOLES) / (rounds * holesPerRound));
+}
+
+/** Build the serialisable leaderboard summary stored for the results screen. */
+function buildTournamentSummary(
+  simulation: ReturnType<typeof simulateTournament>,
+  tournament: { name: string; rounds: number; holesPerRound: number },
+  settlement: TournamentSettlement
+): TournamentSummary {
+  const rateFor = (score: number) =>
+    normaliseAndRate(score, tournament.rounds, tournament.holesPerRound);
+
+  const clubStandings = simulation.standings.filter((s) => !s.player.isOpponent);
+
+  return {
+    tournamentName: tournament.name,
+    rows: simulation.standings.map((s) => ({
+      playerName: playerDisplayName(s.player),
+      placement: s.placement,
+      earnings: s.earnings,
+      reputationGained: s.reputationGained,
+      rating: rateFor(s.totalScore),
+      totalScore: s.totalScore,
+      isClubPlayer: !s.player.isOpponent,
+    })),
+    clubEarnings: settlement.earnings,
+    clubReputation: settlement.reputationGained,
+    playerTracks: clubStandings.map((s) => ({
+      playerName: playerDisplayName(s.player),
+      rounds: s.rounds.map((round) =>
+        round.holes.map((hole) => ({
+          outcome: hole.outcome,
+          scoreToPar: hole.scoreToPar,
+        }))
+      ),
+    })),
+  };
+}
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -470,43 +511,14 @@ export const useGameStore = create<GameState>()(
       reputationGained: settlement.reputationGained,
     };
 
-    // Every player earns a PDGA-style rating for this tournament, from their
-    // total score across all rounds. Tournaments vary in length (3-4 rounds
-    // of 9-18 holes), so the score is normalised to a standard 4x18 (72
-    // hole) basis before rating, keeping ratings comparable across events.
-    const STANDARD_HOLES = 4 * 18;
-    const holesPlayed = tournament.rounds * tournament.holesPerRound;
-    const roundRatingFor = (totalScore: number) =>
-      calculateRoundRating((totalScore * STANDARD_HOLES) / holesPlayed);
-
-    // Trim the standings into a serialisable leaderboard for the results screen.
-    const summary: TournamentSummary = {
-      tournamentName: tournament.name,
-      rows: simulation.standings.map((s) => ({
-        playerName: playerDisplayName(s.player),
-        placement: s.placement,
-        earnings: s.earnings,
-        reputationGained: s.reputationGained,
-        rating: roundRatingFor(s.totalScore),
-        totalScore: s.totalScore,
-        isClubPlayer: !s.player.isOpponent,
-      })),
-      clubEarnings: settlement.earnings,
-      clubReputation: settlement.reputationGained,
-      playerTracks: clubStandings.map((s) => ({
-        playerName: playerDisplayName(s.player),
-        rounds: s.rounds.map((round) =>
-          round.holes.map((hole) => ({
-            outcome: hole.outcome,
-            scoreToPar: hole.scoreToPar,
-          }))
-        ),
-      })),
-    };
+    const summary = buildTournamentSummary(simulation, tournament, settlement);
 
     // Build a rating-update map for everyone who played (club + NPCs).
     const roundRatingById = new Map(
-      simulation.standings.map((s) => [s.player.id, roundRatingFor(s.totalScore)])
+      simulation.standings.map((s) => [
+        s.player.id,
+        normaliseAndRate(s.totalScore, tournament.rounds, tournament.holesPerRound),
+      ])
     );
 
     set((s) => ({
