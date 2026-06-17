@@ -219,6 +219,13 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   return (
     <section className="loop loop-stage-shop">
       <StatusHeader />
+      <button
+        className="btn btn-primary"
+        disabled={!allEquipped}
+        onClick={() => setFlowStage("training")}
+      >
+        {t("shop.continue")}
+      </button>
       <h2>{t("shop.title")}</h2>
       <p className="loop-lead">{t("shop.lead")}</p>
       <p className="loop-lead">
@@ -384,13 +391,6 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
         })}
       </div>
 
-      <button
-        className="btn btn-primary"
-        disabled={!allEquipped}
-        onClick={() => setFlowStage("training")}
-      >
-        {t("shop.continue")}
-      </button>
     </section>
   );
 }
