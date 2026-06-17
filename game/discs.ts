@@ -31,6 +31,41 @@ export const RARITY_BONUS: Record<DiscRarity, number> = {
   Signature: 9,
 };
 
+/**
+ * Minimum club reputation required to purchase discs of each rarity tier.
+ * Common discs are always available; better discs require proven results.
+ */
+export const RARITY_REPUTATION_REQUIRED: Record<DiscRarity, number> = {
+  Common: 0,
+  Rare: 10,
+  Pro: 30,
+  Signature: 75,
+};
+
+/** Whether a club with the given reputation can buy discs of this rarity. */
+export function canAffordRarity(reputation: number, rarity: DiscRarity): boolean {
+  return reputation >= RARITY_REPUTATION_REQUIRED[rarity];
+}
+
+/** Discs available for purchase at the given club reputation level. */
+export function getAvailableDiscs(reputation: number): readonly Disc[] {
+  return DISCS.filter((d) => canAffordRarity(reputation, d.rarity));
+}
+
+/**
+ * The next rarity tier that will unlock as reputation grows, or `undefined`
+ * if all tiers are already available.
+ */
+export function nextDiscUnlock(reputation: number): { rarity: DiscRarity; required: number } | undefined {
+  const order: DiscRarity[] = ["Common", "Rare", "Pro", "Signature"];
+  for (const rarity of order) {
+    if (reputation < RARITY_REPUTATION_REQUIRED[rarity]) {
+      return { rarity, required: RARITY_REPUTATION_REQUIRED[rarity] };
+    }
+  }
+  return undefined;
+}
+
 /** The bonus a disc of the given rarity grants to its type's attribute. */
 export function bonusForRarity(rarity: DiscRarity): number {
   return RARITY_BONUS[rarity];

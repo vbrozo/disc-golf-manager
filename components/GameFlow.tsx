@@ -4,12 +4,13 @@ import { useState, type ReactNode } from "react";
 import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
-  DISCS,
   effectivePlayer,
+  getAvailableDiscs,
   getAvailableTournaments,
   getDiscPrice,
   getEntryFee,
   isSeasonComplete,
+  nextDiscUnlock,
   summariseSeason,
   TRAINING_PROGRAMS,
 } from "@/game";
@@ -164,8 +165,12 @@ export default function GameFlow() {
       });
     };
 
+    const availableDiscs = getAvailableDiscs(club.reputation);
     const visibleDiscs =
-      typeFilter === "All" ? DISCS : DISCS.filter((d) => d.type === typeFilter);
+      typeFilter === "All"
+        ? availableDiscs
+        : availableDiscs.filter((d) => d.type === typeFilter);
+    const unlock = nextDiscUnlock(club.reputation);
 
     const onEquip = (player: Player, discId: string) => {
       if (!discId) return;
@@ -223,6 +228,14 @@ export default function GameFlow() {
             ))}
           </select>
         </label>
+        <p className="loop-meta shop-unlock-hint">
+          {unlock
+            ? t("shop.nextUnlock", {
+                required: unlock.required,
+                rarity: t(`rarity.${unlock.rarity}`),
+              })
+            : t("shop.allUnlocked")}
+        </p>
         <ul className="loop-tournaments">
           {visibleDiscs.map((disc) => {
             const price = getDiscPrice(disc);

@@ -425,6 +425,10 @@ body {
   gap: 0.5rem;
 }
 
+.shop-unlock-hint {
+  font-style: italic;
+}
+
 /* --- Equipment slot grid (Oprema screen) --- */
 .equip-slots {
   display: grid;

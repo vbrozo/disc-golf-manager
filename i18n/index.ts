@@ -152,6 +152,8 @@ const en: Dict = {
   "shop.bought": "Bought {name}.",
   "shop.equipped": "Equipped {name} on {player}.",
   "shop.unequipped": "Unequipped {type} from {player}.",
+  "shop.nextUnlock": "Reach {required} reputation to unlock {rarity} discs.",
+  "shop.allUnlocked": "All disc tiers unlocked.",
 
   // Dashboard
   "dash.clubOverview": "Club Overview",
@@ -338,6 +340,8 @@ const hr: Dict = {
   "shop.bought": "Kupljeno: {name}.",
   "shop.equipped": "Opremljen {name} na {player}.",
   "shop.unequipped": "Skinut {type} s igrača {player}.",
+  "shop.nextUnlock": "Dostignite {required} ugleda za otključavanje {rarity} diskova.",
+  "shop.allUnlocked": "Svi nivoi diskova su otključani.",
 
   // Dashboard
   "dash.clubOverview": "Pregled kluba",
