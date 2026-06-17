@@ -6,7 +6,8 @@
 
 import type { Player, ShotShape } from "@/models/Player";
 import type { RandomFn } from "./simulation/holeSimulator";
-import { BASE_RATING, RATING_PER_STROKE } from "./rating";
+import { averageRating } from "./rating";
+import { pick, rollInRange } from "@/utils/random";
 
 /** Total number of NPCs generated at the start of each game. */
 export const NPC_ROSTER_SIZE = 100;
@@ -28,14 +29,6 @@ const LAST_NAMES = [
 
 const SHOT_SHAPES: readonly ShotShape[] = ["Hyzer", "Anhyzer", "Straight", "Spike"];
 
-function pick<T>(items: readonly T[], rng: RandomFn): T {
-  return items[Math.floor(rng() * items.length)];
-}
-
-function rollInRange(min: number, max: number, rng: RandomFn): number {
-  return min + Math.floor(rng() * (max - min + 1));
-}
-
 /** Five skill tiers — 20 NPCs each, low to elite. */
 const TIERS = [
   { label: "beginner",     statMin: 25, statMax: 42 },
@@ -56,7 +49,7 @@ function seedRatingHistory(overall: number, rng: RandomFn): number[] {
   // Target: overall 25 → ~820, overall 92 → ~1020
   const base = 800 + Math.round((overall / 100) * 250);
   // 3 seed rounds with ±30 jitter each
-  return [0, 1, 2].map(() => {
+  return Array.from({ length: 3 }, () => {
     const jitter = Math.round((rng() - 0.5) * 60);
     return Math.min(1100, Math.max(600, base + jitter));
   });
@@ -70,11 +63,11 @@ export function generateNpcRoster(options: { rng?: RandomFn } = {}): Player[] {
   const rng = options.rng ?? Math.random;
   const roster: Player[] = [];
   const usedNames = new Set<string>();
-  let seq = 0;
 
-  for (const tier of TIERS) {
+  TIERS.forEach((tier, tierIdx) => {
     for (let i = 0; i < PER_TIER; i++) {
-      seq++;
+      const seq = tierIdx * PER_TIER + i + 1;
+
       // Name collision retries
       let firstName = pick(FIRST_NAMES, rng);
       let lastName = pick(LAST_NAMES, rng);
@@ -99,9 +92,7 @@ export function generateNpcRoster(options: { rng?: RandomFn } = {}): Player[] {
       );
 
       const ratingHistory = seedRatingHistory(overall, rng);
-      const rating = Math.round(
-        ratingHistory.reduce((s, r) => s + r, 0) / ratingHistory.length
-      );
+      const rating = averageRating(ratingHistory) ?? 0;
 
       roster.push({
         id: `npc-${seq}`,
@@ -123,7 +114,7 @@ export function generateNpcRoster(options: { rng?: RandomFn } = {}): Player[] {
         rating,
       });
     }
-  }
+  });
 
   return roster;
 }
@@ -154,18 +145,21 @@ export function sampleNpcsForTournament(
     return { npc, weight };
   });
 
-  // Weighted reservoir sampling
+  // Weighted reservoir sampling — maintain a running total so each draw is O(n)
+  // instead of re-summing the entire pool on every iteration.
   const selected: Player[] = [];
   const pool = [...scored];
+  let runningTotal = pool.reduce((s, p) => s + p.weight, 0);
+
   for (let i = 0; i < count && pool.length > 0; i++) {
-    const total = pool.reduce((s, p) => s + p.weight, 0);
-    let rand = rng() * total;
+    let rand = rng() * runningTotal;
     let idx = 0;
     for (; idx < pool.length - 1; idx++) {
       rand -= pool[idx].weight;
       if (rand <= 0) break;
     }
     selected.push(pool[idx].npc);
+    runningTotal -= pool[idx].weight;
     pool.splice(idx, 1);
   }
 

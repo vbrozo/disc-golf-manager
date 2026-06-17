@@ -134,17 +134,23 @@ export function isSeasonComplete(state: SeasonState): boolean {
 
 /** Aggregate the current season's recorded rounds into a summary. */
 export function summariseSeason(state: SeasonState): SeasonSummary {
-  const totalEarnings = state.results.reduce((sum, r) => sum + r.earnings, 0);
-  const totalReputation = state.results.reduce(
-    (sum, r) => sum + r.reputationGained,
-    0
-  );
-  const wins = state.results.filter((r) => r.placement === 1).length;
-  const bestPlacement = state.results.reduce<number | undefined>(
-    (best, r) =>
-      best === undefined ? r.placement : Math.min(best, r.placement),
-    undefined
-  );
+  const { totalEarnings, totalReputation, wins, bestPlacement } =
+    state.results.reduce<{
+      totalEarnings: number;
+      totalReputation: number;
+      wins: number;
+      bestPlacement: number | undefined;
+    }>(
+      (acc, r) => ({
+        totalEarnings:   acc.totalEarnings + r.earnings,
+        totalReputation: acc.totalReputation + r.reputationGained,
+        wins:            acc.wins + (r.placement === 1 ? 1 : 0),
+        bestPlacement:   acc.bestPlacement === undefined
+          ? r.placement
+          : Math.min(acc.bestPlacement, r.placement),
+      }),
+      { totalEarnings: 0, totalReputation: 0, wins: 0, bestPlacement: undefined }
+    );
 
   return {
     season: state.season,

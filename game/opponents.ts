@@ -6,6 +6,7 @@
 
 import type { Player, ShotShape } from "@/models/Player";
 import type { RandomFn } from "./simulation/holeSimulator";
+import { pick, rollInRange } from "@/utils/random";
 
 /** Default total field size (club players + opponents) for a tournament. */
 export const DEFAULT_FIELD_SIZE = 8;
@@ -27,16 +28,6 @@ const LAST_NAMES = [
 ];
 
 const SHOT_SHAPES: readonly ShotShape[] = ["Hyzer", "Anhyzer", "Straight", "Spike"];
-
-/** Pick a uniformly-random element of a non-empty array. */
-function pick<T>(items: readonly T[], rng: RandomFn): T {
-  return items[Math.floor(rng() * items.length)];
-}
-
-/** Roll an integer stat in the [MIN_STAT, MAX_STAT] range. */
-function rollStat(rng: RandomFn): number {
-  return MIN_STAT + Math.floor(rng() * (MAX_STAT - MIN_STAT + 1));
-}
 
 /**
  * Generate `count` AI opponents with random Croatian names and stats. Names are
@@ -63,13 +54,13 @@ export function generateOpponents(
     }
     usedNames.add(name);
 
-    const power = rollStat(rng);
-    const accuracy = rollStat(rng);
-    const putting = rollStat(rng);
-    const scramble = rollStat(rng);
-    const consistency = rollStat(rng);
-    const mental = rollStat(rng);
-    const fitness = rollStat(rng);
+    const power       = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const accuracy    = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const putting     = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const scramble    = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const consistency = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const mental      = rollInRange(MIN_STAT, MAX_STAT, rng);
+    const fitness     = rollInRange(MIN_STAT, MAX_STAT, rng);
     const overall = Math.round(
       (power + accuracy + putting + scramble + consistency + mental + fitness) / 7
     );
@@ -78,7 +69,7 @@ export function generateOpponents(
       id: `opponent-${i + 1}`,
       firstName,
       lastName,
-      age: 20 + Math.floor(rng() * 20),
+      age: rollInRange(20, 39, rng),
       nationality: "Croatia",
       overall,
       power,
