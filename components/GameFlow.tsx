@@ -564,7 +564,7 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
                     <td>{i + 1}</td>
                     <td>{hole.par}</td>
                     <td><span className={`hole-type-badge hole-type-${ht.toLowerCase()}`}>{t(`holeType.${ht}`)}</span></td>
-                    <td>{hole.distance} ft</td>
+                    <td>{hole.distance} m</td>
                   </tr>
                 );
               })}

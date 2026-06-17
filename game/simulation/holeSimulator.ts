@@ -143,7 +143,7 @@ export function moraleBonus(morale: number): number {
  * with obRisk and wooded/elevation as secondary terrain modifiers.
  */
 export function holeDifficultyScore(hole: Hole): number {
-  const distanceFactor = Math.min(100, (hole.distance / 500) * 100);
+  const distanceFactor = Math.min(100, (hole.distance / 150) * 100);
   return (
     hole.difficulty * HOLE_DIFFICULTY_WEIGHTS.difficulty +
     hole.obRisk * HOLE_DIFFICULTY_WEIGHTS.obRisk +

@@ -46,8 +46,8 @@ function generateCourse(id: string, name: string, tier: number): Course {
 
   const holes: Hole[] = Array.from({ length: 18 }, (_, i) => {
     const par = parPattern[i % 9];
-    const baseDist = par === 5 ? 550 : par === 4 ? 380 : 220;
-    const distance = baseDist + tier * 10;
+    const baseDist = par === 5 ? 165 : par === 4 ? 115 : 65;
+    const distance = baseDist + tier * 3;
     const difficulty = Math.min(100, baseDifficulty + (i % 4) * 3);
 
     const char = HOLE_CHARS[i % 5];

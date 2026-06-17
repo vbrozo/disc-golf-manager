@@ -15,7 +15,7 @@ function fixedRng(value: number) {
 function flatCourse(): Course {
   const hole: Hole = {
     par: 3,
-    distance: 250,
+    distance: 75,
     difficulty: 30,
     wooded: 10,
     elevation: 10,

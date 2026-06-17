@@ -17,7 +17,7 @@ function fixedRng(value: number) {
 
 const easyHole: Hole = {
   par: 3,
-  distance: 200,
+  distance: 60,
   difficulty: 10,
   wooded: 5,
   elevation: 5,

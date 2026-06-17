@@ -10,7 +10,7 @@ function fixedRng(value: number) {
 function flatHoles(par: Hole["par"] = 3): Hole[] {
   const hole: Hole = {
     par,
-    distance: 250,
+    distance: 75,
     difficulty: 30,
     wooded: 10,
     elevation: 10,
