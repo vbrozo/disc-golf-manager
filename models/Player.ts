@@ -59,3 +59,20 @@ export interface Player {
 export function playerFullName(player: Player): string {
   return `${player.firstName} ${player.lastName}`.trim();
 }
+
+/**
+ * Returns the player's strongest stat — shown as their specialty in the UI.
+ * Ties broken by simulation weight order (accuracy > putting > power > …).
+ */
+export function getPlayerSpecialty(player: Player): keyof Pick<Player, "accuracy" | "putting" | "power" | "scramble" | "consistency" | "mental" | "fitness"> {
+  const stats = [
+    ["accuracy",    player.accuracy]    as const,
+    ["putting",     player.putting]     as const,
+    ["power",       player.power]       as const,
+    ["scramble",    player.scramble]    as const,
+    ["consistency", player.consistency] as const,
+    ["mental",      player.mental]      as const,
+    ["fitness",     player.fitness]     as const,
+  ];
+  return stats.reduce((best, curr) => curr[1] > best[1] ? curr : best)[0];
+}

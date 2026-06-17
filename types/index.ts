@@ -5,7 +5,7 @@
 // plus the game-loop types (training, tournament results) that sit on top.
 
 export type { Player, ShotShape, Injury } from "@/models/Player";
-export { playerFullName } from "@/models/Player";
+export { playerFullName, getPlayerSpecialty } from "@/models/Player";
 export type { Hole, Course } from "@/models/Course";
 export type { Disc, DiscType, DiscRarity, DiscLoadout } from "@/models/Disc";
 export type { Club } from "@/models/Club";
