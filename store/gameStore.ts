@@ -11,7 +11,7 @@ import {
   applyTraining,
   buildSettlement,
   checkEntryEligibility,
-  calculateRoundRating,
+  calculateRoundRatingsFromPropagators,
   createStarterRoster,
   DEFAULT_FIELD_SIZE,
   equipDisc as equipDiscOnLoadout,
@@ -244,7 +244,7 @@ function playerDisplayName(player: Player): string {
   return `${player.firstName} ${player.lastName}`.trim();
 }
 
-/** Apply a new round rating to a player, updating their rolling history (last 8). */
+/** Apply a new round rating to a player, updating their rolling history. */
 function applyRoundRating(player: Player, roundRating: number): Player {
   const ratingHistory = [...(player.ratingHistory ?? []), roundRating].slice(-8);
   const rating = Math.round(
@@ -253,21 +253,17 @@ function applyRoundRating(player: Player, roundRating: number): Player {
   return { ...player, ratingHistory, rating };
 }
 
-/** Normalise a raw total score to a standard 4×18 basis and compute a PDGA-style rating. */
-function normaliseAndRate(totalScore: number, rounds: number, holesPerRound: number): number {
-  const STANDARD_HOLES = 4 * 18;
-  return calculateRoundRating((totalScore * STANDARD_HOLES) / (rounds * holesPerRound));
-}
-
-/** Build the serialisable leaderboard summary stored for the results screen. */
+/**
+ * Build the serialisable leaderboard summary stored for the results screen.
+ * `eventRatingById` maps each player id to their event rating (average of
+ * per-round propagator ratings) for display in the results table.
+ */
 function buildTournamentSummary(
   simulation: ReturnType<typeof simulateTournament>,
-  tournament: { name: string; rounds: number; holesPerRound: number },
-  settlement: TournamentSettlement
+  tournament: { name: string },
+  settlement: TournamentSettlement,
+  eventRatingById: Map<string, number>
 ): TournamentSummary {
-  const rateFor = (score: number) =>
-    normaliseAndRate(score, tournament.rounds, tournament.holesPerRound);
-
   const clubStandings = simulation.standings.filter((s) => !s.player.isOpponent);
 
   return {
@@ -277,7 +273,7 @@ function buildTournamentSummary(
       placement: s.placement,
       earnings: s.earnings,
       reputationGained: s.reputationGained,
-      rating: rateFor(s.totalScore),
+      rating: eventRatingById.get(s.player.id) ?? 0,
       totalScore: s.totalScore,
       isClubPlayer: !s.player.isOpponent,
     })),
@@ -511,29 +507,49 @@ export const useGameStore = create<GameState>()(
       reputationGained: settlement.reputationGained,
     };
 
-    const summary = buildTournamentSummary(simulation, tournament, settlement);
+    // Compute per-round propagator ratings for each round in the tournament.
+    // For each round, all players serve as propagators using their pre-tournament
+    // rating, and a calibration line is fitted so that each stroke is worth the
+    // right number of rating points for this specific course and conditions.
+    const perRoundRatingById = new Map<string, number[]>(
+      simulation.standings.map((s) => [s.player.id, []])
+    );
+    for (let r = 0; r < tournament.rounds; r++) {
+      const entries = simulation.standings.map((s) => ({
+        id: s.player.id,
+        score: s.rounds[r].totalScore,
+        priorRating: s.player.rating,
+      }));
+      for (const [id, rr] of calculateRoundRatingsFromPropagators(entries)) {
+        perRoundRatingById.get(id)?.push(rr);
+      }
+    }
 
-    // Build a rating-update map for everyone who played (club + NPCs).
-    const roundRatingById = new Map(
-      simulation.standings.map((s) => [
-        s.player.id,
-        normaliseAndRate(s.totalScore, tournament.rounds, tournament.holesPerRound),
+    // Event rating = average of the per-round ratings earned in this tournament.
+    const eventRatingById = new Map<string, number>(
+      Array.from(perRoundRatingById.entries()).map(([id, ratings]) => [
+        id,
+        Math.round(ratings.reduce((s, r) => s + r, 0) / ratings.length),
       ])
     );
+
+    const summary = buildTournamentSummary(simulation, tournament, settlement, eventRatingById);
 
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
-      // Update club players' ratings.
+      // Update club players' ratings — each round's rating is appended individually.
       players: s.players.map((p) => {
-        const roundRating = roundRatingById.get(p.id);
-        return roundRating !== undefined ? applyRoundRating(p, roundRating) : p;
+        const roundRatings = perRoundRatingById.get(p.id);
+        if (!roundRatings?.length) return p;
+        return roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), p);
       }),
       // Update NPC ratings for the players that competed in this tournament.
       npcRoster: s.npcRoster.map((npc) => {
-        const roundRating = roundRatingById.get(npc.id);
-        return roundRating !== undefined ? applyRoundRating(npc, roundRating) : npc;
+        const roundRatings = perRoundRatingById.get(npc.id);
+        if (!roundRatings?.length) return npc;
+        return roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), npc);
       }),
     }));
 
