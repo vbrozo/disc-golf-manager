@@ -25,4 +25,6 @@ export interface TournamentResult {
   placement: number;
   earnings: number;
   reputationGained: number;
+  /** Per-player results for club players in this tournament. */
+  playerResults?: { playerId: string; playerName: string; placement: number; earnings: number; rating: number }[];
 }
