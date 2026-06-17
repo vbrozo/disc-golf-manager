@@ -699,12 +699,7 @@ function ResultsStage({
             <p className="loop-lead">
               {t("results.subtitle", { name: lastTournament.tournamentName })}
             </p>
-            <p className="loop-notice loop-notice-good">
-              {t("results.clubTotal", {
-                earnings: formatMoney(lastTournament.clubEarnings),
-                rep: lastTournament.clubReputation,
-              })}
-            </p>
+            <div className="results-club-indicator" />
             <ol className="leaderboard">
               <li className="leaderboard-head">
                 <span className="leaderboard-pos">{t("results.colPos")}</span>
@@ -744,7 +739,7 @@ function ResultsStage({
                     </span>
                     <span className="leaderboard-name">
                       <Avatar {...avatar} size="sm" />
-                      {row.playerName}
+                      <span className="leaderboard-name-text">{row.playerName}</span>
                       {row.isClubPlayer ? (
                         <span className="leaderboard-badge">
                           {t("results.you")}

@@ -325,6 +325,12 @@ body {
   color: #fca5a5;
 }
 
+.results-club-indicator {
+  height: 0.25rem;
+  border-radius: 999px;
+  background: #16a34a;
+}
+
 .loop-tournaments,
 .loop-summary {
   list-style: none;
@@ -599,7 +605,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem 1fr 3.5rem 4rem 4.5rem;
+  grid-template-columns: 2rem minmax(0, 1fr) 3.5rem 4rem 4.5rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
@@ -644,6 +650,15 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.leaderboard-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .leaderboard-earn {
@@ -1259,6 +1274,13 @@ body {
 
   .app-header-actions {
     gap: 0.5rem;
+  }
+
+  .leaderboard-head,
+  .leaderboard-row {
+    grid-template-columns: 1.5rem minmax(0, 1fr) 3rem 3.5rem 4rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
   }
 }
 
