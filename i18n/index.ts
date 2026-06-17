@@ -46,7 +46,7 @@ const en: Dict = {
   "intro.title": "Welcome, manager!",
   "intro.body1": "Your club has {count} players: {names}.",
   "intro.body2":
-    "First, buy three discs for each player — one Driver, one Midrange and one Putter — and equip them. That is {total} discs in total.",
+    "First, buy three discs for each player — one Driver, one Midrange and one Putter — and equip them.",
   "intro.body3":
     "After that you'll train your players before every tournament. Win prize money and reputation to unlock bigger events. Good luck!",
   "intro.continue": "Go to the disc shop",
@@ -85,6 +85,13 @@ const en: Dict = {
   "results.continue": "Continue",
   "playback.skip": "Skip",
   "playback.viewResults": "View Results",
+  "rankings.title": "World Rankings",
+  "rankings.subtitle": "{total} players ranked",
+  "rankings.colName": "Player",
+  "rankings.colRating": "Rating",
+  "rankings.colOverall": "OVR",
+  "rankings.close": "← Back",
+  "rankings.button": "Rankings",
 
   // Season loop — status header
   "loop.club": "Club",
@@ -225,7 +232,7 @@ const hr: Dict = {
   "intro.title": "Dobrodošao, menadžeru!",
   "intro.body1": "Tvoj klub ima {count} igrača: {names}.",
   "intro.body2":
-    "Najprije svakom igraču kupi tri diska — Driver, Midrange i Putter — i opremi ih. To je ukupno {total} diskova.",
+    "Najprije svakom igraču kupi tri diska — Driver, Midrange i Putter — i opremi ih.",
   "intro.body3":
     "Nakon toga prije svakog turnira treniraš igrače. Osvajaj nagrade i ugled da otključaš veće turnire. Sretno!",
   "intro.continue": "Idi u trgovinu diskova",
@@ -264,6 +271,13 @@ const hr: Dict = {
   "results.continue": "Nastavi",
   "playback.skip": "Preskoči",
   "playback.viewResults": "Pogledaj rezultate",
+  "rankings.title": "Svjetska rang lista",
+  "rankings.subtitle": "{total} igrača rangirano",
+  "rankings.colName": "Igrač",
+  "rankings.colRating": "Rating",
+  "rankings.colOverall": "OVR",
+  "rankings.close": "← Natrag",
+  "rankings.button": "Rang lista",
 
   // Season loop — status header
   "loop.club": "Klub",

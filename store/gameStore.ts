@@ -15,6 +15,7 @@ import {
   createStarterRoster,
   DEFAULT_FIELD_SIZE,
   equipDisc as equipDiscOnLoadout,
+  generateNpcRoster,
   generateOpponents,
   getCourseById,
   getDiscById,
@@ -22,7 +23,9 @@ import {
   getTournamentById,
   getTrainingProgram,
   INITIAL_SEASON_STATE,
+  NPC_ROSTER_SIZE,
   recordRoundResult,
+  sampleNpcsForTournament,
   settleClubEconomy,
   simulateTournament,
   startSeason as startSeasonState,
@@ -128,6 +131,8 @@ export interface GameState {
   flowStage: FlowStage;
   /** Final standings of the most recent tournament, shown on the results step. */
   lastTournament: TournamentSummary | null;
+  /** 100 persistent NPC players that compete in every tournament and appear on the ranking list. */
+  npcRoster: Player[];
 
   // --- Actions ---
   /** Switch the UI language. */
@@ -251,6 +256,7 @@ export const useGameStore = create<GameState>()(
   language: DEFAULT_LANGUAGE,
   flowStage: "intro",
   lastTournament: null,
+  npcRoster: [],
 
   setLanguage: (language) => set({ language }),
 
@@ -415,11 +421,17 @@ export const useGameStore = create<GameState>()(
       return null;
     }
 
-    // Fill the field with AI opponents so the club's players actually compete
-    // for placements instead of always sweeping the podium.
-    const opponents = generateOpponents(
-      Math.max(0, DEFAULT_FIELD_SIZE - state.players.length)
-    );
+    // Fill the field from the persistent NPC roster (falls back to fresh
+    // random opponents if the roster hasn't been seeded yet).
+    const fieldSize = Math.max(DEFAULT_FIELD_SIZE, state.players.length + 1);
+    const neededOpponents = fieldSize - state.players.length;
+    const opponents = state.npcRoster.length > 0
+      ? sampleNpcsForTournament(
+          state.npcRoster,
+          tournament.difficulty,
+          neededOpponents
+        )
+      : generateOpponents(neededOpponents);
     const field = [...state.players, ...opponents];
 
     const simulation = simulateTournament(field, tournament, course, options);
@@ -483,29 +495,34 @@ export const useGameStore = create<GameState>()(
       })),
     };
 
-    // Map each club player's round rating by id so we can update their history.
+    // Build a rating-update map for everyone who played (club + NPCs).
     const roundRatingById = new Map(
-      clubStandings.map((s) => [s.player.id, roundRatingFor(s.totalScore)])
+      simulation.standings.map((s) => [s.player.id, roundRatingFor(s.totalScore)])
     );
 
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
+      // Update club players' ratings.
       players: s.players.map((p) => {
         const roundRating = roundRatingById.get(p.id);
-        if (roundRating === undefined) {
-          return p;
-        }
+        if (roundRating === undefined) return p;
         const ratingHistory = [...(p.ratingHistory ?? []), roundRating].slice(-8);
         const rating = Math.round(
           ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
         );
-        return {
-          ...p,
-          ratingHistory,
-          rating,
-        };
+        return { ...p, ratingHistory, rating };
+      }),
+      // Update NPC ratings for the players that competed in this tournament.
+      npcRoster: s.npcRoster.map((npc) => {
+        const roundRating = roundRatingById.get(npc.id);
+        if (roundRating === undefined) return npc;
+        const ratingHistory = [...(npc.ratingHistory ?? []), roundRating].slice(-8);
+        const rating = Math.round(
+          ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
+        );
+        return { ...npc, ratingHistory, rating };
       }),
     }));
 
@@ -536,9 +553,9 @@ export const useGameStore = create<GameState>()(
         tournaments: [],
         inventory: [],
         season: startSeasonState(INITIAL_SEASON_STATE),
-        // A brand-new game starts the guided onboarding at the intro.
         flowStage: "intro" as FlowStage,
         lastTournament: null,
+        npcRoster: generateNpcRoster(),
       };
     }),
 
@@ -600,6 +617,7 @@ export const useGameStore = create<GameState>()(
         language: state.language,
         flowStage: state.flowStage,
         lastTournament: state.lastTournament,
+        npcRoster: state.npcRoster,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

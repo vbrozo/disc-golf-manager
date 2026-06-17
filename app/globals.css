@@ -293,6 +293,12 @@ body {
   flex-direction: column;
 }
 
+.loop-status-rankings {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
 .loop-status-label {
   display: inline-flex;
   align-items: center;
@@ -840,6 +846,86 @@ body {
 .hole-playback-player + .hole-playback-player {
   border-top: 1px solid #1e293b;
   padding-top: 0.75rem;
+}
+
+/* --- World rankings overlay --- */
+.rankings-overlay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 720px;
+  margin-top: 1.5rem;
+}
+
+.rankings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rankings-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #334155;
+  border-radius: 0.6rem;
+}
+
+.rankings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.rankings-table thead tr {
+  background: #1e293b;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.rankings-table th,
+.rankings-table td {
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+}
+
+.rankings-col-pos {
+  width: 2.5rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.rankings-col-rating,
+.rankings-col-overall {
+  width: 5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.rankings-row {
+  border-top: 1px solid #1e293b;
+  transition: background 0.1s ease;
+}
+
+.rankings-row:hover {
+  background: #1e293b;
+}
+
+.rankings-row-club {
+  background: rgba(22, 163, 74, 0.1);
+  border-left: 3px solid #16a34a;
+}
+
+.rankings-row-club:hover {
+  background: rgba(22, 163, 74, 0.18);
+}
+
+.rankings-col-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* --- Floating feedback numbers --- */

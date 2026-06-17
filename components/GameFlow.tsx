@@ -25,6 +25,7 @@ import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
 import HolePlayback from "@/components/HolePlayback";
 import Icon from "@/components/Icon";
+import RankingList from "@/components/RankingList";
 import type { TournamentSummary } from "@/store/gameStore";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
@@ -85,11 +86,16 @@ export default function GameFlow() {
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [showRankings, setShowRankings] = useState(false);
 
   // No game in progress — show the start screen.
   if (season.phase === "preseason") {
     return <StartScreen />;
+  }
+
+  // Rankings overlay replaces the current stage content.
+  if (showRankings) {
+    return <RankingList onClose={() => setShowRankings(false)} />;
   }
 
   const noticeBar = notice ? (
@@ -105,7 +111,7 @@ export default function GameFlow() {
   if (flowStage === "intro") {
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("intro.title")}</h2>
         <p className="loop-lead">
@@ -115,7 +121,7 @@ export default function GameFlow() {
           })}
         </p>
         <p className="loop-lead">
-          {t("intro.body2", { total: players.length * DISC_TYPES.length })}
+          {t("intro.body2")}
         </p>
         <p className="loop-lead">{t("intro.body3")}</p>
         <button
@@ -140,39 +146,21 @@ export default function GameFlow() {
     const totalNeeded = players.length * DISC_TYPES.length;
     const allEquipped = players.every(isFullyEquipped);
 
-    const getQuantity = (discId: string) => quantities[discId] ?? 1;
-    const setQuantity = (discId: string, qty: number) =>
-      setQuantities((prev) => ({
-        ...prev,
-        [discId]: Math.max(1, Math.floor(qty) || 1),
-      }));
-
     const onBuy = (disc: Disc) => {
-      const qty = getQuantity(disc.id);
-      const bought = buyDiscs(disc.id, qty);
+      const bought = buyDiscs(disc.id, 1);
       if (!bought) {
         setNotice({
           tone: "bad",
-          text:
-            qty > 1
-              ? t("shop.noFundsMultiple", {
-                  qty,
-                  name: disc.name,
-                  price: formatMoney(getDiscPrice(disc) * qty),
-                })
-              : t("shop.noFunds", {
-                  name: disc.name,
-                  price: formatMoney(getDiscPrice(disc)),
-                }),
+          text: t("shop.noFunds", {
+            name: disc.name,
+            price: formatMoney(getDiscPrice(disc)),
+          }),
         });
         return;
       }
       setNotice({
         tone: "good",
-        text:
-          qty > 1
-            ? t("shop.boughtMultiple", { qty, name: disc.name })
-            : t("shop.bought", { name: disc.name }),
+        text: t("shop.bought", { name: disc.name }),
       });
     };
 
@@ -205,7 +193,7 @@ export default function GameFlow() {
 
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("shop.title")}</h2>
         <p className="loop-lead">{t("shop.lead")}</p>
@@ -238,7 +226,6 @@ export default function GameFlow() {
         <ul className="loop-tournaments">
           {visibleDiscs.map((disc) => {
             const price = getDiscPrice(disc);
-            const qty = getQuantity(disc.id);
             return (
               <li key={disc.id} className="loop-tournament">
                 <div className="loop-tournament-info">
@@ -260,26 +247,12 @@ export default function GameFlow() {
                   </span>
                 </div>
                 <div className="loop-train-buttons">
-                  <label className="loop-field">
-                    <span>{t("shop.quantityLabel")}</span>
-                    <input
-                      className="loop-input"
-                      type="number"
-                      min={1}
-                      value={qty}
-                      onChange={(e) =>
-                        setQuantity(disc.id, Number(e.target.value))
-                      }
-                    />
-                  </label>
                   <button
                     className="btn"
-                    disabled={club.money < price * qty}
+                    disabled={club.money < price}
                     onClick={() => onBuy(disc)}
                   >
-                    {qty > 1
-                      ? t("shop.buyTotal", { total: formatMoney(price * qty) })
-                      : t("shop.buy")}
+                    {t("shop.buy")}
                   </button>
                 </div>
               </li>
@@ -376,6 +349,7 @@ export default function GameFlow() {
         stepper={stepper}
         noticeBar={noticeBar}
         setNotice={setNotice}
+        onRankings={() => setShowRankings(true)}
       />
     );
   }
@@ -415,7 +389,7 @@ export default function GameFlow() {
 
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("loop.selectTitle")}</h2>
         <p className="loop-lead">{t("tournament.intro")}</p>
@@ -488,8 +462,8 @@ export default function GameFlow() {
         key={lastTournament?.tournamentName ?? "results"}
         lastTournament={lastTournament}
         players={players}
+        onRankings={() => setShowRankings(true)}
         onContinue={() => {
-          // Now advance the season: back to training, or the season summary.
           const next = advanceSeason();
           setNotice(null);
           setFlowStage(isSeasonComplete(next) ? "complete" : "training");
@@ -502,7 +476,7 @@ export default function GameFlow() {
   const summary = summariseSeason(season);
   return (
     <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-      <StatusHeader />
+      <StatusHeader onRankings={() => setShowRankings(true)} />
       <h2>
         <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
       </h2>
@@ -545,10 +519,12 @@ function TrainingStage({
   stepper,
   noticeBar,
   setNotice,
+  onRankings,
 }: {
   stepper: ReactNode;
   noticeBar: ReactNode;
   setNotice: (notice: Notice | null) => void;
+  onRankings: () => void;
 }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
@@ -579,7 +555,7 @@ function TrainingStage({
 
   return (
     <section className="loop loop-stage-training">
-      <StatusHeader />
+      <StatusHeader onRankings={onRankings} />
       {stepper}
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
@@ -664,10 +640,12 @@ function ResultsStage({
   lastTournament,
   players,
   onContinue,
+  onRankings,
 }: {
   lastTournament: TournamentSummary | null;
   players: Player[];
   onContinue: () => void;
+  onRankings: () => void;
 }) {
   const { t } = useTranslation();
   const [showLeaderboard, setShowLeaderboard] = useState(
@@ -683,7 +661,7 @@ function ResultsStage({
   return (
     <section className="loop loop-stage-results">
       {clubWon && showLeaderboard ? <Confetti /> : null}
-      <StatusHeader />
+      <StatusHeader onRankings={onRankings} />
       <h2>{t("results.title")}</h2>
       {lastTournament ? (
         !showLeaderboard ? (
