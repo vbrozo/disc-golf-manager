@@ -12,7 +12,7 @@ export const LANGUAGES: { code: Language; label: string }[] = [
   { code: "hr", label: "Hrvatski" },
 ];
 
-export const DEFAULT_LANGUAGE: Language = "en";
+export const DEFAULT_LANGUAGE: Language = "hr";
 
 type Dict = Record<string, string>;
 
