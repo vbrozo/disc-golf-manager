@@ -215,22 +215,22 @@ export function createStarterRoster(): Player[] {
   return [
     starterPlayer(
       "player-1",
-      "Ivan",
-      "Horvat",
+      "Vanja",
+      "Brozović",
       { power: 63, accuracy: 58, putting: 54, scramble: 56, consistency: 55, mental: 54, fitness: 66 },
       "Straight"
     ),
     starterPlayer(
       "player-2",
-      "Marko",
-      "Kovačević",
+      "Aleksandar",
+      "Sudžuković",
       { power: 54, accuracy: 65, putting: 61, scramble: 53, consistency: 58, mental: 50, fitness: 60 },
       "Hyzer"
     ),
     starterPlayer(
       "player-3",
-      "Luka",
-      "Babić",
+      "Aki",
+      "Vucković",
       { power: 67, accuracy: 51, putting: 56, scramble: 59, consistency: 53, mental: 52, fitness: 57 },
       "Anhyzer"
     ),

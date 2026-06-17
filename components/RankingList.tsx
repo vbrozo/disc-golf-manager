@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
-import { playerFullName } from "@/models/Player";
+import { playerFullName, getPlayerSpecialty } from "@/models/Player";
 import Icon from "@/components/Icon";
 
 interface RankingListProps {
@@ -66,6 +66,7 @@ export default function RankingList({ onClose }: RankingListProps) {
                     {isClub ? (
                       <span className="leaderboard-badge">{t("results.you")}</span>
                     ) : null}
+                    <span className="specialty-badge">{t(`stat.${getPlayerSpecialty(player)}`)}</span>
                   </td>
                   <td className="rankings-col-rating">{player.rating ?? "—"}</td>
                   <td className="rankings-col-overall">{player.overall}</td>

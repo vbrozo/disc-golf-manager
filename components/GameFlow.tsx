@@ -19,7 +19,7 @@ import {
   TRAINING_PROGRAMS,
 } from "@/game";
 import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
-import { PLAYER_STAT_KEYS } from "@/types";
+import { PLAYER_STAT_KEYS, getPlayerSpecialty } from "@/types";
 import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
 import PlayerModal from "@/components/PlayerModal";
@@ -266,6 +266,9 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                 <span className="player-rating" title={t("player.rating")}>
                   {player.rating ?? t("player.unrated")}
                 </span>
+                <span className="specialty-badge" title={t("player.specialty")}>
+                  {t(`stat.${getPlayerSpecialty(player)}`)}
+                </span>
               </div>
               <div className="equip-slots">
                 {DISC_TYPES.map((type) => {
@@ -415,6 +418,9 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
                 <strong>{playerFullName(player)}</strong>
                 <span className="player-rating" title={t("player.rating")}>
                   {player.rating ?? t("player.unrated")}
+                </span>
+                <span className="specialty-badge" title={t("player.specialty")}>
+                  {t(`stat.${getPlayerSpecialty(player)}`)}
                 </span>
               </div>
               <div className="stat-bars">

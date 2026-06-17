@@ -675,6 +675,17 @@ body {
   text-align: right;
 }
 
+.specialty-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #1e40af;
+  color: #dbeafe;
+  font-weight: 700;
+}
+
 .leaderboard-badge {
   font-size: 0.65rem;
   text-transform: uppercase;

@@ -8,7 +8,7 @@ import Avatar from "@/components/Avatar";
 import StatBar from "@/components/StatBar";
 import StatChart from "@/components/StatChart";
 import { effectivePlayer } from "@/game";
-import { PLAYER_STAT_KEYS } from "@/types";
+import { PLAYER_STAT_KEYS, getPlayerSpecialty } from "@/types";
 
 // PDGA ratings span roughly 600–1100; normalise to 0–100 for the chart.
 function normaliseRating(rating: number): number {
@@ -62,6 +62,9 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
               </span>
               <span className="player-consistency" title={t("stat.consistency")}>
                 {player.consistency}
+              </span>
+              <span className="specialty-badge" title={t("player.specialty")}>
+                {t(`stat.${getPlayerSpecialty(player)}`)}
               </span>
               {activeInjuries.length > 0 && (
                 <span className="injury-chip" title={t("injury.penalty", { pts: injuryPenaltyPts })}>
