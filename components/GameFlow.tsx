@@ -710,9 +710,8 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                       <div key={row.placement} className={`podium-step podium-step-${row.placement}${row.isClubPlayer ? " podium-step-club" : ""}`}>
                         <div className="podium-avatar"><Avatar {...avatar} size="md" /></div>
                         <div className="podium-name">{row.playerName}</div>
-                        <div className="podium-medal">{medal}</div>
                         <div className="podium-earn">{formatMoney(row.earnings)}</div>
-                        <div className="podium-block" />
+                        <div className="podium-block">{medal}</div>
                       </div>
                     );
                   })}
