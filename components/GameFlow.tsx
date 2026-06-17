@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
@@ -28,7 +28,6 @@ import Confetti from "@/components/Confetti";
 import HolePlayback from "@/components/HolePlayback";
 import Icon from "@/components/Icon";
 import RankingList from "@/components/RankingList";
-import type { TournamentSummary } from "@/store/gameStore";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
 import {
@@ -55,203 +54,81 @@ interface Notice {
   text: string;
 }
 
+function useNotice() {
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const noticeBar = notice ? (
+    <p className={`loop-notice loop-notice-${notice.tone}`}>{notice.text}</p>
+  ) : null;
+  return { notice, setNotice, noticeBar };
+}
+
 /** Whether a player has a disc equipped in every type slot. */
 function isFullyEquipped(player: Player): boolean {
   return DISC_TYPES.every((type) => Boolean(player.equipped?.[type]));
 }
 
 /**
- * Guided game flow. Renders one focused screen at a time and walks the player
- * through: intro → buy/equip discs → training → tournament → training → … →
- * season complete. The season engine still drives round counting and rewards;
- * this component just sequences the UI and presents training before each
- * tournament.
+ * Guided game flow. Pure router — delegates all rendering to stage components.
+ * Owns only the rankings overlay state; each stage manages its own local state.
  */
 export default function GameFlow() {
-  const { t } = useTranslation();
-
-  const players = useGameStore((s) => s.players);
   const season = useGameStore((s) => s.season);
   const flowStage = useGameStore((s) => s.flowStage);
-  const lastTournament = useGameStore((s) => s.lastTournament);
-
-  const setFlowStage = useGameStore((s) => s.setFlowStage);
-  const startSeason = useGameStore((s) => s.startSeason);
-  const advanceSeason = useGameStore((s) => s.advanceSeason);
-
-  const [notice, setNotice] = useState<Notice | null>(null);
-  const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
   const [showRankings, setShowRankings] = useState(false);
 
-  // No game in progress — show the start screen.
   if (season.phase === "preseason") {
     return <StartScreen />;
   }
 
-  // Rankings overlay replaces the current stage content.
   if (showRankings) {
     return <RankingList onClose={() => setShowRankings(false)} />;
   }
 
-  const noticeBar = notice ? (
-    <p className={`loop-notice loop-notice-${notice.tone}`}>{notice.text}</p>
-  ) : null;
+  const onRankings = () => setShowRankings(true);
 
-  const stepper =
-    flowStage === "complete" || flowStage === "results" ? null : (
-      <FlowStepper current={flowStage} />
-    );
-
-  // -- Stage: intro ------------------------------------------------------
-  if (flowStage === "intro") {
-    return (
-      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader onRankings={() => setShowRankings(true)} />
-        {stepper}
-        <h2>{t("intro.title")}</h2>
-        <p className="loop-lead">
-          {t("intro.body1", {
-            count: players.length,
-            names: players.map((p) => playerFullName(p)).join(", "),
-          })}
-        </p>
-        <p className="loop-lead">
-          {t("intro.body2")}
-        </p>
-        <p className="loop-lead">{t("intro.body3")}</p>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setNotice(null);
-            setFlowStage("shop");
-          }}
-        >
-          {t("intro.continue")}
-        </button>
-      </section>
-    );
+  switch (flowStage) {
+    case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} />;
+    case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} />;
+    case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} />;
+    case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} />;
+    case "results":    return <ResultsStage    key="results"   onRankings={onRankings} />;
+    case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} />;
   }
+}
 
-  // -- Stage: shop (buy + equip discs) -----------------------------------
-  if (flowStage === "shop") {
-    return (
-      <ShopStage
-        key={flowStage}
-        stepper={stepper}
-        noticeBar={noticeBar}
-        notice={notice}
-        setNotice={setNotice}
-        typeFilter={typeFilter}
-        setTypeFilter={setTypeFilter}
-        onRankings={() => setShowRankings(true)}
-      />
-    );
-  }
+// ---------------------------------------------------------------------------
+// Stage components
+// ---------------------------------------------------------------------------
 
-  // -- Stage: training (before each tournament) --------------------------
-  if (flowStage === "training") {
-    return (
-      <TrainingStage
-        key={flowStage}
-        stepper={stepper}
-        noticeBar={noticeBar}
-        setNotice={setNotice}
-        onRankings={() => setShowRankings(true)}
-      />
-    );
-  }
+function IntroStage({ onRankings }: { onRankings: () => void }) {
+  const { t } = useTranslation();
+  const players = useGameStore((s) => s.players);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
 
-  // -- Stage: tournament -------------------------------------------------
-  if (flowStage === "tournament") {
-    return (
-      <TournamentStage
-        key={flowStage}
-        stepper={stepper}
-        noticeBar={noticeBar}
-        notice={notice}
-        setNotice={setNotice}
-        onRankings={() => setShowRankings(true)}
-      />
-    );
-  }
-
-  // -- Stage: results (tournament leaderboard) ---------------------------
-  if (flowStage === "results") {
-    return (
-      <ResultsStage
-        key={lastTournament?.tournamentName ?? "results"}
-        lastTournament={lastTournament}
-        players={players}
-        onRankings={() => setShowRankings(true)}
-        onContinue={() => {
-          const next = advanceSeason();
-          setNotice(null);
-          setFlowStage(isSeasonComplete(next) ? "complete" : "training");
-        }}
-      />
-    );
-  }
-
-  // -- Stage: complete (season summary) ----------------------------------
-  const summary = summariseSeason(season);
   return (
-    <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-      <StatusHeader onRankings={() => setShowRankings(true)} />
-      <h2>
-        <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
-      </h2>
-      <ul className="loop-summary">
-        <li>
-          {t("loop.roundsPlayed")}: <strong>{summary.roundsPlayed}</strong>
-        </li>
-        <li>
-          {t("loop.wins")}: <strong>{summary.wins}</strong>
-        </li>
-        <li>
-          {t("loop.bestFinish")}:{" "}
-          <strong>
-            {summary.bestPlacement ? `#${summary.bestPlacement}` : "—"}
-          </strong>
-        </li>
-        <li>
-          {t("loop.totalEarnings")}:{" "}
-          <strong>{formatMoney(summary.totalEarnings)}</strong>
-        </li>
-        <li>
-          {t("loop.reputationGained")}: <strong>+{summary.totalReputation}</strong>
-        </li>
-      </ul>
+    <section className="loop loop-stage-intro">
+      <StatusHeader onRankings={onRankings} />
+      <FlowStepper current="intro" />
+      <h2>{t("intro.title")}</h2>
+      <p className="loop-lead">
+        {t("intro.body1", {
+          count: players.length,
+          names: players.map((p) => playerFullName(p)).join(", "),
+        })}
+      </p>
+      <p className="loop-lead">{t("intro.body2")}</p>
+      <p className="loop-lead">{t("intro.body3")}</p>
       <button
         className="btn btn-primary"
-        onClick={() => {
-          setNotice(null);
-          startSeason();
-        }}
+        onClick={() => setFlowStage("shop")}
       >
-        {t("loop.startNextSeason")}
+        {t("intro.continue")}
       </button>
     </section>
   );
 }
 
-/** Disc shop screen: buy discs from the catalogue and equip them to players. */
-function ShopStage({
-  stepper,
-  noticeBar,
-  notice,
-  setNotice,
-  typeFilter,
-  setTypeFilter,
-  onRankings,
-}: {
-  stepper: ReactNode;
-  noticeBar: ReactNode;
-  notice: Notice | null;
-  setNotice: (notice: Notice | null) => void;
-  typeFilter: DiscType | "All";
-  setTypeFilter: (f: DiscType | "All") => void;
-  onRankings: () => void;
-}) {
+function ShopStage({ onRankings }: { onRankings: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
@@ -260,6 +137,9 @@ function ShopStage({
   const buyDiscs = useGameStore((s) => s.buyDiscs);
   const equipDisc = useGameStore((s) => s.equipDisc);
   const unequipDisc = useGameStore((s) => s.unequipDisc);
+
+  const { setNotice, noticeBar } = useNotice();
+  const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
 
   const equippedCount = players.reduce(
     (sum, p) => sum + DISC_TYPES.filter((type) => p.equipped?.[type]).length,
@@ -278,10 +158,7 @@ function ShopStage({
   const onBuy = (disc: Disc) => {
     const bought = buyDiscs(disc.id, 1);
     if (!bought) {
-      setNotice({
-        tone: "bad",
-        text: t("shop.noFunds", { name: disc.name, price: formatMoney(getDiscPrice(disc)) }),
-      });
+      setNotice({ tone: "bad", text: t("shop.noFunds", { name: disc.name, price: formatMoney(getDiscPrice(disc)) }) });
       return;
     }
     setNotice({ tone: "good", text: t("shop.bought", { name: disc.name }) });
@@ -291,30 +168,22 @@ function ShopStage({
     if (!discId) return;
     const disc = inventory.find((d) => d.id === discId);
     equipDisc(player.id, discId);
-    setNotice({
-      tone: "good",
-      text: t("shop.equipped", { name: disc?.name ?? "", player: playerFullName(player) }),
-    });
+    setNotice({ tone: "good", text: t("shop.equipped", { name: disc?.name ?? "", player: playerFullName(player) }) });
   };
 
   const onUnequip = (player: Player, type: DiscType) => {
     unequipDisc(player.id, type);
-    setNotice({
-      tone: "good",
-      text: t("shop.unequipped", { type: t(`discType.${type}`), player: playerFullName(player) }),
-    });
+    setNotice({ tone: "good", text: t("shop.unequipped", { type: t(`discType.${type}`), player: playerFullName(player) }) });
   };
 
   return (
     <section className="loop loop-stage-shop">
       <StatusHeader onRankings={onRankings} />
-      {stepper}
+      <FlowStepper current="shop" />
       <h2>{t("shop.title")}</h2>
       <p className="loop-lead">{t("shop.lead")}</p>
       <p className="loop-lead">
-        <strong>
-          {t("shop.progress", { done: equippedCount, total: totalNeeded })}
-        </strong>{" "}
+        <strong>{t("shop.progress", { done: equippedCount, total: totalNeeded })}</strong>{" "}
         — {t("shop.hint")}
       </p>
       {noticeBar}
@@ -329,18 +198,13 @@ function ShopStage({
         >
           <option value="All">{t("shop.filterAll")}</option>
           {DISC_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {t(`discType.${type}`)}
-            </option>
+            <option key={type} value={type}>{t(`discType.${type}`)}</option>
           ))}
         </select>
       </label>
       <p className="loop-meta shop-unlock-hint">
         {unlock
-          ? t("shop.nextUnlock", {
-              required: unlock.required,
-              rarity: t(`rarity.${unlock.rarity}`),
-            })
+          ? t("shop.nextUnlock", { required: unlock.required, rarity: t(`rarity.${unlock.rarity}`) })
           : t("shop.allUnlocked")}
       </p>
       <ul className="loop-tournaments">
@@ -365,11 +229,7 @@ function ShopStage({
                 </span>
               </div>
               <div className="loop-train-buttons">
-                <button
-                  className="btn"
-                  disabled={club.money < price}
-                  onClick={() => onBuy(disc)}
-                >
+                <button className="btn" disabled={club.money < price} onClick={() => onBuy(disc)}>
                   {t("shop.buy")}
                 </button>
               </div>
@@ -432,9 +292,7 @@ function ShopStage({
                             {options.length === 0 ? t("shop.empty") : t("shop.equipPlaceholder")}
                           </option>
                           {options.map((d) => (
-                            <option key={d.id} value={d.id}>
-                              {d.name} (+{d.bonus})
-                            </option>
+                            <option key={d.id} value={d.id}>{d.name} (+{d.bonus})</option>
                           ))}
                         </select>
                       )}
@@ -450,10 +308,7 @@ function ShopStage({
       <button
         className="btn btn-primary"
         disabled={!allEquipped}
-        onClick={() => {
-          setNotice(null);
-          setFlowStage("training");
-        }}
+        onClick={() => setFlowStage("training")}
       >
         {t("shop.continue")}
       </button>
@@ -461,25 +316,127 @@ function ShopStage({
   );
 }
 
-/** Tournament selection screen: list of available tournaments with entry eligibility. */
-function TournamentStage({
-  stepper,
-  noticeBar,
-  notice,
-  setNotice,
-  onRankings,
-}: {
-  stepper: ReactNode;
-  noticeBar: ReactNode;
-  notice: Notice | null;
-  setNotice: (notice: Notice | null) => void;
-  onRankings: () => void;
-}) {
+function TrainingStage({ onRankings }: { onRankings: () => void }) {
+  const { t } = useTranslation();
+  const club = useGameStore((s) => s.club);
+  const players = useGameStore((s) => s.players);
+  const lastTournament = useGameStore((s) => s.lastTournament);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
+  const trainPlayer = useGameStore((s) => s.trainPlayer);
+
+  const { setNotice, noticeBar } = useNotice();
+  const popups = useFloatingNumbers();
+
+  const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
+  const newlyUnlockedTiers = (
+    Object.entries(RARITY_REPUTATION_REQUIRED) as [import("@/types").DiscRarity, number][]
+  )
+    .filter(([, req]) => req > previousReputation && req <= club.reputation)
+    .map(([rarity]) => rarity);
+
+  const onTrain = (player: Player, type: TrainingType) => {
+    const result = trainPlayer(player.id, type);
+    if (!result) {
+      setNotice({ tone: "bad", text: t("loop.noTrainFunds") });
+      return;
+    }
+    popups.push(`+${result.boost} ${t(`stat.${result.stat}`)}!`, "good", player.id);
+    setNotice({
+      tone: "good",
+      text: t("loop.trained", {
+        player: playerFullName(player),
+        stat: t(`stat.${result.stat}`),
+        boost: result.boost,
+        newValue: result.newValue,
+        cost: formatMoney(result.cost),
+      }),
+    });
+  };
+
+  return (
+    <section className="loop loop-stage-training">
+      <StatusHeader onRankings={onRankings} />
+      <FlowStepper current="training" />
+      <h2>{t("loop.trainingTitle")}</h2>
+      <p className="loop-lead">{t("training.intro")}</p>
+      {noticeBar}
+      {newlyUnlockedTiers.length > 0 ? (
+        <button
+          className="level-up-banner level-up-banner--disc"
+          onClick={() => setFlowStage("shop")}
+        >
+          <span className="level-up-banner-title">
+            <Icon name="disc" size={15} /> {t("training.discUnlockTitle")}
+          </span>
+          <span className="level-up-banner-body">
+            {newlyUnlockedTiers.map((r) => t(`rarity.${r}`)).join(", ")} — {t("training.discUnlockCta")}
+          </span>
+        </button>
+      ) : null}
+      <div className="loop-roster">
+        {players.map((player) => {
+          const effective = effectivePlayer(player);
+          return (
+            <div key={player.id} className="loop-player floating-number-host">
+              <div className="loop-player-head">
+                <Avatar {...getPlayerAvatar(player)} />
+                <strong>{playerFullName(player)}</strong>
+                <span className="player-rating" title={t("player.rating")}>
+                  {player.rating ?? t("player.unrated")}
+                </span>
+              </div>
+              <div className="stat-bars">
+                {STAT_KEYS.map((stat) => (
+                  <StatBar
+                    key={stat}
+                    label={t(`stat.${stat}`)}
+                    value={player[stat]}
+                    effectiveValue={effective[stat]}
+                  />
+                ))}
+              </div>
+              <div className="loop-train-buttons">
+                {TRAINING_PROGRAMS.map((program) => (
+                  <button
+                    key={program.type}
+                    className="btn btn-small"
+                    disabled={club.money < program.cost}
+                    onClick={() => onTrain(player, program.type)}
+                  >
+                    {t("loop.trainButton", {
+                      type: t(`trainingType.${program.type}`),
+                      cost: formatMoney(program.cost),
+                    })}
+                  </button>
+                ))}
+              </div>
+              <FloatingNumbers
+                items={popups.items.filter((item) => item.groupId === player.id)}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="loop-train-buttons">
+        <button className="btn" onClick={() => setFlowStage("shop")}>
+          {t("training.toShop")}
+        </button>
+        <button className="btn btn-primary" onClick={() => setFlowStage("tournament")}>
+          {t("training.toTournament")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function TournamentStage({ onRankings }: { onRankings: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const playTournamentRound = useGameStore((s) => s.playTournamentRound);
+
+  const { setNotice, noticeBar } = useNotice();
 
   const available = getAvailableTournaments(club.reputation);
   const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
@@ -500,7 +457,6 @@ function TournamentStage({
       });
       return;
     }
-    setNotice(null);
     setFlowStage("results");
   };
 
@@ -509,7 +465,7 @@ function TournamentStage({
   return (
     <section className="loop loop-stage-tournament">
       <StatusHeader onRankings={onRankings} />
-      {stepper}
+      <FlowStepper current="tournament" />
       <h2>{t("loop.selectTitle")}</h2>
       <p className="loop-lead">{t("tournament.intro")}</p>
       {noticeBar}
@@ -519,7 +475,7 @@ function TournamentStage({
             <Icon name="star" size={15} /> {t("tournament.levelUpTitle")}
           </span>
           <span className="level-up-banner-body">
-            {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
+            {newlyUnlocked.map((t) => t.name).join(", ")}
           </span>
         </div>
       ) : null}
@@ -572,172 +528,29 @@ function TournamentStage({
   );
 }
 
-/** Pre-tournament training screen: stat bars per player plus floating "+N" feedback on each session. */
-function TrainingStage({
-  stepper,
-  noticeBar,
-  setNotice,
-  onRankings,
-}: {
-  stepper: ReactNode;
-  noticeBar: ReactNode;
-  setNotice: (notice: Notice | null) => void;
-  onRankings: () => void;
-}) {
-  const { t } = useTranslation();
-  const club = useGameStore((s) => s.club);
-  const players = useGameStore((s) => s.players);
-  const lastTournament = useGameStore((s) => s.lastTournament);
-  const setFlowStage = useGameStore((s) => s.setFlowStage);
-  const trainPlayer = useGameStore((s) => s.trainPlayer);
-
-  const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
-  const newlyUnlockedTiers = (
-    Object.entries(RARITY_REPUTATION_REQUIRED) as [import("@/types").DiscRarity, number][]
-  )
-    .filter(([, req]) => req > previousReputation && req <= club.reputation)
-    .map(([rarity]) => rarity);
-
-  const popups = useFloatingNumbers();
-
-  const onTrain = (player: Player, type: TrainingType) => {
-    const result = trainPlayer(player.id, type);
-    if (!result) {
-      setNotice({ tone: "bad", text: t("loop.noTrainFunds") });
-      return;
-    }
-    popups.push(`+${result.boost} ${t(`stat.${result.stat}`)}!`, "good", player.id);
-    setNotice({
-      tone: "good",
-      text: t("loop.trained", {
-        player: playerFullName(player),
-        stat: t(`stat.${result.stat}`),
-        boost: result.boost,
-        newValue: result.newValue,
-        cost: formatMoney(result.cost),
-      }),
-    });
-  };
-
-  return (
-    <section className="loop loop-stage-training">
-      <StatusHeader onRankings={onRankings} />
-      {stepper}
-      <h2>{t("loop.trainingTitle")}</h2>
-      <p className="loop-lead">{t("training.intro")}</p>
-      {noticeBar}
-      {newlyUnlockedTiers.length > 0 ? (
-        <button
-          className="level-up-banner level-up-banner--disc"
-          onClick={() => { setNotice(null); setFlowStage("shop"); }}
-        >
-          <span className="level-up-banner-title">
-            <Icon name="disc" size={15} />{" "}
-            {t("training.discUnlockTitle")}
-          </span>
-          <span className="level-up-banner-body">
-            {newlyUnlockedTiers.map((r) => t(`rarity.${r}`)).join(", ")}{" "}
-            — {t("training.discUnlockCta")}
-          </span>
-        </button>
-      ) : null}
-      <div className="loop-roster">
-        {players.map((player) => {
-          const effective = effectivePlayer(player);
-          return (
-            <div
-              key={player.id}
-              className="loop-player floating-number-host"
-            >
-              <div className="loop-player-head">
-                <Avatar {...getPlayerAvatar(player)} />
-                <strong>{playerFullName(player)}</strong>
-                <span className="player-rating" title={t("player.rating")}>
-                  {player.rating ?? t("player.unrated")}
-                </span>
-              </div>
-              <div className="stat-bars">
-                {STAT_KEYS.map((stat) => (
-                  <StatBar
-                    key={stat}
-                    label={t(`stat.${stat}`)}
-                    value={player[stat]}
-                    effectiveValue={effective[stat]}
-                  />
-                ))}
-              </div>
-              <div className="loop-train-buttons">
-                {TRAINING_PROGRAMS.map((program) => (
-                  <button
-                    key={program.type}
-                    className="btn btn-small"
-                    disabled={club.money < program.cost}
-                    onClick={() => onTrain(player, program.type)}
-                  >
-                    {t("loop.trainButton", {
-                      type: t(`trainingType.${program.type}`),
-                      cost: formatMoney(program.cost),
-                    })}
-                  </button>
-                ))}
-              </div>
-              <FloatingNumbers
-                items={popups.items.filter((item) => item.groupId === player.id)}
-              />
-            </div>
-          );
-        })}
-      </div>
-      <div className="loop-train-buttons">
-        <button
-          className="btn"
-          onClick={() => {
-            setNotice(null);
-            setFlowStage("shop");
-          }}
-        >
-          {t("training.toShop")}
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setNotice(null);
-            setFlowStage("tournament");
-          }}
-        >
-          {t("training.toTournament")}
-        </button>
-      </div>
-    </section>
-  );
-}
-
 /**
  * Tournament results screen. Plays the club's best finisher's round
- * hole-by-hole first (skippable), then reveals the full leaderboard — gives
- * the otherwise-instant simulation a sense of "watching it happen".
+ * hole-by-hole first (skippable), then reveals the full leaderboard.
  */
-function ResultsStage({
-  lastTournament,
-  players,
-  onContinue,
-  onRankings,
-}: {
-  lastTournament: TournamentSummary | null;
-  players: Player[];
-  onContinue: () => void;
-  onRankings: () => void;
-}) {
+function ResultsStage({ onRankings }: { onRankings: () => void }) {
   const { t } = useTranslation();
+  const lastTournament = useGameStore((s) => s.lastTournament);
+  const players = useGameStore((s) => s.players);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
+  const advanceSeason = useGameStore((s) => s.advanceSeason);
+
   const [showLeaderboard, setShowLeaderboard] = useState(
     !lastTournament || lastTournament.playerTracks.length === 0
   );
 
   const clubWon =
-    lastTournament?.rows.some(
-      (row) => row.isClubPlayer && row.placement === 1
-    ) ?? false;
+    lastTournament?.rows.some((row) => row.isClubPlayer && row.placement === 1) ?? false;
   const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
+
+  const onContinue = () => {
+    const next = advanceSeason();
+    setFlowStage(isSeasonComplete(next) ? "complete" : "training");
+  };
 
   return (
     <section className="loop loop-stage-results">
@@ -759,18 +572,10 @@ function ResultsStage({
             <ol className="leaderboard">
               <li className="leaderboard-head">
                 <span className="leaderboard-pos">{t("results.colPos")}</span>
-                <span className="leaderboard-name">
-                  {t("results.colPlayer")}
-                </span>
-                <span className="leaderboard-score">
-                  {t("results.colScore")}
-                </span>
-                <span className="leaderboard-rating">
-                  {t("results.colRating")}
-                </span>
-                <span className="leaderboard-earn">
-                  {t("results.colEarnings")}
-                </span>
+                <span className="leaderboard-name">{t("results.colPlayer")}</span>
+                <span className="leaderboard-score">{t("results.colScore")}</span>
+                <span className="leaderboard-rating">{t("results.colRating")}</span>
+                <span className="leaderboard-earn">{t("results.colEarnings")}</span>
               </li>
               {lastTournament.rows.map((row) => {
                 const resultClass = !row.isClubPlayer
@@ -790,25 +595,17 @@ function ResultsStage({
                     key={`${row.placement}-${row.playerName}`}
                     className={`leaderboard-row${resultClass}`}
                   >
-                    <span className="leaderboard-pos">
-                      {medal ?? row.placement}
-                    </span>
+                    <span className="leaderboard-pos">{medal ?? row.placement}</span>
                     <span className="leaderboard-name">
                       <Avatar {...avatar} size="sm" />
                       <span className="leaderboard-name-text">{row.playerName}</span>
                       {row.isClubPlayer ? (
-                        <span className="leaderboard-badge">
-                          {t("results.you")}
-                        </span>
+                        <span className="leaderboard-badge">{t("results.you")}</span>
                       ) : null}
                     </span>
-                    <span className="leaderboard-score">
-                      {formatScoreToPar(row.totalScore)}
-                    </span>
+                    <span className="leaderboard-score">{formatScoreToPar(row.totalScore)}</span>
                     <span className="leaderboard-rating">{row.rating}</span>
-                    <span className="leaderboard-earn">
-                      {formatMoney(row.earnings)}
-                    </span>
+                    <span className="leaderboard-earn">{formatMoney(row.earnings)}</span>
                   </li>
                 );
               })}
@@ -823,6 +620,35 @@ function ResultsStage({
           {t("results.continue")}
         </button>
       )}
+    </section>
+  );
+}
+
+function CompleteStage({ onRankings }: { onRankings: () => void }) {
+  const { t } = useTranslation();
+  const season = useGameStore((s) => s.season);
+  const startSeason = useGameStore((s) => s.startSeason);
+  const summary = summariseSeason(season);
+
+  return (
+    <section className="loop loop-stage-complete">
+      <StatusHeader onRankings={onRankings} />
+      <h2>
+        <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
+      </h2>
+      <ul className="loop-summary">
+        <li>{t("loop.roundsPlayed")}: <strong>{summary.roundsPlayed}</strong></li>
+        <li>{t("loop.wins")}: <strong>{summary.wins}</strong></li>
+        <li>
+          {t("loop.bestFinish")}:{" "}
+          <strong>{summary.bestPlacement ? `#${summary.bestPlacement}` : "—"}</strong>
+        </li>
+        <li>{t("loop.totalEarnings")}: <strong>{formatMoney(summary.totalEarnings)}</strong></li>
+        <li>{t("loop.reputationGained")}: <strong>+{summary.totalReputation}</strong></li>
+      </ul>
+      <button className="btn btn-primary" onClick={() => startSeason()}>
+        {t("loop.startNextSeason")}
+      </button>
     </section>
   );
 }
