@@ -52,9 +52,9 @@ const PER_TIER = NPC_ROSTER_SIZE / TIERS.length; // 20
  */
 function seedRatingHistory(overall: number, rng: RandomFn): number[] {
   const base = 650 + Math.round((overall / 100) * 400);
-  // 3 seed rounds with ±40 jitter each
+  // 3 seed rounds with ±20 jitter — tight enough to keep tier boundaries clean
   return Array.from({ length: 3 }, () => {
-    const jitter = Math.round((rng() - 0.5) * 80);
+    const jitter = Math.round((rng() - 0.5) * 40);
     return Math.min(1100, Math.max(600, base + jitter));
   });
 }
@@ -137,18 +137,22 @@ export function sampleNpcsForTournament(
   if (npcRoster.length === 0 || count === 0) return [];
   const rng = options.rng ?? Math.random;
 
-  // Target rating for this difficulty (aligned with new seed formula):
-  // diff 1 → ~850 (amateur tier, stats 38–55), diff 5 → ~1050 (elite)
+  // Target rating for this difficulty (aligned with seed formula):
+  // diff 1 → ~850 (amateur tier), diff 5 → ~1050 (elite)
   const targetRating = 850 + (difficulty - 1) * 50;
-  const tolerance = 80 + (difficulty * 15); // wider band for harder events
+  // Narrower tolerance keeps each difficulty pulling from only 1-2 adjacent
+  // tiers; no minimum weight floor so out-of-range NPCs are truly excluded.
+  const tolerance = 60 + difficulty * 10;
 
-  // Score each NPC by proximity to target rating; closer = higher weight
+  // Score each NPC by proximity to target rating; closer = higher weight.
+  // weight=0 means excluded — no floor — so tier bleed between difficulties
+  // doesn't happen even when jitter pushes a few NPCs to the edge.
   const scored = npcRoster.map((npc) => {
     const r = npc.rating ?? 900;
     const dist = Math.abs(r - targetRating);
-    const weight = Math.max(1, tolerance - dist);
+    const weight = Math.max(0, tolerance - dist);
     return { npc, weight };
-  });
+  }).filter((s) => s.weight > 0);
 
   // Weighted reservoir sampling — maintain a running total so each draw is O(n)
   // instead of re-summing the entire pool on every iteration.
