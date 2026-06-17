@@ -4,7 +4,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Disc Golf Manager",
-  description: "Frontend-only disc golf management simulator",
+  description: "Disc golf management simulator",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "DG Manager",
+  },
+  icons: {
+    icon: "/icons/icon-192x192.svg",
+    apple: "/icons/icon-152x152.svg",
+  },
 };
 
 export const viewport: Viewport = {
