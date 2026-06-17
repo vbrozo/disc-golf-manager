@@ -933,21 +933,24 @@ body {
 
 .hole-playback-strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
+  flex-wrap: nowrap;
+  gap: 0.15rem;
   flex: 1;
+  min-width: 0;
 }
 
 .hole-playback-hole {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.55rem;
-  height: 1.55rem;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 1.55rem;
+  aspect-ratio: 1;
   border-radius: 0.25rem;
   background: #1e293b;
   border: 1px solid #334155;
-  font-size: 0.8rem;
+  font-size: clamp(0.6rem, 2.2vw, 0.8rem);
 }
 
 .hole-playback-hole-shown {
