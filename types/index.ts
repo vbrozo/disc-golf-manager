@@ -25,6 +25,17 @@ export type TrainablePlayerStat =
   | "mental"
   | "fitness";
 
+/** Ordered list of all trainable player stats, used for stat bars and training UI. */
+export const PLAYER_STAT_KEYS: readonly TrainablePlayerStat[] = [
+  "power",
+  "accuracy",
+  "putting",
+  "scramble",
+  "consistency",
+  "mental",
+  "fitness",
+];
+
 /** The training disciplines a player can practise, one per trainable stat. */
 export type TrainingType =
   | "Power"

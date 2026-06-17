@@ -19,6 +19,7 @@ import {
   TRAINING_PROGRAMS,
 } from "@/game";
 import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
+import { PLAYER_STAT_KEYS } from "@/types";
 import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
 import PlayerModal from "@/components/PlayerModal";
@@ -44,16 +45,6 @@ import {
   getPlacementMedal,
   getPlayerAvatar,
 } from "@/utils/avatar";
-
-const STAT_KEYS: ("power" | "accuracy" | "putting" | "scramble" | "consistency" | "mental" | "fitness")[] = [
-  "power",
-  "accuracy",
-  "putting",
-  "scramble",
-  "consistency",
-  "mental",
-  "fitness",
-];
 
 const DISC_TYPES: DiscType[] = ["Driver", "Midrange", "Putter"];
 
@@ -427,7 +418,7 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
                 </span>
               </div>
               <div className="stat-bars">
-                {STAT_KEYS.map((stat) => (
+                {PLAYER_STAT_KEYS.map((stat) => (
                   <StatBar
                     key={stat}
                     label={t(`stat.${stat}`)}

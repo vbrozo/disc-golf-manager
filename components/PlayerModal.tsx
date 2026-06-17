@@ -8,16 +8,7 @@ import Avatar from "@/components/Avatar";
 import StatBar from "@/components/StatBar";
 import StatChart from "@/components/StatChart";
 import { effectivePlayer } from "@/game";
-
-const STAT_KEYS: ("power" | "accuracy" | "putting" | "scramble" | "consistency" | "mental" | "fitness")[] = [
-  "power",
-  "accuracy",
-  "putting",
-  "scramble",
-  "consistency",
-  "mental",
-  "fitness",
-];
+import { PLAYER_STAT_KEYS } from "@/types";
 
 // PDGA ratings span roughly 600–1100; normalise to 0–100 for the chart.
 function normaliseRating(rating: number): number {
@@ -33,11 +24,7 @@ interface PlayerModalProps {
 export default function PlayerModal({ player, allTournaments, onClose }: PlayerModalProps) {
   const { t } = useTranslation();
 
-  const relevant = allTournaments.filter((tr) =>
-    tr.playerResults?.some((pr) => pr.playerId === player.id)
-  );
-
-  const playerResults = relevant.flatMap(
+  const playerResults = allTournaments.flatMap(
     (tr) => tr.playerResults?.filter((pr) => pr.playerId === player.id) ?? []
   );
 
@@ -119,7 +106,7 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
         <div className="player-modal-section">
           <h3>{t("player.overview")}</h3>
           <div className="stat-bars">
-            {STAT_KEYS.map((stat) => (
+            {PLAYER_STAT_KEYS.map((stat) => (
               <StatBar
                 key={stat}
                 label={t(`stat.${stat}`)}

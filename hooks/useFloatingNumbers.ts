@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FloatingNumber } from "@/components/FloatingNumbers";
 
 let nextId = 0;
@@ -7,6 +7,12 @@ let nextId = 0;
 export function useFloatingNumbers() {
   const [items, setItems] = useState<FloatingNumber[]>([]);
   const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timeouts.current.forEach(clearTimeout);
+    };
+  }, []);
 
   const push = useCallback(
     (text: string, tone: "good" | "bad" = "good", groupId?: string) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { t as translate, type Language } from "@/i18n";
 
@@ -10,8 +11,10 @@ import { t as translate, type Language } from "@/i18n";
  */
 export function useTranslation() {
   const language = useGameStore((s) => s.language);
-  const t = (key: string, params?: Record<string, string | number>) =>
-    translate(language, key, params);
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>) => translate(language, key, params),
+    [language]
+  );
   return { language, t, setLanguage: useGameStore.getState().setLanguage } as {
     language: Language;
     t: typeof t;
