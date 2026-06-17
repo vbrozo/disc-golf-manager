@@ -1363,8 +1363,11 @@ body {
 /* --- Achievement badges + streak --- */
 .achievement-row {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 0.5rem;
-  margin-top: -0.5rem;
+  margin-left: auto;
+  margin-top: 0;
 }
 
 .achievement-badge {
