@@ -89,10 +89,10 @@ export interface TournamentSimulationResult {
   standings: TournamentStanding[];
 }
 
-const PRIZE_SHARES = [0.5, 0.3, 0.2];
+const PRIZE_SHARES = [0.40, 0.25, 0.15, 0.12, 0.08];
 
 /**
- * Only top 3 share the prize pool (50/30/20%). All other placements earn 0.
+ * Top 5 share the prize pool (40/25/15/12/8%). All other placements earn 0.
  */
 export function earningsForPlacement(
   prizePool: number,
