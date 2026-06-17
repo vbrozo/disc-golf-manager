@@ -406,7 +406,7 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
                     key={program.type}
                     className="btn btn-small"
                     disabled={club.money < program.cost}
-                    onClick={() => onTrain(player, program.type)}
+                    onClick={(e) => { e.stopPropagation(); onTrain(player, program.type); }}
                   >
                     {t("loop.trainButton", {
                       type: t(`trainingType.${program.type}`),
