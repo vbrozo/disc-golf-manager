@@ -20,6 +20,7 @@ import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
 import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
 import PlayerModal from "@/components/PlayerModal";
+import ClubHistoryModal from "@/components/ClubHistoryModal";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
@@ -65,6 +66,7 @@ export default function GameFlow() {
   const season = useGameStore((s) => s.season);
   const flowStage = useGameStore((s) => s.flowStage);
   const [showRankings, setShowRankings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   if (season.phase === "preseason") {
     return <StartScreen />;
@@ -74,15 +76,24 @@ export default function GameFlow() {
     return <RankingList onClose={() => setShowRankings(false)} />;
   }
 
+  if (showHistory) {
+    return (
+      <div className="app-main">
+        <ClubHistoryModal onClose={() => setShowHistory(false)} />
+      </div>
+    );
+  }
+
   const onRankings = () => setShowRankings(true);
+  const onHistory = () => setShowHistory(true);
 
   switch (flowStage) {
-    case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} />;
-    case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} />;
-    case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} />;
-    case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} />;
-    case "results":    return <ResultsStage    key="results"   onRankings={onRankings} />;
-    case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} />;
+    case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+    case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+    case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+    case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+    case "results":    return <ResultsStage    key="results"   onRankings={onRankings} onHistory={onHistory} />;
+    case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
   }
 }
 
@@ -90,14 +101,14 @@ export default function GameFlow() {
 // Stage components
 // ---------------------------------------------------------------------------
 
-function IntroStage({ onRankings }: { onRankings: () => void }) {
+function IntroStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const players = useGameStore((s) => s.players);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
 
   return (
     <section className="loop loop-stage-intro">
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <FlowStepper current="intro" />
       <h2>{t("intro.title")}</h2>
       <p className="loop-lead">
@@ -118,7 +129,7 @@ function IntroStage({ onRankings }: { onRankings: () => void }) {
   );
 }
 
-function ShopStage({ onRankings }: { onRankings: () => void }) {
+function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
@@ -168,7 +179,7 @@ function ShopStage({ onRankings }: { onRankings: () => void }) {
 
   return (
     <section className="loop loop-stage-shop">
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <FlowStepper current="shop" />
       <h2>{t("shop.title")}</h2>
       <p className="loop-lead">{t("shop.lead")}</p>
@@ -307,7 +318,7 @@ function ShopStage({ onRankings }: { onRankings: () => void }) {
   );
 }
 
-function TrainingStage({ onRankings }: { onRankings: () => void }) {
+function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
@@ -355,7 +366,7 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
           onClose={() => setSelectedPlayer(null)}
         />
       )}
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <FlowStepper current="training" />
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
@@ -434,7 +445,7 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
   );
 }
 
-function TournamentStage({ onRankings }: { onRankings: () => void }) {
+function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const lastTournament = useGameStore((s) => s.lastTournament);
@@ -469,7 +480,7 @@ function TournamentStage({ onRankings }: { onRankings: () => void }) {
 
   return (
     <section className="loop loop-stage-tournament">
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <FlowStepper current="tournament" />
       <h2>{t("loop.selectTitle")}</h2>
       <p className="loop-lead">{t("tournament.intro")}</p>
@@ -537,7 +548,7 @@ function TournamentStage({ onRankings }: { onRankings: () => void }) {
  * Tournament results screen. Plays the club's best finisher's round
  * hole-by-hole first (skippable), then reveals the full leaderboard.
  */
-function ResultsStage({ onRankings }: { onRankings: () => void }) {
+function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const lastTournament = useGameStore((s) => s.lastTournament);
   const players = useGameStore((s) => s.players);
@@ -560,7 +571,7 @@ function ResultsStage({ onRankings }: { onRankings: () => void }) {
   return (
     <section className="loop loop-stage-results">
       {clubWon && showLeaderboard ? <Confetti /> : null}
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <h2>{t("results.title")}</h2>
       {lastTournament ? (
         !showLeaderboard ? (
@@ -629,7 +640,7 @@ function ResultsStage({ onRankings }: { onRankings: () => void }) {
   );
 }
 
-function CompleteStage({ onRankings }: { onRankings: () => void }) {
+function CompleteStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const season = useGameStore((s) => s.season);
   const startSeason = useGameStore((s) => s.startSeason);
@@ -637,7 +648,7 @@ function CompleteStage({ onRankings }: { onRankings: () => void }) {
 
   return (
     <section className="loop loop-stage-complete">
-      <StatusHeader onRankings={onRankings} />
+      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
       <h2>
         <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
       </h2>

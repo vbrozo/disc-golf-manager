@@ -49,6 +49,18 @@ export interface EnterTournamentResult {
   standings: TournamentStanding[];
 }
 
+/** End-of-season performance snapshot stored in {@link GameState.clubHistory}. */
+export interface SeasonSnapshot {
+  season: number;
+  tournamentsPlayed: number;
+  wins: number;
+  bestPlacement: number | null;
+  totalEarnings: number;
+  reputationGained: number;
+  /** Club reputation at the moment the season ended. */
+  endReputation: number;
+}
+
 /** A single row of a tournament's final leaderboard, for the results screen. */
 export interface LeaderboardRow {
   playerName: string;
@@ -132,6 +144,8 @@ export interface GameState {
   lastTournament: TournamentSummary | null;
   /** 100 persistent NPC players that compete in every tournament and appear on the ranking list. */
   npcRoster: Player[];
+  /** End-of-season performance snapshots, one per completed season. */
+  clubHistory: SeasonSnapshot[];
 
   // --- Actions ---
   /** Switch the UI language. */
@@ -303,6 +317,7 @@ export const useGameStore = create<GameState>()(
   flowStage: "intro",
   lastTournament: null,
   npcRoster: [],
+  clubHistory: [],
 
   setLanguage: (language) => set({ language }),
 
@@ -618,6 +633,7 @@ export const useGameStore = create<GameState>()(
         flowStage: "intro" as FlowStage,
         lastTournament: null,
         npcRoster: generateNpcRoster(),
+        clubHistory: [],
       };
     }),
 
@@ -672,8 +688,19 @@ export const useGameStore = create<GameState>()(
       });
       if (next.phase === "complete") {
         const seasonNum = next.season;
+        const results = state.season.results;
+        const snapshot: SeasonSnapshot = {
+          season: seasonNum,
+          tournamentsPlayed: results.length,
+          wins: results.filter((r) => r.placement === 1).length,
+          bestPlacement: results.length > 0 ? Math.min(...results.map((r) => r.placement)) : null,
+          totalEarnings: results.reduce((sum, r) => sum + r.earnings, 0),
+          reputationGained: results.reduce((sum, r) => sum + r.reputationGained, 0),
+          endReputation: state.club.reputation,
+        };
         return {
           season: next,
+          clubHistory: [...state.clubHistory, snapshot],
           players: playersWithRecovery.map((p) => ({
             ...p,
             seasonHistory: [
@@ -714,6 +741,7 @@ export const useGameStore = create<GameState>()(
         flowStage: state.flowStage,
         lastTournament: state.lastTournament,
         npcRoster: state.npcRoster,
+        clubHistory: state.clubHistory,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

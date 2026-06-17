@@ -231,6 +231,19 @@ const en: Dict = {
   "player.tournamentHistory": "Rating Trend",
   "player.noTournamentHistory": "Play tournaments to see your rating trend.",
   "player.tournamentHistoryLabel": "T{round}",
+  // Club history
+  "history.title": "Club History",
+  "history.button": "History",
+  "history.close": "← Back",
+  "history.noHistory": "Complete a season to see club history.",
+  "history.colSeason": "Season",
+  "history.colPlayed": "Played",
+  "history.colWins": "Wins",
+  "history.colBest": "Best",
+  "history.colEarnings": "Earnings",
+  "history.colRep": "Rep+",
+  "history.chartEarnings": "Season Earnings",
+  "history.chartReputation": "End Reputation",
 };
 
 const hr: Dict = {
@@ -448,6 +461,19 @@ const hr: Dict = {
   "player.tournamentHistory": "Trend ratinga",
   "player.noTournamentHistory": "Igraj turnire kako bi vidio trend ratinga.",
   "player.tournamentHistoryLabel": "T{round}",
+  // Povijest kluba
+  "history.title": "Povijest kluba",
+  "history.button": "Povijest",
+  "history.close": "← Natrag",
+  "history.noHistory": "Završi sezonu kako bi vidio povijest kluba.",
+  "history.colSeason": "Sezona",
+  "history.colPlayed": "Odig.",
+  "history.colWins": "Pob.",
+  "history.colBest": "Plasman",
+  "history.colEarnings": "Zarada",
+  "history.colRep": "Ugled+",
+  "history.chartEarnings": "Zarada po sezoni",
+  "history.chartReputation": "Ukupni ugled",
 };
 
 const DICTS: Record<Language, Dict> = { en, hr };

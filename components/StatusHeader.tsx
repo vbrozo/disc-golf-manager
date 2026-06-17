@@ -13,10 +13,11 @@ import { getAchievements, getCurrentStreak } from "@/game/achievements";
 
 interface StatusHeaderProps {
   onRankings?: () => void;
+  onHistory?: () => void;
 }
 
 /** Persistent club status bar shown on every in-game flow step. */
-export default function StatusHeader({ onRankings }: StatusHeaderProps = {}) {
+export default function StatusHeader({ onRankings, onHistory }: StatusHeaderProps = {}) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const season = useGameStore((s) => s.season);
@@ -97,13 +98,18 @@ export default function StatusHeader({ onRankings }: StatusHeaderProps = {}) {
             </strong>
           </div>
         ) : null}
-        {onRankings ? (
-          <div className="loop-status-rankings">
+        <div className="loop-status-rankings">
+          {onHistory && (
+            <button className="btn btn-small" onClick={onHistory} style={{ marginRight: "0.4rem" }}>
+              <Icon name="chart" size={13} /> {t("history.button")}
+            </button>
+          )}
+          {onRankings && (
             <button className="btn btn-small" onClick={onRankings}>
               <Icon name="trophy" size={13} /> {t("rankings.button")}
             </button>
-          </div>
-        ) : null}
+          )}
+        </div>
       </header>
       <AchievementBadges achievements={achievements} />
     </>

@@ -6,7 +6,8 @@ type IconName =
   | "check"
   | "flame"
   | "calendar"
-  | "flag";
+  | "flag"
+  | "chart";
 
 interface IconProps {
   name: IconName;
@@ -27,6 +28,7 @@ const PATHS: Record<IconName, string> = {
   calendar:
     "M4 5.5h16v15H4v-15Z M4 9.5h16 M8 3v4 M16 3v4",
   flag: "M5 21V4 M5 4h13l-3 3.5L18 11H5",
+  chart: "M3 3v18h18 M7 16l4-4 4 4 4-7",
 };
 
 /** Consistent stroke-style icon, replacing ad-hoc emoji in chrome/UI elements. */
