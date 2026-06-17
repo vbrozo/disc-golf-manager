@@ -13,9 +13,9 @@ export default function PageTitle() {
       document.title = "Disc Golf Manager";
       return;
     }
-    const parts = [club.name, `Season ${season.currentSeason}`, `Round ${season.currentRound}`];
+    const parts = [club.name, `Season ${season.season}`, `Round ${season.round}`];
     document.title = parts.join(" · ");
-  }, [club.name, season.phase, season.currentSeason, season.currentRound]);
+  }, [club.name, season.phase, season.season, season.round]);
 
   return null;
 }
