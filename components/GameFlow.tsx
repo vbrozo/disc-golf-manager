@@ -6,6 +6,7 @@ import {
   checkEntryEligibility,
   DISC_TYPE_STAT,
   effectivePlayer,
+  entryFeeMultiplier,
   getAvailableDiscs,
   getAvailableTournaments,
   getDiscPrice,
@@ -21,6 +22,8 @@ import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
 import PlayerModal from "@/components/PlayerModal";
 import ClubHistoryModal from "@/components/ClubHistoryModal";
+import ClubUpgradesModal from "@/components/ClubUpgradesModal";
+import BottomNav from "@/components/BottomNav";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
@@ -67,6 +70,7 @@ export default function GameFlow() {
   const flowStage = useGameStore((s) => s.flowStage);
   const [showRankings, setShowRankings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showUpgrades, setShowUpgrades] = useState(false);
 
   if (season.phase === "preseason") {
     return <StartScreen />;
@@ -84,17 +88,35 @@ export default function GameFlow() {
     );
   }
 
+  if (showUpgrades) {
+    return (
+      <div className="app-main">
+        <ClubUpgradesModal onClose={() => setShowUpgrades(false)} />
+      </div>
+    );
+  }
+
   const onRankings = () => setShowRankings(true);
   const onHistory = () => setShowHistory(true);
+  const onUpgrades = () => setShowUpgrades(true);
 
-  switch (flowStage) {
-    case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-    case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-    case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-    case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-    case "results":    return <ResultsStage    key="results"   onRankings={onRankings} onHistory={onHistory} />;
-    case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-  }
+  const stageEl = (() => {
+    switch (flowStage) {
+      case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+      case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+      case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />;
+      case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+      case "results":    return <ResultsStage    key="results"   onRankings={onRankings} onHistory={onHistory} />;
+      case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
+    }
+  })();
+
+  return (
+    <>
+      {stageEl}
+      <BottomNav onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -318,7 +340,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   );
 }
 
-function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
+function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () => void; onHistory: () => void; onUpgrades?: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
@@ -437,6 +459,11 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
         <button className="btn" onClick={() => setFlowStage("shop")}>
           {t("training.toShop")}
         </button>
+        {onUpgrades && (
+          <button className="btn" onClick={onUpgrades}>
+            <Icon name="flag" size={13} /> {t("upgrades.button")}
+          </button>
+        )}
         <button className="btn btn-primary" onClick={() => setFlowStage("tournament")}>
           {t("training.toTournament")}
         </button>
@@ -448,9 +475,11 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
 function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
+  const clubUpgrades = useGameStore((s) => s.clubUpgrades);
   const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const playTournamentRound = useGameStore((s) => s.playTournamentRound);
+  const feeMult = entryFeeMultiplier(clubUpgrades);
 
   const { setNotice, noticeBar } = useNotice();
 
@@ -464,11 +493,12 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
     const outcome = playTournamentRound(tournament.id);
     if (!outcome) {
       const eligibility = checkEntryEligibility(club, tournament);
+      const discountedFee = Math.round(eligibility.entryFee * feeMult);
       setNotice({
         tone: "bad",
         text:
-          eligibility.reason === "insufficient-funds"
-            ? t("loop.noFunds", { fee: formatMoney(eligibility.entryFee) })
+          eligibility.reason !== "locked" && club.money < discountedFee
+            ? t("loop.noFunds", { fee: formatMoney(discountedFee) })
             : t("loop.cantEnter"),
       });
       return;
@@ -497,8 +527,10 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
       ) : null}
       <ul className="loop-tournaments">
         {available.map((tournament) => {
-          const fee = getEntryFee(tournament);
-          const eligibility = checkEntryEligibility(club, tournament);
+          const baseFee = getEntryFee(tournament);
+          const fee = Math.round(baseFee * feeMult);
+          const reputationOk = club.reputation >= tournament.reputationRequired;
+          const eligibility = { canEnter: reputationOk && club.money >= fee };
           const unlocked = isNewlyUnlocked(tournament);
           return (
             <li

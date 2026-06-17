@@ -18,6 +18,11 @@ import {
   generateNpcRoster,
   generateOpponents,
   getCourseById,
+  getUpgradeById,
+  trainingCostMultiplier,
+  trainingBoostBonus,
+  injuryRecoveryBonus,
+  entryFeeMultiplier,
   getDiscById,
   getDiscPrice,
   getTournamentById,
@@ -146,6 +151,8 @@ export interface GameState {
   npcRoster: Player[];
   /** End-of-season performance snapshots, one per completed season. */
   clubHistory: SeasonSnapshot[];
+  /** Purchased facility upgrades: upgrade id → current level (1 or 2). */
+  clubUpgrades: Record<string, number>;
 
   // --- Actions ---
   /** Switch the UI language. */
@@ -244,6 +251,11 @@ export interface GameState {
    * Returns the resulting {@link SeasonState}.
    */
   advanceSeason: () => SeasonState;
+  /**
+   * Purchase the next level of a club upgrade. Charges the club the upgrade's
+   * cost. Returns `true` on success, `false` if already maxed or unaffordable.
+   */
+  purchaseUpgrade: (id: string) => boolean;
 }
 
 const initialClub: Club = {
@@ -318,6 +330,7 @@ export const useGameStore = create<GameState>()(
   lastTournament: null,
   npcRoster: [],
   clubHistory: [],
+  clubUpgrades: {},
 
   setLanguage: (language) => set({ language }),
 
@@ -347,22 +360,40 @@ export const useGameStore = create<GameState>()(
     const program = getTrainingProgram(type);
     const player = state.players.find((p) => p.id === id);
 
-    // Reject unknown program/player or an unaffordable session — no changes.
-    if (!program || !player || state.club.money < program.cost) {
-      return null;
-    }
+    if (!program || !player) return null;
 
+    // Apply Training Center cost discount.
+    const costMult = trainingCostMultiplier(state.clubUpgrades);
+    const effectiveCost = Math.round(program.cost * costMult);
+
+    if (state.club.money < effectiveCost) return null;
+
+    // Apply Video Analysis boost bonus (extra +N on top of random roll).
+    const boostBonus = trainingBoostBonus(state.clubUpgrades);
     const outcome = applyTraining(player, type, options);
-    if (!outcome) {
-      return null;
-    }
+    if (!outcome) return null;
+
+    const baseStat = outcome.player[program.stat as keyof typeof outcome.player] as number;
+    const boostedStat = Math.min(100, baseStat + boostBonus);
+    const boostedPlayer = boostBonus > 0
+      ? { ...outcome.player, [program.stat]: boostedStat }
+      : outcome.player;
+    const originalStat = player[program.stat as keyof typeof player] as number;
+    const finalStat = boostBonus > 0 ? boostedStat : baseStat;
+
+    const result = {
+      ...outcome.result,
+      cost: effectiveCost,
+      boost: finalStat - originalStat,
+      newValue: finalStat,
+    };
 
     set((s) => ({
-      club: { ...s.club, money: s.club.money - program.cost },
-      players: s.players.map((p) => (p.id === id ? outcome.player : p)),
+      club: { ...s.club, money: s.club.money - effectiveCost },
+      players: s.players.map((p) => (p.id === id ? boostedPlayer : p)),
     }));
 
-    return outcome.result;
+    return result;
   },
 
   addDisc: (disc) =>
@@ -476,11 +507,14 @@ export const useGameStore = create<GameState>()(
       return null;
     }
 
-    // Reputation gate + entry-fee affordability — reject without changes.
+    // Reputation gate check — reject locked tournaments.
     const eligibility = checkEntryEligibility(state.club, tournament);
-    if (!eligibility.canEnter) {
-      return null;
-    }
+    if (eligibility.reason === "locked") return null;
+
+    // Apply Club Sponsor entry fee discount, then check affordability.
+    const feeMult = entryFeeMultiplier(state.clubUpgrades);
+    const discountedFee = Math.round(eligibility.entryFee * feeMult);
+    if (state.club.money < discountedFee) return null;
 
     // Fill the field from the persistent NPC roster (falls back to fresh
     // random opponents if the roster hasn't been seeded yet).
@@ -507,11 +541,13 @@ export const useGameStore = create<GameState>()(
 
     // The club banks the prize money earned by every one of its players.
     const clubEarnings = clubStandings.reduce((sum, s) => sum + s.earnings, 0);
-    const settlement = buildSettlement(
-      tournament,
-      clubEarnings,
-      best.reputationGained
-    );
+    const baseSettlement = buildSettlement(tournament, clubEarnings, best.reputationGained);
+    // Override entry fee with the discounted amount.
+    const settlement = {
+      ...baseSettlement,
+      entryFee: discountedFee,
+      netMoney: baseSettlement.earnings - discountedFee,
+    };
 
     const result: TournamentResult = {
       id: `result-${Date.now()}-${tournament.id}`,
@@ -634,6 +670,7 @@ export const useGameStore = create<GameState>()(
         lastTournament: null,
         npcRoster: generateNpcRoster(),
         clubHistory: [],
+        clubUpgrades: {},
       };
     }),
 
@@ -678,11 +715,12 @@ export const useGameStore = create<GameState>()(
   advanceSeason: () => {
     set((state) => {
       const next = advanceRound(state.season);
-      // Reduce injury duration by 1 round and remove healed injuries.
+      // Reduce injury duration (1 round + Medical Team bonus) and remove healed injuries.
+      const recoveryPerRound = 1 + injuryRecoveryBonus(state.clubUpgrades);
       const playersWithRecovery = state.players.map((p) => {
         if (!p.injuries?.length) return p;
         const injuries = p.injuries
-          .map((inj) => ({ ...inj, weeksRemaining: inj.weeksRemaining - 1 }))
+          .map((inj) => ({ ...inj, weeksRemaining: inj.weeksRemaining - recoveryPerRound }))
           .filter((inj) => inj.weeksRemaining > 0);
         return { ...p, injuries };
       });
@@ -724,6 +762,20 @@ export const useGameStore = create<GameState>()(
     });
     return get().season;
   },
+
+  purchaseUpgrade: (id) => {
+    const state = get();
+    const currentLevel = state.clubUpgrades[id] ?? 0;
+    const upgrade = getUpgradeById(id);
+    if (!upgrade || currentLevel >= upgrade.maxLevel) return false;
+    const cost = upgrade.costs[currentLevel];
+    if (state.club.money < cost) return false;
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - cost },
+      clubUpgrades: { ...s.clubUpgrades, [id]: currentLevel + 1 },
+    }));
+    return true;
+  },
     }),
     {
       name: "disc-golf-manager",
@@ -742,6 +794,7 @@ export const useGameStore = create<GameState>()(
         lastTournament: state.lastTournament,
         npcRoster: state.npcRoster,
         clubHistory: state.clubHistory,
+        clubUpgrades: state.clubUpgrades,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

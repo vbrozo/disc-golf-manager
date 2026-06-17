@@ -12,3 +12,4 @@ export * from "./opponents";
 export * from "./npcRoster";
 export * from "./rating";
 export * from "./achievements";
+export * from "./upgrades";
