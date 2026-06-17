@@ -97,7 +97,7 @@ export default function GameFlow() {
     switch (flowStage) {
       case "intro":      return <IntroStage      key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
       case "shop":       return <ShopStage       key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
-      case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />;
+      case "training":   return <TrainingStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
       case "tournament": return <TournamentStage key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
       case "results":    return <ResultsStage    key="results"   onRankings={onRankings} onHistory={onHistory} />;
       case "complete":   return <CompleteStage   key={flowStage} onRankings={onRankings} onHistory={onHistory} />;
