@@ -753,7 +753,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 2.8rem 3.2rem;
+  grid-template-columns: 2rem minmax(0, 1fr) 2.2rem 3rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
@@ -764,12 +764,14 @@ body {
   font-variant-numeric: tabular-nums;
   text-align: right;
   color: #94a3b8;
+  font-size: 0.78rem;
 }
 
 .leaderboard-score {
   font-variant-numeric: tabular-nums;
   text-align: right;
   color: #94a3b8;
+  font-size: 0.78rem;
 }
 
 .leaderboard-head {
