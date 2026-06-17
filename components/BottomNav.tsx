@@ -16,13 +16,14 @@ interface NavTab {
   labelKey: string;
   icon: IconName;
   stage?: "shop" | "training" | "tournament";
-  action?: "rankings" | "history";
+  action?: "rankings" | "history" | "upgrades";
 }
 
 const TABS: NavTab[] = [
   { id: "shop",       labelKey: "nav.shop",       icon: "disc",    stage: "shop" },
   { id: "training",   labelKey: "nav.training",   icon: "flame",   stage: "training" },
   { id: "tournament", labelKey: "nav.tournament", icon: "trophy",  stage: "tournament" },
+  { id: "club",       labelKey: "nav.club",        icon: "flag",    action: "upgrades" },
   { id: "rankings",   labelKey: "nav.rankings",   icon: "star",    action: "rankings" },
   { id: "history",    labelKey: "nav.history",    icon: "chart",   action: "history" },
 ];
@@ -47,8 +48,9 @@ export default function BottomNav({ onRankings, onHistory, onUpgrades }: BottomN
   };
 
   const handleTab = (tab: NavTab) => {
-    if (tab.action === "rankings") { onRankings(); return; }
-    if (tab.action === "history")  { onHistory();  return; }
+    if (tab.action === "rankings") { onRankings();  return; }
+    if (tab.action === "history")  { onHistory();   return; }
+    if (tab.action === "upgrades") { onUpgrades();  return; }
     if (tab.stage && !isDisabled(tab)) setFlowStage(tab.stage);
   };
 

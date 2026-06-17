@@ -395,7 +395,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   );
 }
 
-function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () => void; onHistory: () => void; onUpgrades?: () => void }) {
+function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const clubUpgrades = useGameStore((s) => s.clubUpgrades);
@@ -518,14 +518,6 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
         })}
       </div>
       <div className="loop-train-buttons">
-        <button className="btn" onClick={() => setFlowStage("shop")}>
-          {t("training.toShop")}
-        </button>
-        {onUpgrades && (
-          <button className="btn" onClick={onUpgrades}>
-            <Icon name="flag" size={13} /> {t("upgrades.button")}
-          </button>
-        )}
         <button className="btn btn-primary" onClick={() => setFlowStage("tournament")}>
           {t("training.toTournament")}
         </button>
