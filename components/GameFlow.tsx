@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
+  DISC_TYPE_STAT,
   effectivePlayer,
   getAvailableDiscs,
   getAvailableTournaments,
@@ -212,6 +213,7 @@ function ShopStage({ onRankings }: { onRankings: () => void }) {
                     type: t(`discType.${disc.type}`),
                     rarity: t(`rarity.${disc.rarity}`),
                     bonus: disc.bonus,
+                    stat: t(`stat.${DISC_TYPE_STAT[disc.type]}`),
                     price: formatMoney(price),
                   })}
                 </span>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import { isSeasonComplete } from "@/game";
 import { useClickSound } from "@/hooks/useClickSound";
 import GameFlow from "@/components/GameFlow";
 import PageTitle from "@/components/PageTitle";
@@ -17,6 +18,7 @@ import PageTitle from "@/components/PageTitle";
 export default function GameClient() {
   const { t } = useTranslation();
   const [hydrated, setHydrated] = useState(false);
+  const season = useGameStore((s) => s.season);
 
   useClickSound();
 
@@ -26,11 +28,13 @@ export default function GameClient() {
     setHydrated(true);
   }, []);
 
+  const gameActive = hydrated && season.phase !== "preseason";
+
   return (
     <>
       <PageTitle />
-      <h2>{t("dashboard.title")}</h2>
-      <p>{t("dashboard.welcome")}</p>
+      {!gameActive && <h2>{t("dashboard.title")}</h2>}
+      {!gameActive && <p>{t("dashboard.welcome")}</p>}
       {hydrated ? (
         <GameFlow />
       ) : (
