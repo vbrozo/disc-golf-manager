@@ -730,9 +730,7 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                   ? ""
                   : row.placement === 1
                   ? " leaderboard-win"
-                  : row.earnings > 0
-                  ? " leaderboard-good"
-                  : " leaderboard-bad";
+                  : " leaderboard-good";
                 const clubPlayer = row.playerId ? playersById.get(row.playerId) : undefined;
                 const avatar = clubPlayer
                   ? getPlayerAvatar(clubPlayer)
