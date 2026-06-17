@@ -50,6 +50,8 @@ export interface Player {
   rating?: number;
   /** Snapshot of key stats at the end of each completed season. */
   seasonHistory?: { season: number; power: number; accuracy: number; putting: number; scramble: number; consistency: number; mental: number; fitness: number; rating: number }[];
+  /** Per-tournament performance log for in-season trend charts. */
+  tournamentHistory?: { season: number; round: number; tournamentName: string; placement: number; rating: number }[];
 }
 
 /** Full display name helper. */

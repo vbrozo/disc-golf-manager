@@ -148,8 +148,10 @@ export function simulateHole(
 
   const performance = basePerformance(player);
   const randomFactor = rng() * 20 - 10; // [-10, 10]
+  // Each active injury reduces effective performance by 5 points.
+  const injuryPenalty = (player.injuries?.length ?? 0) * 5;
   const total =
-    performance + randomFactor + formBonus(player.form) + moraleBonus(player.morale) + momentumBonus;
+    performance + randomFactor + formBonus(player.form) + moraleBonus(player.morale) + momentumBonus - injuryPenalty;
 
   const difficultyScore = holeDifficultyScore(hole);
   const difference = total - difficultyScore;

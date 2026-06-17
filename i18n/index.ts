@@ -208,6 +208,13 @@ const en: Dict = {
   "stat.consistency": "Consistency",
   "stat.mental": "Mental",
   "stat.fitness": "Fitness",
+  "stat.power.tooltip": "Drive distance and throw power off the tee. Affects long-range shots.",
+  "stat.accuracy.tooltip": "Disc placement accuracy on fairways. Highest weight in hole simulation (30%).",
+  "stat.putting.tooltip": "Short-range putting success. Second highest weight in simulation (25%).",
+  "stat.scramble.tooltip": "Recovery from difficult lies and out-of-position shots (10%).",
+  "stat.consistency.tooltip": "Steady performance under pressure. Reduces variance across holes (10%).",
+  "stat.mental.tooltip": "Focus and composure during critical moments. Affects clutch performance (10%).",
+  "stat.fitness.tooltip": "Stamina and endurance. Protects against stat decay over long rounds.",
   "program.Power": "Power Training",
   "program.Accuracy": "Accuracy Drills",
   "program.Putting": "Putting Practice",
@@ -215,6 +222,15 @@ const en: Dict = {
   "program.Consistency": "Consistency Coaching",
   "program.Mental": "Mental Coaching",
   "program.Fitness": "Fitness Training",
+  // Injuries
+  "injury.title": "Active Injuries",
+  "injury.none": "No active injuries",
+  "injury.weeksRemaining": "{weeks}w left",
+  "injury.penalty": "−{pts} pts performance",
+  // Tournament history
+  "player.tournamentHistory": "Rating Trend",
+  "player.noTournamentHistory": "Play tournaments to see your rating trend.",
+  "player.tournamentHistoryLabel": "T{round}",
 };
 
 const hr: Dict = {
@@ -409,6 +425,13 @@ const hr: Dict = {
   "stat.consistency": "Konzistentnost",
   "stat.mental": "Psiha",
   "stat.fitness": "Kondicija",
+  "stat.power.tooltip": "Daljina bacanja i snaga s tee pozicije. Utječe na dugačke udarce.",
+  "stat.accuracy.tooltip": "Točnost postavljanja diska na fairwayu. Najviši utjecaj u simulaciji rupe (30%).",
+  "stat.putting.tooltip": "Uspješnost kratkih puttova. Drugi po utjecaju u simulaciji (25%).",
+  "stat.scramble.tooltip": "Oporavak s težih pozicija i loših udaraca (10%).",
+  "stat.consistency.tooltip": "Stabilna izvedba pod pritiskom. Smanjuje varijanse kroz rupe (10%).",
+  "stat.mental.tooltip": "Fokus i smirenost u ključnim trenucima. Utječe na izvedbu pod pritiskom (10%).",
+  "stat.fitness.tooltip": "Izdržljivost i kondicija. Štiti od pada atributa u dugim rundama.",
   "program.Power": "Trening snage",
   "program.Accuracy": "Vježbe točnosti",
   "program.Putting": "Vježbe puttanja",
@@ -416,6 +439,15 @@ const hr: Dict = {
   "program.Consistency": "Trening konzistentnosti",
   "program.Mental": "Mentalni coaching",
   "program.Fitness": "Kondicijski trening",
+  // Ozljede
+  "injury.title": "Aktivne ozljede",
+  "injury.none": "Nema aktivnih ozljeda",
+  "injury.weeksRemaining": "{weeks}t ostalo",
+  "injury.penalty": "−{pts} bodova izvedbe",
+  // Povijest turnira
+  "player.tournamentHistory": "Trend ratinga",
+  "player.noTournamentHistory": "Igraj turnire kako bi vidio trend ratinga.",
+  "player.tournamentHistoryLabel": "T{round}",
 };
 
 const DICTS: Record<Language, Dict> = { en, hr };

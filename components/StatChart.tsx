@@ -3,6 +3,8 @@ interface StatChartProps {
   color?: string;
   label?: string;
   height?: number;
+  /** Per-point tooltip strings shown in SVG <title> on hover. */
+  tooltips?: string[];
 }
 
 export default function StatChart({
@@ -10,6 +12,7 @@ export default function StatChart({
   color = "#4ade80",
   label,
   height = 80,
+  tooltips,
 }: StatChartProps) {
   const width = 300;
   const padX = 24;
@@ -77,7 +80,9 @@ export default function StatChart({
         <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} />
         {data.map((d, i) => (
           <g key={i}>
-            <circle cx={toX(i)} cy={toY(d.value)} r={3} fill={color} />
+            <circle cx={toX(i)} cy={toY(d.value)} r={3} fill={color}>
+              {tooltips?.[i] && <title>{tooltips[i]}</title>}
+            </circle>
             <text
               x={toX(i)}
               y={height - 2}

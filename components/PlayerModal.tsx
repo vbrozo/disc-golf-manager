@@ -19,6 +19,11 @@ const STAT_KEYS: ("power" | "accuracy" | "putting" | "scramble" | "consistency" 
   "fitness",
 ];
 
+// PDGA ratings span roughly 600–1100; normalise to 0–100 for the chart.
+function normaliseRating(rating: number): number {
+  return Math.round(Math.max(0, Math.min(100, ((rating - 600) / 500) * 100)));
+}
+
 interface PlayerModalProps {
   player: Player;
   allTournaments: TournamentResult[];
@@ -46,12 +51,16 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
 
   const history = player.seasonHistory ?? [];
   const effective = effectivePlayer(player);
+  const tournamentHistory = player.tournamentHistory ?? [];
 
   const chartStats: { key: "power" | "accuracy" | "putting"; label: string }[] = [
     { key: "power", label: t("stat.power") },
     { key: "accuracy", label: t("stat.accuracy") },
     { key: "putting", label: t("stat.putting") },
   ];
+
+  const activeInjuries = player.injuries?.filter((inj) => inj.weeksRemaining > 0) ?? [];
+  const injuryPenaltyPts = activeInjuries.length * 5;
 
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -67,6 +76,11 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
               <span className="player-consistency" title={t("stat.consistency")}>
                 {player.consistency}
               </span>
+              {activeInjuries.length > 0 && (
+                <span className="injury-chip" title={t("injury.penalty", { pts: injuryPenaltyPts })}>
+                  🤕 ×{activeInjuries.length}
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -78,6 +92,30 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
           </button>
         </div>
 
+        {/* Injuries section */}
+        <div className="player-modal-section">
+          <h3>{t("injury.title")}</h3>
+          {activeInjuries.length === 0 ? (
+            <p className="stat-chart-notice">{t("injury.none")}</p>
+          ) : (
+            <ul className="injury-list">
+              {activeInjuries.map((inj) => (
+                <li key={inj.id} className="injury-item">
+                  <span className="injury-desc">{inj.description}</span>
+                  <span className="injury-meta">
+                    <span className="injury-weeks">
+                      {t("injury.weeksRemaining", { weeks: inj.weeksRemaining })}
+                    </span>
+                    <span className="injury-penalty">
+                      {t("injury.penalty", { pts: 5 })}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <div className="player-modal-section">
           <h3>{t("player.overview")}</h3>
           <div className="stat-bars">
@@ -87,6 +125,7 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
                 label={t(`stat.${stat}`)}
                 value={player[stat]}
                 effectiveValue={effective[stat]}
+                tooltip={t(`stat.${stat}.tooltip`)}
               />
             ))}
           </div>
@@ -118,6 +157,24 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
               <span className="career-stat-label">{t("player.bestPlacement")}</span>
             </div>
           </div>
+        </div>
+
+        {/* Rating trend across tournaments */}
+        <div className="player-modal-section">
+          <h3>{t("player.tournamentHistory")}</h3>
+          {tournamentHistory.length >= 2 ? (
+            <StatChart
+              data={tournamentHistory.map((h, i) => ({
+                season: i + 1,
+                value: normaliseRating(h.rating),
+              }))}
+              color="#38bdf8"
+              label={`${tournamentHistory[0]?.rating ?? "—"} → ${tournamentHistory[tournamentHistory.length - 1]?.rating ?? "—"}`}
+              tooltips={tournamentHistory.map((h) => `${h.tournamentName} • #${h.placement} • ${h.rating}`)}
+            />
+          ) : (
+            <p className="stat-chart-notice">{t("player.noTournamentHistory")}</p>
+          )}
         </div>
 
         <div className="player-modal-section">

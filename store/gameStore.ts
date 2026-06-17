@@ -546,15 +546,39 @@ export const useGameStore = create<GameState>()(
       };
     });
 
+    // Build per-player tournament history entries using current season/round.
+    const currentSeason = state.season.season;
+    const currentRound = state.season.round;
+    const historyEntryByPlayerId = new Map<string, { season: number; round: number; tournamentName: string; placement: number; rating: number }>();
+    for (const pr of result.playerResults ?? []) {
+      historyEntryByPlayerId.set(pr.playerId, {
+        season: currentSeason,
+        round: currentRound,
+        tournamentName: tournament.name,
+        placement: pr.placement,
+        rating: pr.rating,
+      });
+    }
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
-      // Update club players' ratings — each round's rating is appended individually.
+      // Update club players' ratings and tournament history.
       players: s.players.map((p) => {
         const roundRatings = perRoundRatingById.get(p.id);
-        if (!roundRatings?.length) return p;
-        return roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), p);
+        const historyEntry = historyEntryByPlayerId.get(p.id);
+        let updated = p;
+        if (roundRatings?.length) {
+          updated = roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), updated);
+        }
+        if (historyEntry) {
+          updated = {
+            ...updated,
+            tournamentHistory: [...(updated.tournamentHistory ?? []), historyEntry],
+          };
+        }
+        return updated;
       }),
       // Update NPC ratings for the players that competed in this tournament.
       npcRoster: s.npcRoster.map((npc) => {
@@ -638,11 +662,19 @@ export const useGameStore = create<GameState>()(
   advanceSeason: () => {
     set((state) => {
       const next = advanceRound(state.season);
+      // Reduce injury duration by 1 round and remove healed injuries.
+      const playersWithRecovery = state.players.map((p) => {
+        if (!p.injuries?.length) return p;
+        const injuries = p.injuries
+          .map((inj) => ({ ...inj, weeksRemaining: inj.weeksRemaining - 1 }))
+          .filter((inj) => inj.weeksRemaining > 0);
+        return { ...p, injuries };
+      });
       if (next.phase === "complete") {
         const seasonNum = next.season;
         return {
           season: next,
-          players: state.players.map((p) => ({
+          players: playersWithRecovery.map((p) => ({
             ...p,
             seasonHistory: [
               ...(p.seasonHistory ?? []),
@@ -661,7 +693,7 @@ export const useGameStore = create<GameState>()(
           })),
         };
       }
-      return { season: next };
+      return { season: next, players: playersWithRecovery };
     });
     return get().season;
   },
