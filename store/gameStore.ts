@@ -81,6 +81,8 @@ export interface LeaderboardRow {
   totalScore: number;
   /** True for one of the club's own players, false for an AI opponent. */
   isClubPlayer: boolean;
+  /** Player id for club players; used by the UI to look up avatars without matching by name. */
+  playerId?: string;
 }
 
 /** One hole's outcome, trimmed down for the hole-by-hole results animation. */
@@ -304,6 +306,7 @@ function buildTournamentSummary(
       rating: eventRatingById.get(s.player.id) ?? 0,
       totalScore: s.totalScore,
       isClubPlayer: !s.player.isOpponent,
+      playerId: s.player.isOpponent ? undefined : s.player.id,
     })),
     clubEarnings: settlement.earnings,
     clubReputation: settlement.reputationGained,

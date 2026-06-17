@@ -61,7 +61,7 @@ export function generateTournamentInjuries(
           description: INJURY_DESCRIPTIONS[idx],
           descriptionHr: HR_INJURY_DESCRIPTIONS[idx],
           weeksRemaining: severity,
-        } as Injury & { descriptionHr: string },
+        },
       });
     }
   }
