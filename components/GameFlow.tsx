@@ -15,6 +15,7 @@ import {
   nextDiscUnlock,
   RARITY_REPUTATION_REQUIRED,
   summariseSeason,
+  trainingCostMultiplier,
   TRAINING_PROGRAMS,
 } from "@/game";
 import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
@@ -343,11 +344,13 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
 function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () => void; onHistory: () => void; onUpgrades?: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
+  const clubUpgrades = useGameStore((s) => s.clubUpgrades);
   const players = useGameStore((s) => s.players);
   const tournaments = useGameStore((s) => s.tournaments);
   const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const trainPlayer = useGameStore((s) => s.trainPlayer);
+  const costMult = trainingCostMultiplier(clubUpgrades);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const { setNotice, noticeBar } = useNotice();
@@ -434,19 +437,22 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
                 ))}
               </div>
               <div className="loop-train-buttons">
-                {TRAINING_PROGRAMS.map((program) => (
-                  <button
-                    key={program.type}
-                    className="btn btn-small"
-                    disabled={club.money < program.cost}
-                    onClick={(e) => { e.stopPropagation(); onTrain(player, program.type); }}
-                  >
-                    {t("loop.trainButton", {
-                      type: t(`trainingType.${program.type}`),
-                      cost: formatMoney(program.cost),
-                    })}
-                  </button>
-                ))}
+                {TRAINING_PROGRAMS.map((program) => {
+                  const effectiveCost = Math.round(program.cost * costMult);
+                  return (
+                    <button
+                      key={program.type}
+                      className="btn btn-small"
+                      disabled={club.money < effectiveCost}
+                      onClick={(e) => { e.stopPropagation(); onTrain(player, program.type); }}
+                    >
+                      {t("loop.trainButton", {
+                        type: t(`trainingType.${program.type}`),
+                        cost: formatMoney(effectiveCost),
+                      })}
+                    </button>
+                  );
+                })}
               </div>
               <FloatingNumbers
                 items={popups.items.filter((item) => item.groupId === player.id)}
@@ -594,7 +600,7 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
 
   const clubWon =
     lastTournament?.rows.some((row) => row.isClubPlayer && row.placement === 1) ?? false;
-  const playersByName = new Map(players.map((p) => [playerFullName(p), p]));
+  const playersById = new Map(players.map((p) => [p.id, p]));
 
   const onContinue = () => {
     const next = advanceSeason();
@@ -634,7 +640,7 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                   : row.earnings > 0
                   ? " leaderboard-good"
                   : " leaderboard-bad";
-                const clubPlayer = playersByName.get(row.playerName);
+                const clubPlayer = row.playerId ? playersById.get(row.playerId) : undefined;
                 const avatar = clubPlayer
                   ? getPlayerAvatar(clubPlayer)
                   : getNameAvatar(row.playerName);
@@ -667,7 +673,7 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                     <li key={inj.playerId} className="injury-report-item">
                       {t("injury.new.item", {
                         name: inj.playerName,
-                        desc: language === "hr" ? ((inj.injury as import("@/models/Player").Injury & { descriptionHr?: string }).descriptionHr ?? inj.injury.description) : inj.injury.description,
+                        desc: language === "hr" ? (inj.injury.descriptionHr ?? inj.injury.description) : inj.injury.description,
                         weeks: inj.injury.weeksRemaining,
                       })}
                     </li>
