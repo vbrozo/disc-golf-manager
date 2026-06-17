@@ -66,10 +66,15 @@ export function calculateRoundRatingsFromPropagators(
 
   if (propagators.length >= MIN_PROPAGATORS) {
     const n = propagators.length;
-    const sumX  = propagators.reduce((s, p) => s + p.score, 0);
-    const sumY  = propagators.reduce((s, p) => s + p.priorRating, 0);
-    const sumXY = propagators.reduce((s, p) => s + p.score * p.priorRating, 0);
-    const sumX2 = propagators.reduce((s, p) => s + p.score * p.score, 0);
+    const { sumX, sumY, sumXY, sumX2 } = propagators.reduce(
+      (acc, p) => ({
+        sumX:  acc.sumX  + p.score,
+        sumY:  acc.sumY  + p.priorRating,
+        sumXY: acc.sumXY + p.score * p.priorRating,
+        sumX2: acc.sumX2 + p.score * p.score,
+      }),
+      { sumX: 0, sumY: 0, sumXY: 0, sumX2: 0 }
+    );
     const denom = n * sumX2 - sumX * sumX;
 
     if (denom !== 0) {
