@@ -1027,6 +1027,7 @@ body {
   background: linear-gradient(155deg, #1e293b 0%, #18223a 100%);
   border: 1px solid #334155;
   border-radius: 0.7rem;
+  position: relative;
 }
 
 /* one block per club player */
@@ -1131,18 +1132,27 @@ body {
 }
 
 .hole-playback-round-banner {
-  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: 0.04em;
   color: #38bdf8;
-  padding: 0.4rem 0;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(4px);
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  white-space: nowrap;
+  z-index: 10;
   animation: round-banner-in 0.3s ease both;
 }
 
 @keyframes round-banner-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
 .hole-playback-footer {
