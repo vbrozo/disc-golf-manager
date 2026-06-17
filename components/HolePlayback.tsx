@@ -142,6 +142,12 @@ export default function HolePlayback({ tracks, onDone }: HolePlaybackProps) {
         );
       })}
 
+      {pausing ? (
+        <div className="hole-playback-round-banner" key={activeRound}>
+          {t("playback.roundStarting", { round: activeRound + 2 })}
+        </div>
+      ) : null}
+
       <div className="hole-playback-footer">
         {!allDone ? (
           <button className="btn btn-small" onClick={skipToEnd}>
