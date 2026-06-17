@@ -425,6 +425,87 @@ body {
   gap: 0.5rem;
 }
 
+/* --- Equipment slot grid (Oprema screen) --- */
+.equip-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.equip-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  background: #1e293b;
+  min-width: 0;
+}
+
+.equip-slot--filled {
+  border-color: #16a34a;
+  background: rgba(20, 83, 45, 0.2);
+}
+
+.equip-slot-type {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.equip-slot-disc {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+}
+
+.equip-slot-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #dcfce7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.equip-slot-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.equip-slot-bonus {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.equip-slot-remove {
+  margin-left: auto;
+  padding: 0.05rem 0.4rem;
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.equip-slot-remove:hover {
+  background: rgba(127, 29, 29, 0.4);
+  border-color: #ef4444;
+}
+
+.equip-slot-select {
+  width: 100%;
+  font-size: 0.72rem;
+  padding: 0.3rem 0.4rem;
+}
+
 .loop-summary {
   padding: 0.75rem 1rem;
   background: #1e293b;
