@@ -827,6 +827,40 @@ body {
   }
 }
 
+/* Disc-unlock variant: purple instead of amber, styled as a clickable button */
+.level-up-banner--disc {
+  background: linear-gradient(90deg, #3b0764, #6d28d9 50%, #3b0764);
+  border-color: #a78bfa;
+  box-shadow: 0 0 14px rgba(167, 139, 250, 0.45);
+  animation: level-up-in 0.5s ease both, level-up-glow-disc 2s ease-in-out infinite;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.level-up-banner--disc:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.level-up-banner--disc .level-up-banner-title {
+  color: #ede9fe;
+}
+
+.level-up-banner--disc .level-up-banner-body {
+  color: #ddd6fe;
+}
+
+@keyframes level-up-glow-disc {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(167, 139, 250, 0.65);
+  }
+}
+
 /* --- Hole-by-hole results playback --- */
 .hole-playback {
   display: flex;

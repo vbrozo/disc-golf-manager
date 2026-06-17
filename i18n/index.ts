@@ -61,6 +61,8 @@ const en: Dict = {
   "training.intro": "Train your players before the next tournament.",
   "training.toTournament": "Go to tournament",
   "training.toShop": "Visit disc shop",
+  "training.discUnlockTitle": "New disc tier unlocked!",
+  "training.discUnlockCta": "Tap to visit the shop →",
 
   // Flow — tournament step extras
   "tournament.intro": "Pick a tournament to enter this round.",
@@ -249,6 +251,8 @@ const hr: Dict = {
   "training.intro": "Treniraj igrače prije sljedećeg turnira.",
   "training.toTournament": "Idi na turnir",
   "training.toShop": "Posjeti trgovinu diskova",
+  "training.discUnlockTitle": "Nova razina diskova otključana!",
+  "training.discUnlockCta": "Klikni za odlazak u trgovinu →",
 
   // Flow — tournament step extras
   "tournament.intro": "Odaberi turnir za ovo kolo.",

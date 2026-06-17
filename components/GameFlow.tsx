@@ -11,6 +11,7 @@ import {
   getEntryFee,
   isSeasonComplete,
   nextDiscUnlock,
+  RARITY_REPUTATION_REQUIRED,
   summariseSeason,
   TRAINING_PROGRAMS,
 } from "@/game";
@@ -554,8 +555,16 @@ function TrainingStage({
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
+  const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const trainPlayer = useGameStore((s) => s.trainPlayer);
+
+  const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
+  const newlyUnlockedTiers = (
+    Object.entries(RARITY_REPUTATION_REQUIRED) as [import("@/types").DiscRarity, number][]
+  )
+    .filter(([, req]) => req > previousReputation && req <= club.reputation)
+    .map(([rarity]) => rarity);
 
   const popups = useFloatingNumbers();
 
@@ -585,6 +594,21 @@ function TrainingStage({
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
       {noticeBar}
+      {newlyUnlockedTiers.length > 0 ? (
+        <button
+          className="level-up-banner level-up-banner--disc"
+          onClick={() => { setNotice(null); setFlowStage("shop"); }}
+        >
+          <span className="level-up-banner-title">
+            <Icon name="disc" size={15} />{" "}
+            {t("training.discUnlockTitle")}
+          </span>
+          <span className="level-up-banner-body">
+            {newlyUnlockedTiers.map((r) => t(`rarity.${r}`)).join(", ")}{" "}
+            — {t("training.discUnlockCta")}
+          </span>
+        </button>
+      ) : null}
       <div className="loop-roster">
         {players.map((player) => {
           const effective = effectivePlayer(player);
