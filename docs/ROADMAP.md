@@ -64,12 +64,15 @@ injured in-game. The natural next step is wiring them to tournament outcomes.
 - Sponsor contracts: passive income in exchange for performance goals
 - Disc degradation: discs wear out over N uses, need replacing
 - Prize pool inflation across seasons (harder to keep up without upgrading)
+- Equipment loans / buy on credit — risk higher debt for early disc access
 
 **UI / UX**
 - Dark/light theme toggle
 - Condensed player card view for large rosters (>4 players)
 - Drag-and-drop disc equip interface
 - Animated reputation bar fill in StatusHeader
+- Hole-by-hole animated results playback (more dramatic tournament reveal)
+- Per-season leaderboard history — compare reputation & earnings across seasons
 
 **Game feel**
 - Sound effects (toggle on/off): birdie chime, win fanfare
@@ -80,8 +83,10 @@ injured in-game. The natural next step is wiring them to tournament outcomes.
 - Prestige system: reset with a bonus (cosmetic club badge, small stat head-start)
 - Hard mode: no saving mid-season, permadeath for injuries
 - Weekly challenges: "win a tournament with only Common discs" etc.
+- Player morale / hot-streak system — random form events that force decisions (rest vs. play)
 
 **Technical**
 - Server-side save backup (optional, needs auth)
 - Shareable season summary card (og:image generation)
 - PWA manifest for install-to-homescreen
+- Export/share season result as image or link
