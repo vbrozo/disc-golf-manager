@@ -2,6 +2,8 @@
 
 import type { Player } from "@/models/Player";
 import type { Hole } from "@/models/Course";
+import { getPlayerSpecialty } from "@/models/Player";
+import type { PlayerSpecialty } from "@/models/Player";
 
 /** Per-hole outcome relative to par. */
 export type HoleOutcome = "Eagle" | "Birdie" | "Par" | "Bogey" | "DoubleBogey";
@@ -16,6 +18,12 @@ export interface HoleSimulationOptions {
   momentumBonus?: number;
 }
 
+/**
+ * The character of a hole — used to award specialty bonuses.
+ * Derived from a hole's dominant terrain attribute and par.
+ */
+export type HoleType = "Short" | "Long" | "Technical" | "Recovery" | "Pressure" | "Balanced";
+
 export interface HoleResult {
   outcome: HoleOutcome;
   /** Actual strokes taken on this hole. */
@@ -26,6 +34,10 @@ export interface HoleResult {
   performance: number;
   /** The hole's computed difficulty score, for UI/debugging. */
   difficultyScore: number;
+  /** Hole character derived from terrain attributes. */
+  holeType: HoleType;
+  /** Specialty performance bonus applied on this hole (0 if no match). */
+  specialtyBonus: number;
 }
 
 /** Strokes-relative-to-par delta for each outcome. */
@@ -72,6 +84,25 @@ export const STAT_WEIGHTS = {
   consistency: 0.1,
   mental: 0.1,
 } as const;
+
+/**
+ * Hole types that grant a specialty performance bonus.
+ * AllRounder gets a flat bonus on every hole instead of a per-type match.
+ */
+const SPECIALTY_HOLE_TYPES: Record<PlayerSpecialty, readonly HoleType[]> = {
+  PowerPlayer:    ["Long"],
+  Precision:      ["Technical"],
+  PuttingMachine: ["Short"],
+  Scrambler:      ["Recovery"],
+  MentalGame:     ["Pressure"],
+  Workhorse:      ["Long", "Pressure"],
+  AllRounder:     [],
+};
+
+/** Performance bonus when a player's specialty matches the hole type. */
+const SPECIALTY_MATCH_BONUS = 8;
+/** Flat per-hole bonus for AllRounder (applies everywhere). */
+const ALLROUNDER_BONUS = 2;
 
 /** Map a hole outcome + par into actual strokes taken. */
 export function strokesForOutcome(outcome: HoleOutcome, par: Hole["par"]): number {
@@ -122,6 +153,28 @@ export function holeDifficultyScore(hole: Hole): number {
   );
 }
 
+/**
+ * Classify a hole by its dominant terrain attribute and par.
+ * - par 5 → Long (power/distance challenge)
+ * - obRisk > 1.05× difficulty → Recovery (OB-heavy, scrambling required)
+ * - wooded > 1.05× difficulty → Technical (wooded, precision required)
+ * - par 3 otherwise → Short (open approach + putting focus)
+ * - par 4 with elevation dominant → Pressure (uphill/downhill, mental challenge)
+ * - par 4 balanced → Balanced (all-round play)
+ */
+export function holeType(hole: Hole): HoleType {
+  if (hole.par === 5) return "Long";
+  const obDom   = hole.obRisk > hole.wooded   && hole.obRisk > hole.difficulty * 1.05;
+  const woodDom = hole.wooded  > hole.obRisk  && hole.wooded  > hole.difficulty * 1.05;
+  if (obDom)   return "Recovery";
+  if (woodDom) return "Technical";
+  if (hole.par === 3) return "Short";
+  // par 4:
+  const elevDom = hole.elevation > hole.obRisk && hole.elevation > hole.wooded;
+  if (elevDom) return "Pressure";
+  return "Balanced";
+}
+
 /** Map a performance/difficulty difference to a hole outcome per the v2 spec table. */
 export function outcomeForDifference(difference: number): HoleOutcome {
   if (difference >= OUTCOME_THRESHOLDS.eagle) return "Eagle";
@@ -134,9 +187,12 @@ export function outcomeForDifference(difference: number): HoleOutcome {
 /**
  * Simulate a single hole for a player against a {@link Hole}.
  *
- * total = performance + random(-10,10) + formBonus + moraleBonus
+ * total = performance + random(-10,10) + formBonus + moraleBonus + specialtyBonus
  * difference = total - holeDifficultyScore
  * outcome via {@link outcomeForDifference}.
+ *
+ * Specialty bonus: +8 if the player's archetype matches the hole type,
+ * or +2 flat for AllRounder (applies on every hole).
  */
 export function simulateHole(
   player: Player,
@@ -150,8 +206,18 @@ export function simulateHole(
   const randomFactor = rng() * 20 - 10; // [-10, 10]
   // Each active injury reduces effective performance by 5 points.
   const injuryPenalty = (player.injuries?.length ?? 0) * 5;
+
+  const ht = holeType(hole);
+  const specialty = getPlayerSpecialty(player);
+  const specialtyBonus =
+    specialty === "AllRounder"
+      ? ALLROUNDER_BONUS
+      : (SPECIALTY_HOLE_TYPES[specialty] as readonly HoleType[]).includes(ht)
+        ? SPECIALTY_MATCH_BONUS
+        : 0;
+
   const total =
-    performance + randomFactor + formBonus(player.form) + moraleBonus(player.morale) + momentumBonus - injuryPenalty;
+    performance + randomFactor + formBonus(player.form) + moraleBonus(player.morale) + momentumBonus - injuryPenalty + specialtyBonus;
 
   const difficultyScore = holeDifficultyScore(hole);
   const difference = total - difficultyScore;
@@ -164,5 +230,7 @@ export function simulateHole(
     scoreToPar: OUTCOME_DELTA[outcome],
     performance: total,
     difficultyScore,
+    holeType: ht,
+    specialtyBonus,
   };
 }

@@ -267,7 +267,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                   {player.rating ?? t("player.unrated")}
                 </span>
                 <span className="specialty-badge" title={t("player.specialty")}>
-                  {t(`stat.${getPlayerSpecialty(player)}`)}
+                  {t(`specialty.${getPlayerSpecialty(player)}`)}
                 </span>
               </div>
               <div className="equip-slots">
@@ -420,7 +420,7 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
                   {player.rating ?? t("player.unrated")}
                 </span>
                 <span className="specialty-badge" title={t("player.specialty")}>
-                  {t(`stat.${getPlayerSpecialty(player)}`)}
+                  {t(`specialty.${getPlayerSpecialty(player)}`)}
                 </span>
               </div>
               <div className="stat-bars">

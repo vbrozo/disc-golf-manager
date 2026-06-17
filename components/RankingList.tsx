@@ -66,7 +66,7 @@ export default function RankingList({ onClose }: RankingListProps) {
                     {isClub ? (
                       <span className="leaderboard-badge">{t("results.you")}</span>
                     ) : null}
-                    <span className="specialty-badge">{t(`stat.${getPlayerSpecialty(player)}`)}</span>
+                    <span className="specialty-badge">{t(`specialty.${getPlayerSpecialty(player)}`)}</span>
                   </td>
                   <td className="rankings-col-rating">{player.rating ?? "—"}</td>
                   <td className="rankings-col-overall">{player.overall}</td>
