@@ -581,9 +581,10 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
  * hole-by-hole first (skippable), then reveals the full leaderboard.
  */
 function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHistory: () => void }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const lastTournament = useGameStore((s) => s.lastTournament);
   const players = useGameStore((s) => s.players);
+  const clubUpgrades = useGameStore((s) => s.clubUpgrades);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const advanceSeason = useGameStore((s) => s.advanceSeason);
 
@@ -658,6 +659,25 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                 );
               })}
             </ol>
+            {lastTournament.newInjuries && lastTournament.newInjuries.length > 0 && (
+              <div className="injury-report">
+                <h3 className="injury-report-title">⚠️ {t("injury.new.title")}</h3>
+                <ul className="injury-report-list">
+                  {lastTournament.newInjuries.map((inj) => (
+                    <li key={inj.playerId} className="injury-report-item">
+                      {t("injury.new.item", {
+                        name: inj.playerName,
+                        desc: language === "hr" ? ((inj.injury as import("@/models/Player").Injury & { descriptionHr?: string }).descriptionHr ?? inj.injury.description) : inj.injury.description,
+                        weeks: inj.injury.weeksRemaining,
+                      })}
+                    </li>
+                  ))}
+                </ul>
+                {(clubUpgrades["medical-team"] ?? 0) > 0 && (
+                  <p className="injury-report-medical">{t("injury.new.medical")}</p>
+                )}
+              </div>
+            )}
             <button className="btn btn-primary" onClick={onContinue}>
               {t("results.continue")}
             </button>

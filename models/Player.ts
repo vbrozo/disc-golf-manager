@@ -7,6 +7,7 @@ export type ShotShape = "Hyzer" | "Anhyzer" | "Straight" | "Spike";
 export interface Injury {
   id: string;
   description: string;
+  descriptionHr?: string;
   weeksRemaining: number;
 }
 

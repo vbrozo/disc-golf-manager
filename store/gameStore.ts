@@ -6,6 +6,7 @@ import type { Disc, DiscLoadout, DiscType } from "@/models/Disc";
 import type { Player } from "@/models/Player";
 import type { Tournament, TournamentResult } from "@/models/Tournament";
 import type { TrainingResult, TrainingType } from "@/types";
+import { generateTournamentInjuries } from "@/game/simulation/tournamentSimulator";
 import {
   advanceRound,
   applyTraining,
@@ -104,6 +105,8 @@ export interface TournamentSummary {
   clubReputation: number;
   /** Per-club-player hole sequences for the playback animation, ordered best first. */
   playerTracks: PlayerHoleTrack[];
+  /** Injuries sustained by club players during this tournament. */
+  newInjuries?: import("@/game/simulation/tournamentSimulator").TournamentInjury[];
 }
 
 /**
@@ -584,7 +587,15 @@ export const useGameStore = create<GameState>()(
       ])
     );
 
-    const summary = buildTournamentSummary(simulation, tournament, settlement, eventRatingById);
+    const summaryBase = buildTournamentSummary(simulation, tournament, settlement, eventRatingById);
+
+    // Roll for injuries on club players after the tournament.
+    const newInjuries = generateTournamentInjuries(
+      state.players,
+      tournament.difficulty,
+      options?.rng
+    );
+    const summary = newInjuries.length > 0 ? { ...summaryBase, newInjuries } : summaryBase;
 
     result.playerResults = clubStandings.map((s) => {
       const clubPlayer = state.players.find((p) => playerDisplayName(p) === playerDisplayName(s.player));
@@ -611,14 +622,17 @@ export const useGameStore = create<GameState>()(
       });
     }
 
+    const injuryByPlayerId = new Map(newInjuries.map((i) => [i.playerId, i.injury]));
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
-      // Update club players' ratings and tournament history.
+      // Update club players' ratings, tournament history, and new injuries.
       players: s.players.map((p) => {
         const roundRatings = perRoundRatingById.get(p.id);
         const historyEntry = historyEntryByPlayerId.get(p.id);
+        const newInjury = injuryByPlayerId.get(p.id);
         let updated = p;
         if (roundRatings?.length) {
           updated = roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), updated);
@@ -627,6 +641,12 @@ export const useGameStore = create<GameState>()(
           updated = {
             ...updated,
             tournamentHistory: [...(updated.tournamentHistory ?? []), historyEntry],
+          };
+        }
+        if (newInjury) {
+          updated = {
+            ...updated,
+            injuries: [...(updated.injuries ?? []), newInjury],
           };
         }
         return updated;

@@ -227,6 +227,9 @@ const en: Dict = {
   "injury.none": "No active injuries",
   "injury.weeksRemaining": "{weeks}w left",
   "injury.penalty": "−{pts} pts performance",
+  "injury.new.title": "Injury Report",
+  "injury.new.item": "{name} — {desc} ({weeks}w out)",
+  "injury.new.medical": "Medical Team reduces recovery time.",
   // Tournament history
   "player.tournamentHistory": "Rating Trend",
   "player.noTournamentHistory": "Play tournaments to see your rating trend.",
@@ -487,6 +490,9 @@ const hr: Dict = {
   "injury.none": "Nema aktivnih ozljeda",
   "injury.weeksRemaining": "{weeks}t ostalo",
   "injury.penalty": "−{pts} bodova izvedbe",
+  "injury.new.title": "Izvješće o ozljedama",
+  "injury.new.item": "{name} — {desc} ({weeks}t van)",
+  "injury.new.medical": "Medicinski tim ubrzava oporavak.",
   // Povijest turnira
   "player.tournamentHistory": "Trend ratinga",
   "player.noTournamentHistory": "Igraj turnire kako bi vidio trend ratinga.",
