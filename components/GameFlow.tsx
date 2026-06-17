@@ -173,6 +173,18 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
       : availableDiscs.filter((d) => d.type === typeFilter);
   const unlock = nextDiscUnlock(club.reputation);
 
+  // Track which catalogue disc type+rarity combinations the club already owns
+  // (in inventory or equipped on any player) so we can block re-purchasing.
+  const ownedKeys = new Set(
+    [
+      ...inventory,
+      ...players.flatMap((p) =>
+        DISC_TYPES.map((t) => p.equipped?.[t]).filter((d): d is Disc => !!d)
+      ),
+    ].map((d) => `${d.type}-${d.rarity}`)
+  );
+  const isOwned = (d: Disc) => ownedKeys.has(`${d.type}-${d.rarity}`);
+
   const onBuy = (disc: Disc) => {
     const bought = buyDiscs(disc.id, 1);
     if (!bought) {
@@ -260,8 +272,8 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                 </span>
               </div>
               <div className="loop-train-buttons">
-                <button className="btn" disabled={club.money < price} onClick={() => onBuy(disc)}>
-                  {t("shop.buy")}
+                <button className="btn" disabled={club.money < price || isOwned(disc)} onClick={() => onBuy(disc)}>
+                  {isOwned(disc) ? t("shop.owned") : t("shop.buy")}
                 </button>
               </div>
             </li>
@@ -315,7 +327,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                             </button>
                           </div>
                           {(() => {
-                            const upgrades = availableDiscs.filter((d) => d.type === type);
+                            const upgrades = availableDiscs.filter((d) => d.type === type && !isOwned(d));
                             return upgrades.length > 0 ? (
                               <select
                                 className="btn btn-small equip-slot-select"
@@ -348,7 +360,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                             ))}
                           </select>
                           {(() => {
-                            const catalogueOptions = availableDiscs.filter((d) => d.type === type);
+                            const catalogueOptions = availableDiscs.filter((d) => d.type === type && !isOwned(d));
                             return catalogueOptions.length > 0 ? (
                               <select
                                 className="btn btn-small equip-slot-select"
