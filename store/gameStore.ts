@@ -68,10 +68,11 @@ export interface HoleByHoleEntry {
   scoreToPar: number;
 }
 
-/** One club player's hole-by-hole sequence for the results animation. */
+/** One club player's per-round hole sequences for the results animation. */
 export interface PlayerHoleTrack {
   playerName: string;
-  holes: HoleByHoleEntry[];
+  /** Each element is one round's worth of holes, in round order. */
+  rounds: HoleByHoleEntry[][];
 }
 
 /** The full standings of the most recent tournament, kept for the results screen. */
@@ -473,7 +474,7 @@ export const useGameStore = create<GameState>()(
       clubReputation: settlement.reputationGained,
       playerTracks: clubStandings.map((s) => ({
         playerName: playerDisplayName(s.player),
-        holes: s.rounds.flatMap((round) =>
+        rounds: s.rounds.map((round) =>
           round.holes.map((hole) => ({
             outcome: hole.outcome,
             scoreToPar: hole.scoreToPar,
