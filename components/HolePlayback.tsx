@@ -59,9 +59,10 @@ export default function HolePlayback({ tracks, onDone }: HolePlaybackProps) {
     }
 
     if (revealed >= holesPerRound) {
-      // Round complete — start pause before next round (or mark done if last)
       if (activeRound < totalRounds - 1) {
         setPausing(true);
+      } else {
+        setActiveRound(totalRounds); // last round done → trigger allDone
       }
       return;
     }
