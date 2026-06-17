@@ -37,24 +37,46 @@ const OUTCOME_DELTA: Record<HoleOutcome, number> = {
   DoubleBogey: 2,
 };
 
+/**
+ * Minimum performance-minus-difficulty value required to achieve each outcome.
+ * Weights sum to 0.90 by design — the remaining 0.10 comes from the random
+ * factor in {@link simulateHole} (form, morale, momentum).
+ */
+export const OUTCOME_THRESHOLDS = {
+  eagle: 15,
+  birdie: 8,
+  par: -7,
+  bogey: -15,
+} as const;
+
+/** Contribution of each player attribute to {@link basePerformance}. */
+export const STAT_WEIGHTS = {
+  accuracy: 0.3,
+  putting: 0.25,
+  power: 0.15,
+  scramble: 0.1,
+  consistency: 0.1,
+  mental: 0.1,
+} as const;
+
 /** Map a hole outcome + par into actual strokes taken. */
 export function strokesForOutcome(outcome: HoleOutcome, par: Hole["par"]): number {
   return par + OUTCOME_DELTA[outcome];
 }
 
 /**
- * Weighted performance formula, weights sum to 0.90 by design — the
- * remaining 0.10 of "performance" comes from randomness, form and morale
- * (see {@link simulateHole}), not from a player skill.
+ * Weighted performance formula. Weights are defined in {@link STAT_WEIGHTS}
+ * and sum to 0.90 by design — the remaining 0.10 comes from randomness, form
+ * and morale (see {@link simulateHole}), not from a player skill.
  */
 export function basePerformance(player: Player): number {
   return (
-    player.accuracy * 0.3 +
-    player.putting * 0.25 +
-    player.power * 0.15 +
-    player.scramble * 0.1 +
-    player.consistency * 0.1 +
-    player.mental * 0.1
+    player.accuracy * STAT_WEIGHTS.accuracy +
+    player.putting * STAT_WEIGHTS.putting +
+    player.power * STAT_WEIGHTS.power +
+    player.scramble * STAT_WEIGHTS.scramble +
+    player.consistency * STAT_WEIGHTS.consistency +
+    player.mental * STAT_WEIGHTS.mental
   );
 }
 
@@ -88,10 +110,10 @@ export function holeDifficultyScore(hole: Hole): number {
 
 /** Map a performance/difficulty difference to a hole outcome per the v2 spec table. */
 export function outcomeForDifference(difference: number): HoleOutcome {
-  if (difference >= 15) return "Eagle";
-  if (difference >= 8) return "Birdie";
-  if (difference >= -7) return "Par";
-  if (difference >= -15) return "Bogey";
+  if (difference >= OUTCOME_THRESHOLDS.eagle) return "Eagle";
+  if (difference >= OUTCOME_THRESHOLDS.birdie) return "Birdie";
+  if (difference >= OUTCOME_THRESHOLDS.par) return "Par";
+  if (difference >= OUTCOME_THRESHOLDS.bogey) return "Bogey";
   return "DoubleBogey";
 }
 

@@ -245,6 +245,15 @@ function playerDisplayName(player: Player): string {
   return `${player.firstName} ${player.lastName}`.trim();
 }
 
+/** Apply a new round rating to a player, updating their rolling history (last 8). */
+function applyRoundRating(player: Player, roundRating: number): Player {
+  const ratingHistory = [...(player.ratingHistory ?? []), roundRating].slice(-8);
+  const rating = Math.round(
+    ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
+  );
+  return { ...player, ratingHistory, rating };
+}
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -507,22 +516,12 @@ export const useGameStore = create<GameState>()(
       // Update club players' ratings.
       players: s.players.map((p) => {
         const roundRating = roundRatingById.get(p.id);
-        if (roundRating === undefined) return p;
-        const ratingHistory = [...(p.ratingHistory ?? []), roundRating].slice(-8);
-        const rating = Math.round(
-          ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
-        );
-        return { ...p, ratingHistory, rating };
+        return roundRating !== undefined ? applyRoundRating(p, roundRating) : p;
       }),
       // Update NPC ratings for the players that competed in this tournament.
       npcRoster: s.npcRoster.map((npc) => {
         const roundRating = roundRatingById.get(npc.id);
-        if (roundRating === undefined) return npc;
-        const ratingHistory = [...(npc.ratingHistory ?? []), roundRating].slice(-8);
-        const rating = Math.round(
-          ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
-        );
-        return { ...npc, ratingHistory, rating };
+        return roundRating !== undefined ? applyRoundRating(npc, roundRating) : npc;
       }),
     }));
 

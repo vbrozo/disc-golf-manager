@@ -70,21 +70,14 @@ function isFullyEquipped(player: Player): boolean {
 export default function GameFlow() {
   const { t } = useTranslation();
 
-  const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
   const season = useGameStore((s) => s.season);
-  const inventory = useGameStore((s) => s.inventory);
   const flowStage = useGameStore((s) => s.flowStage);
   const lastTournament = useGameStore((s) => s.lastTournament);
 
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const startSeason = useGameStore((s) => s.startSeason);
-  const playTournamentRound = useGameStore((s) => s.playTournamentRound);
   const advanceSeason = useGameStore((s) => s.advanceSeason);
-  const trainPlayer = useGameStore((s) => s.trainPlayer);
-  const buyDiscs = useGameStore((s) => s.buyDiscs);
-  const equipDisc = useGameStore((s) => s.equipDisc);
-  const unequipDisc = useGameStore((s) => s.unequipDisc);
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
@@ -141,229 +134,17 @@ export default function GameFlow() {
 
   // -- Stage: shop (buy + equip discs) -----------------------------------
   if (flowStage === "shop") {
-    const equippedCount = players.reduce(
-      (sum, p) => sum + DISC_TYPES.filter((type) => p.equipped?.[type]).length,
-      0
-    );
-    const totalNeeded = players.length * DISC_TYPES.length;
-    const allEquipped = players.every(isFullyEquipped);
-
-    const onBuy = (disc: Disc) => {
-      const bought = buyDiscs(disc.id, 1);
-      if (!bought) {
-        setNotice({
-          tone: "bad",
-          text: t("shop.noFunds", {
-            name: disc.name,
-            price: formatMoney(getDiscPrice(disc)),
-          }),
-        });
-        return;
-      }
-      setNotice({
-        tone: "good",
-        text: t("shop.bought", { name: disc.name }),
-      });
-    };
-
-    const availableDiscs = getAvailableDiscs(club.reputation);
-    const visibleDiscs =
-      typeFilter === "All"
-        ? availableDiscs
-        : availableDiscs.filter((d) => d.type === typeFilter);
-    const unlock = nextDiscUnlock(club.reputation);
-
-    const onEquip = (player: Player, discId: string) => {
-      if (!discId) return;
-      const disc = inventory.find((d) => d.id === discId);
-      equipDisc(player.id, discId);
-      setNotice({
-        tone: "good",
-        text: t("shop.equipped", {
-          name: disc?.name ?? "",
-          player: playerFullName(player),
-        }),
-      });
-    };
-
-    const onUnequip = (player: Player, type: DiscType) => {
-      unequipDisc(player.id, type);
-      setNotice({
-        tone: "good",
-        text: t("shop.unequipped", {
-          type: t(`discType.${type}`),
-          player: playerFullName(player),
-        }),
-      });
-    };
-
     return (
-      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader onRankings={() => setShowRankings(true)} />
-        {stepper}
-        <h2>{t("shop.title")}</h2>
-        <p className="loop-lead">{t("shop.lead")}</p>
-        <p className="loop-lead">
-          <strong>
-            {t("shop.progress", { done: equippedCount, total: totalNeeded })}
-          </strong>{" "}
-          — {t("shop.hint")}
-        </p>
-        {noticeBar}
-
-        <h3>{t("shop.catalogue")}</h3>
-        <label className="loop-field">
-          <span>{t("shop.filterLabel")}</span>
-          <select
-            className="btn btn-small"
-            value={typeFilter}
-            onChange={(e) =>
-              setTypeFilter(e.target.value as DiscType | "All")
-            }
-          >
-            <option value="All">{t("shop.filterAll")}</option>
-            {DISC_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {t(`discType.${type}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <p className="loop-meta shop-unlock-hint">
-          {unlock
-            ? t("shop.nextUnlock", {
-                required: unlock.required,
-                rarity: t(`rarity.${unlock.rarity}`),
-              })
-            : t("shop.allUnlocked")}
-        </p>
-        <ul className="loop-tournaments">
-          {visibleDiscs.map((disc) => {
-            const price = getDiscPrice(disc);
-            return (
-              <li key={disc.id} className="loop-tournament">
-                <div className="loop-tournament-info">
-                  <strong>
-                    <Avatar {...getDiscAvatar(disc)} size="sm" /> {disc.name}{" "}
-                    <span
-                      className={`rarity-badge rarity-${disc.rarity.toLowerCase()}`}
-                    >
-                      {t(`rarity.${disc.rarity}`)}
-                    </span>
-                  </strong>
-                  <span className="loop-meta">
-                    {t("shop.discMeta", {
-                      type: t(`discType.${disc.type}`),
-                      rarity: t(`rarity.${disc.rarity}`),
-                      bonus: disc.bonus,
-                      price: formatMoney(price),
-                    })}
-                  </span>
-                </div>
-                <div className="loop-train-buttons">
-                  <button
-                    className="btn"
-                    disabled={club.money < price}
-                    onClick={() => onBuy(disc)}
-                  >
-                    {t("shop.buy")}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        <h3>{t("shop.loadouts")}</h3>
-        <div className="loop-roster">
-          {players.map((player) => {
-            const equipped = player.equipped ?? {};
-            return (
-              <div key={player.id} className="loop-player">
-                <div className="loop-player-head">
-                  <Avatar {...getPlayerAvatar(player)} />
-                  <strong>{playerFullName(player)}</strong>
-                  <span className="player-rating" title={t("player.rating")}>
-                    {player.rating ?? t("player.unrated")}
-                  </span>
-                </div>
-                <div className="equip-slots">
-                  {DISC_TYPES.map((type) => {
-                    const current = equipped[type];
-                    const options = inventory.filter((d) => d.type === type);
-                    return (
-                      <div
-                        key={type}
-                        className={`equip-slot ${current ? "equip-slot--filled" : "equip-slot--empty"}`}
-                      >
-                        <span className="equip-slot-type">
-                          {t(`discType.${type}`)}
-                        </span>
-                        {current ? (
-                          <>
-                            <div className="equip-slot-disc">
-                              <Avatar {...getDiscAvatar(current)} size="sm" />
-                              <span className="equip-slot-name">
-                                {current.name}
-                              </span>
-                            </div>
-                            <div className="equip-slot-meta">
-                              <span className="equip-slot-bonus">
-                                +{current.bonus}
-                              </span>
-                              <span
-                                className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
-                              >
-                                {t(`rarity.${current.rarity}`)}
-                              </span>
-                              <button
-                                className="btn btn-small equip-slot-remove"
-                                onClick={() => onUnequip(player, type)}
-                                title={t("shop.unequip")}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <select
-                            className="btn btn-small equip-slot-select"
-                            value=""
-                            onChange={(e) => onEquip(player, e.target.value)}
-                            disabled={options.length === 0}
-                          >
-                            <option value="">
-                              {options.length === 0
-                                ? t("shop.empty")
-                                : t("shop.equipPlaceholder")}
-                            </option>
-                            {options.map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name} (+{d.bonus})
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <button
-          className="btn btn-primary"
-          disabled={!allEquipped}
-          onClick={() => {
-            setNotice(null);
-            setFlowStage("training");
-          }}
-        >
-          {t("shop.continue")}
-        </button>
-      </section>
+      <ShopStage
+        key={flowStage}
+        stepper={stepper}
+        noticeBar={noticeBar}
+        notice={notice}
+        setNotice={setNotice}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        onRankings={() => setShowRankings(true)}
+      />
     );
   }
 
@@ -382,102 +163,15 @@ export default function GameFlow() {
 
   // -- Stage: tournament -------------------------------------------------
   if (flowStage === "tournament") {
-    const available = getAvailableTournaments(club.reputation);
-    // Approximate the reputation the club had before its most recent result,
-    // so tournaments crossing the threshold this round can be flagged as
-    // newly unlocked.
-    const previousReputation =
-      club.reputation - (lastTournament?.clubReputation ?? 0);
-    const isNewlyUnlocked = (tournament: Tournament) =>
-      tournament.reputationRequired > previousReputation &&
-      tournament.reputationRequired <= club.reputation;
-
-    const onEnter = (tournament: Tournament) => {
-      const outcome = playTournamentRound(tournament.id);
-      if (!outcome) {
-        const eligibility = checkEntryEligibility(club, tournament);
-        setNotice({
-          tone: "bad",
-          text:
-            eligibility.reason === "insufficient-funds"
-              ? t("loop.noFunds", { fee: formatMoney(eligibility.entryFee) })
-              : t("loop.cantEnter"),
-        });
-        return;
-      }
-      // Tournament played → show the full leaderboard on the results screen.
-      // The season is advanced later, from the results "Continue" button.
-      setNotice(null);
-      setFlowStage("results");
-    };
-
-    const newlyUnlocked = available.filter(isNewlyUnlocked);
-
     return (
-      <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader onRankings={() => setShowRankings(true)} />
-        {stepper}
-        <h2>{t("loop.selectTitle")}</h2>
-        <p className="loop-lead">{t("tournament.intro")}</p>
-        {noticeBar}
-        {newlyUnlocked.length > 0 ? (
-          <div className="level-up-banner">
-            <span className="level-up-banner-title">
-              <Icon name="star" size={15} /> {t("tournament.levelUpTitle")}
-            </span>
-            <span className="level-up-banner-body">
-              {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
-            </span>
-          </div>
-        ) : null}
-        <ul className="loop-tournaments">
-          {available.map((tournament) => {
-            const fee = getEntryFee(tournament);
-            const eligibility = checkEntryEligibility(club, tournament);
-            const unlocked = isNewlyUnlocked(tournament);
-            return (
-              <li
-                key={tournament.id}
-                className={`loop-tournament${
-                  unlocked ? " loop-tournament-unlocked" : ""
-                }`}
-              >
-                <div className="loop-tournament-info">
-                  <strong>
-                    {tournament.name}{" "}
-                    <span className="tournament-stars">
-                      {Array.from({ length: tournament.difficulty }).map((_, i) => (
-                        <Icon key={i} name="star" size={12} />
-                      ))}
-                    </span>
-                    {unlocked ? (
-                      <span className="unlocked-badge">
-                        <Icon name="check" size={12} /> {t("tournament.unlocked")}
-                      </span>
-                    ) : null}
-                  </strong>
-                  <span className="loop-meta">
-                    {t("loop.tournamentMeta", {
-                      rounds: tournament.rounds,
-                      holes: tournament.holesPerRound,
-                      difficulty: tournament.difficulty,
-                      pool: formatMoney(tournament.prizePool),
-                      fee: formatMoney(fee),
-                    })}
-                  </span>
-                </div>
-                <button
-                  className="btn"
-                  disabled={!eligibility.canEnter}
-                  onClick={() => onEnter(tournament)}
-                >
-                  {t("loop.enter")}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      <TournamentStage
+        key={flowStage}
+        stepper={stepper}
+        noticeBar={noticeBar}
+        notice={notice}
+        setNotice={setNotice}
+        onRankings={() => setShowRankings(true)}
+      />
     );
   }
 
@@ -536,6 +230,344 @@ export default function GameFlow() {
       >
         {t("loop.startNextSeason")}
       </button>
+    </section>
+  );
+}
+
+/** Disc shop screen: buy discs from the catalogue and equip them to players. */
+function ShopStage({
+  stepper,
+  noticeBar,
+  notice,
+  setNotice,
+  typeFilter,
+  setTypeFilter,
+  onRankings,
+}: {
+  stepper: ReactNode;
+  noticeBar: ReactNode;
+  notice: Notice | null;
+  setNotice: (notice: Notice | null) => void;
+  typeFilter: DiscType | "All";
+  setTypeFilter: (f: DiscType | "All") => void;
+  onRankings: () => void;
+}) {
+  const { t } = useTranslation();
+  const club = useGameStore((s) => s.club);
+  const players = useGameStore((s) => s.players);
+  const inventory = useGameStore((s) => s.inventory);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
+  const buyDiscs = useGameStore((s) => s.buyDiscs);
+  const equipDisc = useGameStore((s) => s.equipDisc);
+  const unequipDisc = useGameStore((s) => s.unequipDisc);
+
+  const equippedCount = players.reduce(
+    (sum, p) => sum + DISC_TYPES.filter((type) => p.equipped?.[type]).length,
+    0
+  );
+  const totalNeeded = players.length * DISC_TYPES.length;
+  const allEquipped = players.every(isFullyEquipped);
+
+  const availableDiscs = getAvailableDiscs(club.reputation);
+  const visibleDiscs =
+    typeFilter === "All"
+      ? availableDiscs
+      : availableDiscs.filter((d) => d.type === typeFilter);
+  const unlock = nextDiscUnlock(club.reputation);
+
+  const onBuy = (disc: Disc) => {
+    const bought = buyDiscs(disc.id, 1);
+    if (!bought) {
+      setNotice({
+        tone: "bad",
+        text: t("shop.noFunds", { name: disc.name, price: formatMoney(getDiscPrice(disc)) }),
+      });
+      return;
+    }
+    setNotice({ tone: "good", text: t("shop.bought", { name: disc.name }) });
+  };
+
+  const onEquip = (player: Player, discId: string) => {
+    if (!discId) return;
+    const disc = inventory.find((d) => d.id === discId);
+    equipDisc(player.id, discId);
+    setNotice({
+      tone: "good",
+      text: t("shop.equipped", { name: disc?.name ?? "", player: playerFullName(player) }),
+    });
+  };
+
+  const onUnequip = (player: Player, type: DiscType) => {
+    unequipDisc(player.id, type);
+    setNotice({
+      tone: "good",
+      text: t("shop.unequipped", { type: t(`discType.${type}`), player: playerFullName(player) }),
+    });
+  };
+
+  return (
+    <section className="loop loop-stage-shop">
+      <StatusHeader onRankings={onRankings} />
+      {stepper}
+      <h2>{t("shop.title")}</h2>
+      <p className="loop-lead">{t("shop.lead")}</p>
+      <p className="loop-lead">
+        <strong>
+          {t("shop.progress", { done: equippedCount, total: totalNeeded })}
+        </strong>{" "}
+        — {t("shop.hint")}
+      </p>
+      {noticeBar}
+
+      <h3>{t("shop.catalogue")}</h3>
+      <label className="loop-field">
+        <span>{t("shop.filterLabel")}</span>
+        <select
+          className="btn btn-small"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as DiscType | "All")}
+        >
+          <option value="All">{t("shop.filterAll")}</option>
+          {DISC_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {t(`discType.${type}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="loop-meta shop-unlock-hint">
+        {unlock
+          ? t("shop.nextUnlock", {
+              required: unlock.required,
+              rarity: t(`rarity.${unlock.rarity}`),
+            })
+          : t("shop.allUnlocked")}
+      </p>
+      <ul className="loop-tournaments">
+        {visibleDiscs.map((disc) => {
+          const price = getDiscPrice(disc);
+          return (
+            <li key={disc.id} className="loop-tournament">
+              <div className="loop-tournament-info">
+                <strong>
+                  <Avatar {...getDiscAvatar(disc)} size="sm" /> {disc.name}{" "}
+                  <span className={`rarity-badge rarity-${disc.rarity.toLowerCase()}`}>
+                    {t(`rarity.${disc.rarity}`)}
+                  </span>
+                </strong>
+                <span className="loop-meta">
+                  {t("shop.discMeta", {
+                    type: t(`discType.${disc.type}`),
+                    rarity: t(`rarity.${disc.rarity}`),
+                    bonus: disc.bonus,
+                    price: formatMoney(price),
+                  })}
+                </span>
+              </div>
+              <div className="loop-train-buttons">
+                <button
+                  className="btn"
+                  disabled={club.money < price}
+                  onClick={() => onBuy(disc)}
+                >
+                  {t("shop.buy")}
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <h3>{t("shop.loadouts")}</h3>
+      <div className="loop-roster">
+        {players.map((player) => {
+          const equipped = player.equipped ?? {};
+          return (
+            <div key={player.id} className="loop-player">
+              <div className="loop-player-head">
+                <Avatar {...getPlayerAvatar(player)} />
+                <strong>{playerFullName(player)}</strong>
+                <span className="player-rating" title={t("player.rating")}>
+                  {player.rating ?? t("player.unrated")}
+                </span>
+              </div>
+              <div className="equip-slots">
+                {DISC_TYPES.map((type) => {
+                  const current = equipped[type];
+                  const options = inventory.filter((d) => d.type === type);
+                  return (
+                    <div
+                      key={type}
+                      className={`equip-slot ${current ? "equip-slot--filled" : "equip-slot--empty"}`}
+                    >
+                      <span className="equip-slot-type">{t(`discType.${type}`)}</span>
+                      {current ? (
+                        <>
+                          <div className="equip-slot-disc">
+                            <Avatar {...getDiscAvatar(current)} size="sm" />
+                            <span className="equip-slot-name">{current.name}</span>
+                          </div>
+                          <div className="equip-slot-meta">
+                            <span className="equip-slot-bonus">+{current.bonus}</span>
+                            <span className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}>
+                              {t(`rarity.${current.rarity}`)}
+                            </span>
+                            <button
+                              className="btn btn-small equip-slot-remove"
+                              onClick={() => onUnequip(player, type)}
+                              title={t("shop.unequip")}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <select
+                          className="btn btn-small equip-slot-select"
+                          value=""
+                          onChange={(e) => onEquip(player, e.target.value)}
+                          disabled={options.length === 0}
+                        >
+                          <option value="">
+                            {options.length === 0 ? t("shop.empty") : t("shop.equipPlaceholder")}
+                          </option>
+                          {options.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name} (+{d.bonus})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        className="btn btn-primary"
+        disabled={!allEquipped}
+        onClick={() => {
+          setNotice(null);
+          setFlowStage("training");
+        }}
+      >
+        {t("shop.continue")}
+      </button>
+    </section>
+  );
+}
+
+/** Tournament selection screen: list of available tournaments with entry eligibility. */
+function TournamentStage({
+  stepper,
+  noticeBar,
+  notice,
+  setNotice,
+  onRankings,
+}: {
+  stepper: ReactNode;
+  noticeBar: ReactNode;
+  notice: Notice | null;
+  setNotice: (notice: Notice | null) => void;
+  onRankings: () => void;
+}) {
+  const { t } = useTranslation();
+  const club = useGameStore((s) => s.club);
+  const lastTournament = useGameStore((s) => s.lastTournament);
+  const setFlowStage = useGameStore((s) => s.setFlowStage);
+  const playTournamentRound = useGameStore((s) => s.playTournamentRound);
+
+  const available = getAvailableTournaments(club.reputation);
+  const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
+  const isNewlyUnlocked = (tournament: Tournament) =>
+    tournament.reputationRequired > previousReputation &&
+    tournament.reputationRequired <= club.reputation;
+
+  const onEnter = (tournament: Tournament) => {
+    const outcome = playTournamentRound(tournament.id);
+    if (!outcome) {
+      const eligibility = checkEntryEligibility(club, tournament);
+      setNotice({
+        tone: "bad",
+        text:
+          eligibility.reason === "insufficient-funds"
+            ? t("loop.noFunds", { fee: formatMoney(eligibility.entryFee) })
+            : t("loop.cantEnter"),
+      });
+      return;
+    }
+    setNotice(null);
+    setFlowStage("results");
+  };
+
+  const newlyUnlocked = available.filter(isNewlyUnlocked);
+
+  return (
+    <section className="loop loop-stage-tournament">
+      <StatusHeader onRankings={onRankings} />
+      {stepper}
+      <h2>{t("loop.selectTitle")}</h2>
+      <p className="loop-lead">{t("tournament.intro")}</p>
+      {noticeBar}
+      {newlyUnlocked.length > 0 ? (
+        <div className="level-up-banner">
+          <span className="level-up-banner-title">
+            <Icon name="star" size={15} /> {t("tournament.levelUpTitle")}
+          </span>
+          <span className="level-up-banner-body">
+            {newlyUnlocked.map((tournament) => tournament.name).join(", ")}
+          </span>
+        </div>
+      ) : null}
+      <ul className="loop-tournaments">
+        {available.map((tournament) => {
+          const fee = getEntryFee(tournament);
+          const eligibility = checkEntryEligibility(club, tournament);
+          const unlocked = isNewlyUnlocked(tournament);
+          return (
+            <li
+              key={tournament.id}
+              className={`loop-tournament${unlocked ? " loop-tournament-unlocked" : ""}`}
+            >
+              <div className="loop-tournament-info">
+                <strong>
+                  {tournament.name}{" "}
+                  <span className="tournament-stars">
+                    {Array.from({ length: tournament.difficulty }).map((_, i) => (
+                      <Icon key={i} name="star" size={12} />
+                    ))}
+                  </span>
+                  {unlocked ? (
+                    <span className="unlocked-badge">
+                      <Icon name="check" size={12} /> {t("tournament.unlocked")}
+                    </span>
+                  ) : null}
+                </strong>
+                <span className="loop-meta">
+                  {t("loop.tournamentMeta", {
+                    rounds: tournament.rounds,
+                    holes: tournament.holesPerRound,
+                    difficulty: tournament.difficulty,
+                    pool: formatMoney(tournament.prizePool),
+                    fee: formatMoney(fee),
+                  })}
+                </span>
+              </div>
+              <button
+                className="btn"
+                disabled={!eligibility.canEnter}
+                onClick={() => onEnter(tournament)}
+              >
+                {t("loop.enter")}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
