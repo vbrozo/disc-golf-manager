@@ -725,82 +725,121 @@ body {
 .hole-playback {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   padding: 1rem;
   background: linear-gradient(155deg, #1e293b 0%, #18223a 100%);
   border: 1px solid #334155;
   border-radius: 0.7rem;
 }
 
-.hole-playback-tracks {
+/* one block per club player */
+.hole-playback-player {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.4rem;
 }
 
-.hole-playback-track {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.hole-playback-track-head {
+.hole-playback-player-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 0.1rem;
 }
 
 .hole-playback-name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
 }
 
-.hole-playback-score {
+.hole-playback-overall {
   font-size: 0.95rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   transition: color 0.3s ease;
 }
 
+/* one row per round */
+.hole-playback-round {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.4rem;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  opacity: 0.4;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.hole-playback-round-active {
+  opacity: 1;
+  border-color: #38bdf8;
+}
+
+.hole-playback-round-past {
+  opacity: 0.85;
+  border-color: #334155;
+}
+
+.hole-playback-round-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  width: 1.5rem;
+  flex-shrink: 0;
+}
+
 .hole-playback-strip {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 0.2rem;
+  flex: 1;
 }
 
 .hole-playback-hole {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 0.3rem;
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  font-size: 0.9rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 0.25rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  font-size: 0.8rem;
 }
 
 .hole-playback-hole-shown {
-  animation: hole-pop 0.3s ease;
+  animation: hole-pop 0.28s ease;
   border-width: 1.5px;
 }
 
 @keyframes hole-pop {
-  from {
-    transform: scale(0.4);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.hole-playback-round-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  width: 2.5rem;
+  text-align: right;
+  flex-shrink: 0;
+  transition: color 0.3s ease, opacity 0.3s ease;
 }
 
 .hole-playback-footer {
   display: flex;
   justify-content: flex-end;
   padding-top: 0.25rem;
+}
+
+/* divider between players */
+.hole-playback-player + .hole-playback-player {
+  border-top: 1px solid #1e293b;
+  padding-top: 0.75rem;
 }
 
 /* --- Floating feedback numbers --- */
