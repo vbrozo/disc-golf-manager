@@ -300,6 +300,7 @@ const en: Dict = {
   "nav.shop": "Shop",
   "nav.training": "Training",
   "nav.tournament": "Tournament",
+  "nav.club": "Club",
   "nav.rankings": "Rankings",
   "nav.history": "History",
 };
@@ -588,6 +589,7 @@ const hr: Dict = {
   "nav.shop": "Dućan",
   "nav.training": "Trening",
   "nav.tournament": "Turnir",
+  "nav.club": "Klub",
   "nav.rankings": "Rang lista",
   "nav.history": "Povijest",
 };
