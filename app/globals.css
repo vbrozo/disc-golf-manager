@@ -753,7 +753,7 @@ body {
 .leaderboard-head,
 .leaderboard-row {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 1.8rem 2.8rem;
+  grid-template-columns: 2rem minmax(0, 1fr) 1.6rem 2.6rem;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
@@ -811,10 +811,6 @@ body {
   min-width: 0;
 }
 
-.leaderboard-earn {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
 
 .specialty-badge {
   font-size: 0.65rem;
