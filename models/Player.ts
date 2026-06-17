@@ -48,6 +48,8 @@ export interface Player {
   ratingHistory?: number[];
   /** Current overall rating: the average of {@link ratingHistory}. */
   rating?: number;
+  /** Snapshot of key stats at the end of each completed season. */
+  seasonHistory?: { season: number; power: number; accuracy: number; putting: number; scramble: number; consistency: number; mental: number; fitness: number; rating: number }[];
 }
 
 /** Full display name helper. */

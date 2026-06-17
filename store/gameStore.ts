@@ -535,6 +535,17 @@ export const useGameStore = create<GameState>()(
 
     const summary = buildTournamentSummary(simulation, tournament, settlement, eventRatingById);
 
+    result.playerResults = clubStandings.map((s) => {
+      const clubPlayer = state.players.find((p) => playerDisplayName(p) === playerDisplayName(s.player));
+      return {
+        playerId: clubPlayer?.id ?? s.player.id,
+        playerName: playerDisplayName(s.player),
+        placement: s.placement,
+        earnings: s.earnings,
+        rating: eventRatingById.get(s.player.id) ?? 0,
+      };
+    });
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
@@ -625,7 +636,33 @@ export const useGameStore = create<GameState>()(
   },
 
   advanceSeason: () => {
-    set((state) => ({ season: advanceRound(state.season) }));
+    set((state) => {
+      const next = advanceRound(state.season);
+      if (next.phase === "complete") {
+        const seasonNum = next.season;
+        return {
+          season: next,
+          players: state.players.map((p) => ({
+            ...p,
+            seasonHistory: [
+              ...(p.seasonHistory ?? []),
+              {
+                season: seasonNum,
+                power: p.power,
+                accuracy: p.accuracy,
+                putting: p.putting,
+                scramble: p.scramble,
+                consistency: p.consistency,
+                mental: p.mental,
+                fitness: p.fitness,
+                rating: p.rating ?? 0,
+              },
+            ],
+          })),
+        };
+      }
+      return { season: next };
+    });
     return get().season;
   },
     }),

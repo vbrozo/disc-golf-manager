@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import {
   checkEntryEligibility,
+  DISC_TYPE_STAT,
   effectivePlayer,
   getAvailableDiscs,
   getAvailableTournaments,
@@ -18,6 +19,7 @@ import {
 import type { Disc, DiscType, Player, Tournament, TrainingType } from "@/types";
 import { playerFullName } from "@/models/Player";
 import { useTranslation } from "@/hooks/useTranslation";
+import PlayerModal from "@/components/PlayerModal";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
 import FlowStepper from "@/components/FlowStepper";
@@ -212,6 +214,7 @@ function ShopStage({ onRankings }: { onRankings: () => void }) {
                     type: t(`discType.${disc.type}`),
                     rarity: t(`rarity.${disc.rarity}`),
                     bonus: disc.bonus,
+                    stat: t(`stat.${DISC_TYPE_STAT[disc.type]}`),
                     price: formatMoney(price),
                   })}
                 </span>
@@ -308,9 +311,11 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const players = useGameStore((s) => s.players);
+  const tournaments = useGameStore((s) => s.tournaments);
   const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const trainPlayer = useGameStore((s) => s.trainPlayer);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const { setNotice, noticeBar } = useNotice();
   const popups = useFloatingNumbers();
@@ -343,6 +348,13 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
 
   return (
     <section className="loop loop-stage-training">
+      {selectedPlayer && (
+        <PlayerModal
+          player={selectedPlayer}
+          allTournaments={tournaments}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
       <StatusHeader onRankings={onRankings} />
       <FlowStepper current="training" />
       <h2>{t("loop.trainingTitle")}</h2>
@@ -365,7 +377,12 @@ function TrainingStage({ onRankings }: { onRankings: () => void }) {
         {players.map((player) => {
           const effective = effectivePlayer(player);
           return (
-            <div key={player.id} className="loop-player floating-number-host">
+            <div
+              key={player.id}
+              className="loop-player floating-number-host player-card-clickable"
+              onClick={() => setSelectedPlayer(player)}
+              title={t("player.overview")}
+            >
               <div className="loop-player-head">
                 <Avatar {...getPlayerAvatar(player)} />
                 <strong>{playerFullName(player)}</strong>
