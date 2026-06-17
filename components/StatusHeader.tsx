@@ -11,8 +11,12 @@ import AchievementBadges from "@/components/AchievementBadges";
 import Icon from "@/components/Icon";
 import { getAchievements, getCurrentStreak } from "@/game/achievements";
 
+interface StatusHeaderProps {
+  onRankings?: () => void;
+}
+
 /** Persistent club status bar shown on every in-game flow step. */
-export default function StatusHeader() {
+export default function StatusHeader({ onRankings }: StatusHeaderProps = {}) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
   const season = useGameStore((s) => s.season);
@@ -91,6 +95,13 @@ export default function StatusHeader() {
             <strong className={`streak-chip${streak >= 3 ? " streak-hot" : ""}`}>
               {streak}
             </strong>
+          </div>
+        ) : null}
+        {onRankings ? (
+          <div className="loop-status-rankings">
+            <button className="btn btn-small" onClick={onRankings}>
+              <Icon name="trophy" size={13} /> {t("rankings.button")}
+            </button>
           </div>
         ) : null}
       </header>

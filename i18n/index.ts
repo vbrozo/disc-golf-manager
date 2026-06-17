@@ -85,6 +85,13 @@ const en: Dict = {
   "results.continue": "Continue",
   "playback.skip": "Skip",
   "playback.viewResults": "View Results",
+  "rankings.title": "World Rankings",
+  "rankings.subtitle": "{total} players ranked",
+  "rankings.colName": "Player",
+  "rankings.colRating": "Rating",
+  "rankings.colOverall": "OVR",
+  "rankings.close": "← Back",
+  "rankings.button": "Rankings",
 
   // Season loop — status header
   "loop.club": "Club",
@@ -264,6 +271,13 @@ const hr: Dict = {
   "results.continue": "Nastavi",
   "playback.skip": "Preskoči",
   "playback.viewResults": "Pogledaj rezultate",
+  "rankings.title": "Svjetska rang lista",
+  "rankings.subtitle": "{total} igrača rangirano",
+  "rankings.colName": "Igrač",
+  "rankings.colRating": "Rating",
+  "rankings.colOverall": "OVR",
+  "rankings.close": "← Natrag",
+  "rankings.button": "Rang lista",
 
   // Season loop — status header
   "loop.club": "Klub",

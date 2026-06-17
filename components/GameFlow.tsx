@@ -25,6 +25,7 @@ import Avatar from "@/components/Avatar";
 import Confetti from "@/components/Confetti";
 import HolePlayback from "@/components/HolePlayback";
 import Icon from "@/components/Icon";
+import RankingList from "@/components/RankingList";
 import type { TournamentSummary } from "@/store/gameStore";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
@@ -85,10 +86,16 @@ export default function GameFlow() {
 
   const [notice, setNotice] = useState<Notice | null>(null);
   const [typeFilter, setTypeFilter] = useState<DiscType | "All">("All");
+  const [showRankings, setShowRankings] = useState(false);
 
   // No game in progress — show the start screen.
   if (season.phase === "preseason") {
     return <StartScreen />;
+  }
+
+  // Rankings overlay replaces the current stage content.
+  if (showRankings) {
+    return <RankingList onClose={() => setShowRankings(false)} />;
   }
 
   const noticeBar = notice ? (
@@ -104,7 +111,7 @@ export default function GameFlow() {
   if (flowStage === "intro") {
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("intro.title")}</h2>
         <p className="loop-lead">
@@ -186,7 +193,7 @@ export default function GameFlow() {
 
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("shop.title")}</h2>
         <p className="loop-lead">{t("shop.lead")}</p>
@@ -342,6 +349,7 @@ export default function GameFlow() {
         stepper={stepper}
         noticeBar={noticeBar}
         setNotice={setNotice}
+        onRankings={() => setShowRankings(true)}
       />
     );
   }
@@ -381,7 +389,7 @@ export default function GameFlow() {
 
     return (
       <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-        <StatusHeader />
+        <StatusHeader onRankings={() => setShowRankings(true)} />
         {stepper}
         <h2>{t("loop.selectTitle")}</h2>
         <p className="loop-lead">{t("tournament.intro")}</p>
@@ -454,8 +462,8 @@ export default function GameFlow() {
         key={lastTournament?.tournamentName ?? "results"}
         lastTournament={lastTournament}
         players={players}
+        onRankings={() => setShowRankings(true)}
         onContinue={() => {
-          // Now advance the season: back to training, or the season summary.
           const next = advanceSeason();
           setNotice(null);
           setFlowStage(isSeasonComplete(next) ? "complete" : "training");
@@ -468,7 +476,7 @@ export default function GameFlow() {
   const summary = summariseSeason(season);
   return (
     <section className={`loop loop-stage-${flowStage}`} key={flowStage}>
-      <StatusHeader />
+      <StatusHeader onRankings={() => setShowRankings(true)} />
       <h2>
         <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
       </h2>
@@ -511,10 +519,12 @@ function TrainingStage({
   stepper,
   noticeBar,
   setNotice,
+  onRankings,
 }: {
   stepper: ReactNode;
   noticeBar: ReactNode;
   setNotice: (notice: Notice | null) => void;
+  onRankings: () => void;
 }) {
   const { t } = useTranslation();
   const club = useGameStore((s) => s.club);
@@ -545,7 +555,7 @@ function TrainingStage({
 
   return (
     <section className="loop loop-stage-training">
-      <StatusHeader />
+      <StatusHeader onRankings={onRankings} />
       {stepper}
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
@@ -630,10 +640,12 @@ function ResultsStage({
   lastTournament,
   players,
   onContinue,
+  onRankings,
 }: {
   lastTournament: TournamentSummary | null;
   players: Player[];
   onContinue: () => void;
+  onRankings: () => void;
 }) {
   const { t } = useTranslation();
   const [showLeaderboard, setShowLeaderboard] = useState(
@@ -649,7 +661,7 @@ function ResultsStage({
   return (
     <section className="loop loop-stage-results">
       {clubWon && showLeaderboard ? <Confetti /> : null}
-      <StatusHeader />
+      <StatusHeader onRankings={onRankings} />
       <h2>{t("results.title")}</h2>
       {lastTournament ? (
         !showLeaderboard ? (
