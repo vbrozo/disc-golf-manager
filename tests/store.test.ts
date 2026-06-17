@@ -108,14 +108,15 @@ describe("enterTournament", () => {
   });
 
   it("gives each club player a rating after the tournament", () => {
+    // "local-open" has 3 rounds, so each tournament adds 3 per-round entries.
     useGameStore.getState().enterTournament("local-open");
     const players = useGameStore.getState().players;
     players.forEach((p) => {
-      expect(p.ratingHistory).toHaveLength(1);
+      expect(p.ratingHistory).toHaveLength(3);
       expect(typeof p.rating).toBe("number");
     });
-    // A second tournament adds another rated entry to the history.
+    // A second tournament adds 3 more entries (6 total, well within the 8-round window).
     useGameStore.getState().enterTournament("local-open");
-    expect(useGameStore.getState().players[0].ratingHistory).toHaveLength(2);
+    expect(useGameStore.getState().players[0].ratingHistory).toHaveLength(6);
   });
 });
