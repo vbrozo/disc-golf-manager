@@ -5,6 +5,7 @@ import { useGameStore } from "@/store/gameStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useClickSound } from "@/hooks/useClickSound";
 import GameFlow from "@/components/GameFlow";
+import PageTitle from "@/components/PageTitle";
 
 /**
  * Client entry point for the game UI. The Zustand store persists to
@@ -27,6 +28,7 @@ export default function GameClient() {
 
   return (
     <>
+      <PageTitle />
       <h2>{t("dashboard.title")}</h2>
       <p>{t("dashboard.welcome")}</p>
       {hydrated ? (
