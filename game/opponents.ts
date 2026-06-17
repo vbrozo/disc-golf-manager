@@ -9,7 +9,7 @@ import type { RandomFn } from "./simulation/holeSimulator";
 import { pick, rollInRange } from "@/utils/random";
 
 /** Default total field size (club players + opponents) for a tournament. */
-export const DEFAULT_FIELD_SIZE = 8;
+export const DEFAULT_FIELD_SIZE = 10;
 
 /** Opponent attributes are rolled in this inclusive range, around the starter level. */
 const MIN_STAT = 42;

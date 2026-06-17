@@ -88,13 +88,13 @@ describe("enterTournament", () => {
     expect(outcome).not.toBeNull();
 
     const summary = useGameStore.getState().lastTournament!;
-    // 2 club players + opponents (default field of 8) → 8 ranked rows.
-    expect(summary.rows).toHaveLength(8);
+    // 2 club players + opponents (default field of 10) → 10 ranked rows.
+    expect(summary.rows).toHaveLength(10);
     // Exactly the two club players are flagged as ours.
     expect(summary.rows.filter((r) => r.isClubPlayer)).toHaveLength(2);
-    // Placements are 1..8 with no gaps.
+    // Placements are 1..10 with no gaps.
     const placements = summary.rows.map((r) => r.placement).sort((a, b) => a - b);
-    expect(placements).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(placements).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 
   it("banks the sum of the club players' earnings", () => {
