@@ -89,20 +89,19 @@ export interface TournamentSimulationResult {
   standings: TournamentStanding[];
 }
 
+const PRIZE_SHARES = [0.5, 0.3, 0.2];
+
 /**
- * Split a prize pool across placements with a linear, rank-weighted scheme:
- * a field of `n` players shares the pool by weight (n - placement + 1), so
- * the winner earns the most and the last place the least. Rounded to whole
- * units.
+ * Only top 3 share the prize pool (50/30/20%). All other placements earn 0.
  */
 export function earningsForPlacement(
   prizePool: number,
   placement: number,
-  fieldSize: number
+  _fieldSize: number
 ): number {
-  const totalWeight = (fieldSize * (fieldSize + 1)) / 2;
-  const weight = fieldSize - placement + 1;
-  return Math.round((prizePool * weight) / totalWeight);
+  const share = PRIZE_SHARES[placement - 1];
+  if (!share) return 0;
+  return Math.round(prizePool * share);
 }
 
 /**
