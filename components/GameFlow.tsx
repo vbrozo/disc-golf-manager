@@ -273,55 +273,67 @@ export default function GameFlow() {
                     {player.rating ?? t("player.unrated")}
                   </span>
                 </div>
-                {DISC_TYPES.map((type) => {
-                  const current = equipped[type];
-                  const options = inventory.filter((d) => d.type === type);
-                  return (
-                    <div key={type} className="loop-train-buttons">
-                      <span className="loop-meta">
-                        {t("shop.slot", {
-                          type: t(`discType.${type}`),
-                          value: current
-                            ? t("shop.slotEquipped", {
-                                name: current.name,
-                                bonus: current.bonus,
-                              })
-                            : t("shop.empty"),
-                        })}
-                      </span>
-                      {current ? (
-                        <>
-                          <Avatar {...getDiscAvatar(current)} size="sm" />
-                          <span
-                            className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
-                          >
-                            {t(`rarity.${current.rarity}`)}
-                          </span>
-                        </>
-                      ) : null}
-                      <select
-                        className="btn btn-small"
-                        value=""
-                        onChange={(e) => onEquip(player, e.target.value)}
+                <div className="equip-slots">
+                  {DISC_TYPES.map((type) => {
+                    const current = equipped[type];
+                    const options = inventory.filter((d) => d.type === type);
+                    return (
+                      <div
+                        key={type}
+                        className={`equip-slot ${current ? "equip-slot--filled" : "equip-slot--empty"}`}
                       >
-                        <option value="">{t("shop.equipPlaceholder")}</option>
-                        {options.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name} (+{d.bonus})
-                          </option>
-                        ))}
-                      </select>
-                      {current ? (
-                        <button
-                          className="btn btn-small"
-                          onClick={() => onUnequip(player, type)}
-                        >
-                          {t("shop.unequip")}
-                        </button>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                        <span className="equip-slot-type">
+                          {t(`discType.${type}`)}
+                        </span>
+                        {current ? (
+                          <>
+                            <div className="equip-slot-disc">
+                              <Avatar {...getDiscAvatar(current)} size="sm" />
+                              <span className="equip-slot-name">
+                                {current.name}
+                              </span>
+                            </div>
+                            <div className="equip-slot-meta">
+                              <span className="equip-slot-bonus">
+                                +{current.bonus}
+                              </span>
+                              <span
+                                className={`rarity-badge rarity-${current.rarity.toLowerCase()}`}
+                              >
+                                {t(`rarity.${current.rarity}`)}
+                              </span>
+                              <button
+                                className="btn btn-small equip-slot-remove"
+                                onClick={() => onUnequip(player, type)}
+                                title={t("shop.unequip")}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <select
+                            className="btn btn-small equip-slot-select"
+                            value=""
+                            onChange={(e) => onEquip(player, e.target.value)}
+                            disabled={options.length === 0}
+                          >
+                            <option value="">
+                              {options.length === 0
+                                ? t("shop.empty")
+                                : t("shop.equipPlaceholder")}
+                            </option>
+                            {options.map((d) => (
+                              <option key={d.id} value={d.id}>
+                                {d.name} (+{d.bonus})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
