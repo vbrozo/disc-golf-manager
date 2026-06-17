@@ -123,7 +123,7 @@ function IntroStage({ onRankings, onHistory }: { onRankings: () => void; onHisto
 
   return (
     <section className="loop loop-stage-intro">
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <h2>{t("intro.title")}</h2>
       <p className="loop-lead">
         {t("intro.body1", {
@@ -218,7 +218,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
 
   return (
     <section className="loop loop-stage-shop">
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <h2>{t("shop.title")}</h2>
       <p className="loop-lead">{t("shop.lead")}</p>
       <p className="loop-lead">
@@ -445,7 +445,7 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
           onClose={() => setSelectedPlayer(null)}
         />
       )}
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
       {noticeBar}
@@ -587,7 +587,7 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
     const totalPar = holes.reduce((s, h) => s + h.par, 0);
     return (
       <section className="loop loop-stage-tournament">
-        <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+        <StatusHeader />
         <h2>{previewTournament.name}</h2>
         <p className="loop-meta">
           {t("loop.tournamentMeta", {
@@ -643,7 +643,7 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
 
   return (
     <section className="loop loop-stage-tournament">
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <FlowStepper current="tournament" />
       <h2>{t("loop.selectTitle")}</h2>
       <p className="loop-lead">{t("tournament.intro")}</p>
@@ -737,7 +737,7 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
   return (
     <section className="loop loop-stage-results">
       {clubWon && showLeaderboard ? <Confetti /> : null}
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <h2>{t("results.title")}</h2>
       {lastTournament ? (
         !showLeaderboard ? (
@@ -849,7 +849,7 @@ function CompleteStage({ onRankings, onHistory }: { onRankings: () => void; onHi
 
   return (
     <section className="loop loop-stage-complete">
-      <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+      <StatusHeader />
       <h2>
         <Icon name="trophy" size={20} /> {t("loop.seasonComplete", { n: summary.season })}
       </h2>
