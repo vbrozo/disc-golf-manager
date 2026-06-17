@@ -28,7 +28,6 @@ import ClubUpgradesModal from "@/components/ClubUpgradesModal";
 import BottomNav from "@/components/BottomNav";
 import StartScreen from "@/components/StartScreen";
 import StatusHeader from "@/components/StatusHeader";
-import FlowStepper from "@/components/FlowStepper";
 import StatBar from "@/components/StatBar";
 import FloatingNumbers from "@/components/FloatingNumbers";
 import Avatar from "@/components/Avatar";
@@ -125,7 +124,6 @@ function IntroStage({ onRankings, onHistory }: { onRankings: () => void; onHisto
   return (
     <section className="loop loop-stage-intro">
       <StatusHeader onRankings={onRankings} onHistory={onHistory} />
-      <FlowStepper current="intro" />
       <h2>{t("intro.title")}</h2>
       <p className="loop-lead">
         {t("intro.body1", {
@@ -209,7 +207,6 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
   return (
     <section className="loop loop-stage-shop">
       <StatusHeader onRankings={onRankings} onHistory={onHistory} />
-      <FlowStepper current="shop" />
       <h2>{t("shop.title")}</h2>
       <p className="loop-lead">{t("shop.lead")}</p>
       <p className="loop-lead">
@@ -437,7 +434,6 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
         />
       )}
       <StatusHeader onRankings={onRankings} onHistory={onHistory} />
-      <FlowStepper current="training" />
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
       {noticeBar}
@@ -580,7 +576,6 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
     return (
       <section className="loop loop-stage-tournament">
         <StatusHeader onRankings={onRankings} onHistory={onHistory} />
-        <FlowStepper current="tournament" />
         <h2>{previewTournament.name}</h2>
         <p className="loop-meta">
           {t("loop.tournamentMeta", {
