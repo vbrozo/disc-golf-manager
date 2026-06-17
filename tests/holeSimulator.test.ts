@@ -34,7 +34,7 @@ describe("basePerformance", () => {
       consistency: 40,
       mental: 30,
     });
-    const expected = 80 * 0.3 + 70 * 0.25 + 60 * 0.15 + 50 * 0.1 + 40 * 0.1 + 30 * 0.1;
+    const expected = 80 * 0.25 + 70 * 0.2 + 60 * 0.15 + 50 * 0.1 + 40 * 0.1 + 30 * 0.1;
     expect(basePerformance(player)).toBeCloseTo(expected);
   });
 });

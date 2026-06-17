@@ -43,6 +43,7 @@ import {
   type TournamentStanding,
   type TrainingOptions,
 } from "@/game";
+import { appendRoundRating, averageRating } from "@/game/rating";
 
 /**
  * Everything a UI needs after the club enters a tournament: the money +
@@ -275,10 +276,8 @@ function playerDisplayName(player: Player): string {
 
 /** Apply a new round rating to a player, updating their rolling history. */
 function applyRoundRating(player: Player, roundRating: number): Player {
-  const ratingHistory = [...(player.ratingHistory ?? []), roundRating].slice(-8);
-  const rating = Math.round(
-    ratingHistory.reduce((sum, r) => sum + r, 0) / ratingHistory.length
-  );
+  const ratingHistory = appendRoundRating(player.ratingHistory, roundRating);
+  const rating = averageRating(ratingHistory) ?? player.rating;
   return { ...player, ratingHistory, rating };
 }
 
@@ -383,11 +382,15 @@ export const useGameStore = create<GameState>()(
       : outcome.player;
     const originalStat = player[program.stat as keyof typeof player] as number;
     const finalStat = boostBonus > 0 ? boostedStat : baseStat;
+    const finalBoost = finalStat - originalStat;
+
+    // Stat already at cap — don't charge money for zero gain.
+    if (finalBoost === 0) return null;
 
     const result = {
       ...outcome.result,
       cost: effectiveCost,
-      boost: finalStat - originalStat,
+      boost: finalBoost,
       newValue: finalStat,
     };
 
@@ -598,9 +601,8 @@ export const useGameStore = create<GameState>()(
     const summary = newInjuries.length > 0 ? { ...summaryBase, newInjuries } : summaryBase;
 
     result.playerResults = clubStandings.map((s) => {
-      const clubPlayer = state.players.find((p) => playerDisplayName(p) === playerDisplayName(s.player));
       return {
-        playerId: clubPlayer?.id ?? s.player.id,
+        playerId: s.player.id,
         playerName: playerDisplayName(s.player),
         placement: s.placement,
         earnings: s.earnings,

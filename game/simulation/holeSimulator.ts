@@ -37,11 +37,7 @@ const OUTCOME_DELTA: Record<HoleOutcome, number> = {
   DoubleBogey: 2,
 };
 
-/**
- * Minimum performance-minus-difficulty value required to achieve each outcome.
- * Weights sum to 0.90 by design — the remaining 0.10 comes from the random
- * factor in {@link simulateHole} (form, morale, momentum).
- */
+/** Minimum performance-minus-difficulty value required to achieve each outcome. */
 export const OUTCOME_THRESHOLDS = {
   eagle: 15,
   birdie: 8,
@@ -63,10 +59,14 @@ export const HOLE_DIFFICULTY_WEIGHTS = {
   elevation: 0.1,
 } as const;
 
-/** Contribution of each player attribute to {@link basePerformance}. */
+/**
+ * Contribution of each player attribute to {@link basePerformance}.
+ * Weights sum to 0.90 by design — the remaining 0.10 is left for the random
+ * factor in {@link simulateHole} (form, morale, momentum), not a player skill.
+ */
 export const STAT_WEIGHTS = {
-  accuracy: 0.3,
-  putting: 0.25,
+  accuracy: 0.25,
+  putting: 0.2,
   power: 0.15,
   scramble: 0.1,
   consistency: 0.1,
