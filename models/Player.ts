@@ -55,24 +55,45 @@ export interface Player {
   tournamentHistory?: { season: number; round: number; tournamentName: string; placement: number; rating: number }[];
 }
 
+/**
+ * A player's gameplay archetype, derived from their stat distribution.
+ * Determines which hole types grant a performance bonus in simulation.
+ */
+export type PlayerSpecialty =
+  | "AllRounder"
+  | "PowerPlayer"
+  | "Precision"
+  | "PuttingMachine"
+  | "Scrambler"
+  | "MentalGame"
+  | "Workhorse";
+
 /** Full display name helper. */
 export function playerFullName(player: Player): string {
   return `${player.firstName} ${player.lastName}`.trim();
 }
 
 /**
- * Returns the player's strongest stat — shown as their specialty in the UI.
- * Ties broken by simulation weight order (accuracy > putting > power > …).
+ * Returns the player's gameplay archetype based on their stat distribution.
+ * If all stats are within 15 points of each other the player is an AllRounder
+ * (gets a small bonus everywhere). Otherwise the dominant stat determines the
+ * archetype (priority-ordered for tie-breaking).
  */
-export function getPlayerSpecialty(player: Player): keyof Pick<Player, "accuracy" | "putting" | "power" | "scramble" | "consistency" | "mental" | "fitness"> {
-  const stats = [
-    ["accuracy",    player.accuracy]    as const,
-    ["putting",     player.putting]     as const,
-    ["power",       player.power]       as const,
-    ["scramble",    player.scramble]    as const,
-    ["consistency", player.consistency] as const,
-    ["mental",      player.mental]      as const,
-    ["fitness",     player.fitness]     as const,
+export function getPlayerSpecialty(player: Player): PlayerSpecialty {
+  const values = [
+    player.accuracy, player.putting, player.power,
+    player.scramble, player.mental, player.consistency, player.fitness,
   ];
-  return stats.reduce((best, curr) => curr[1] > best[1] ? curr : best)[0];
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+
+  if (max - min < 15) return "AllRounder";
+
+  if (player.accuracy    === max) return "Precision";
+  if (player.putting     === max) return "PuttingMachine";
+  if (player.power       === max) return "PowerPlayer";
+  if (player.scramble    === max) return "Scrambler";
+  if (player.mental      === max) return "MentalGame";
+  if (player.consistency === max) return "MentalGame";
+  return "Workhorse";
 }

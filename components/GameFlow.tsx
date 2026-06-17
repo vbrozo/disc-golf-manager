@@ -39,6 +39,8 @@ import RankingList from "@/components/RankingList";
 import { useFloatingNumbers } from "@/hooks/useFloatingNumbers";
 import { useNotice } from "@/hooks/useNotice";
 import { formatMoney, formatScoreToPar } from "@/utils/format";
+import { getCourseById } from "@/game/courses";
+import { holeType } from "@/game/simulation/holeSimulator";
 import {
   getDiscAvatar,
   getNameAvatar,
@@ -267,7 +269,7 @@ function ShopStage({ onRankings, onHistory }: { onRankings: () => void; onHistor
                   {player.rating ?? t("player.unrated")}
                 </span>
                 <span className="specialty-badge" title={t("player.specialty")}>
-                  {t(`stat.${getPlayerSpecialty(player)}`)}
+                  {t(`specialty.${getPlayerSpecialty(player)}`)}
                 </span>
               </div>
               <div className="equip-slots">
@@ -420,7 +422,7 @@ function TrainingStage({ onRankings, onHistory, onUpgrades }: { onRankings: () =
                   {player.rating ?? t("player.unrated")}
                 </span>
                 <span className="specialty-badge" title={t("player.specialty")}>
-                  {t(`stat.${getPlayerSpecialty(player)}`)}
+                  {t(`specialty.${getPlayerSpecialty(player)}`)}
                 </span>
               </div>
               <div className="stat-bars">
@@ -485,6 +487,7 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
   const feeMult = entryFeeMultiplier(clubUpgrades);
 
   const { setNotice, noticeBar } = useNotice();
+  const [previewTournament, setPreviewTournament] = useState<Tournament | null>(null);
 
   const available = getAvailableTournaments(club.reputation);
   const previousReputation = club.reputation - (lastTournament?.clubReputation ?? 0);
@@ -493,10 +496,9 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
     tournament.reputationRequired <= club.reputation;
 
   const onEnter = (tournament: Tournament) => {
-    const outcome = playTournamentRound(tournament.id);
-    if (!outcome) {
-      const eligibility = checkEntryEligibility(club, tournament);
-      const discountedFee = Math.round(eligibility.entryFee * feeMult);
+    const eligibility = checkEntryEligibility(club, tournament);
+    const discountedFee = Math.round(eligibility.entryFee * feeMult);
+    if (!eligibility.canEnter || club.money < discountedFee) {
       setNotice({
         tone: "bad",
         text:
@@ -506,10 +508,82 @@ function TournamentStage({ onRankings, onHistory }: { onRankings: () => void; on
       });
       return;
     }
+    setPreviewTournament(tournament);
+  };
+
+  const onConfirmEnter = () => {
+    if (!previewTournament) return;
+    const outcome = playTournamentRound(previewTournament.id);
+    if (!outcome) {
+      setPreviewTournament(null);
+      setNotice({ tone: "bad", text: t("loop.cantEnter") });
+      return;
+    }
     setFlowStage("results");
   };
 
   const newlyUnlocked = available.filter(isNewlyUnlocked);
+
+  if (previewTournament) {
+    const course = getCourseById(previewTournament.courseId);
+    const holes = course ? course.holes.slice(0, previewTournament.holesPerRound) : [];
+    const totalPar = holes.reduce((s, h) => s + h.par, 0);
+    return (
+      <section className="loop loop-stage-tournament">
+        <StatusHeader onRankings={onRankings} onHistory={onHistory} />
+        <FlowStepper current="tournament" />
+        <h2>{previewTournament.name}</h2>
+        <p className="loop-meta">
+          {t("loop.tournamentMeta", {
+            rounds: previewTournament.rounds,
+            holes: previewTournament.holesPerRound,
+            difficulty: previewTournament.difficulty,
+            pool: formatMoney(previewTournament.prizePool),
+            fee: formatMoney(Math.round(getEntryFee(previewTournament) * feeMult)),
+          })}
+        </p>
+        <div className="course-preview">
+          <div className="course-preview-header">
+            <span className="course-preview-title">{course?.name ?? previewTournament.name}</span>
+            <span className="course-preview-par">{t("course.totalPar", { par: totalPar })}</span>
+          </div>
+          <table className="course-preview-table">
+            <thead>
+              <tr>
+                <th>{t("course.hole")}</th>
+                <th>{t("course.par")}</th>
+                <th>{t("course.type")}</th>
+                <th>{t("course.distance")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {holes.map((hole, i) => {
+                const ht = holeType(hole);
+                return (
+                  <tr key={i}>
+                    <td>{i + 1}</td>
+                    <td>{hole.par}</td>
+                    <td><span className={`hole-type-badge hole-type-${ht.toLowerCase()}`}>{t(`holeType.${ht}`)}</span></td>
+                    <td>{hole.distance} ft</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={2}><strong>{t("course.totalPar", { par: totalPar })}</strong></td>
+                <td colSpan={2} />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div className="course-preview-actions">
+          <button className="btn" onClick={() => setPreviewTournament(null)}>{t("course.back")}</button>
+          <button className="btn btn-primary" onClick={onConfirmEnter}>{t("course.startTournament")}</button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="loop loop-stage-tournament">

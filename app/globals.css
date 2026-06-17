@@ -268,6 +268,91 @@ body {
   --stage-accent: #16a34a;
 }
 
+.course-preview {
+  background: #1e293b;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.course-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+.course-preview-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.course-preview-par {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #22c55e;
+}
+
+.course-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.course-preview-table th {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #334155;
+}
+
+.course-preview-table td {
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid #1e293b;
+  color: #e2e8f0;
+}
+
+.course-preview-table tbody tr:nth-child(even) td {
+  background: #162032;
+}
+
+.course-preview-table tfoot td {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #334155;
+  border-bottom: none;
+  color: #22c55e;
+}
+
+.course-preview-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.hole-type-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+
+.hole-type-short    { background: #166534; color: #bbf7d0; }
+.hole-type-long     { background: #1e3a5f; color: #bfdbfe; }
+.hole-type-technical{ background: #713f12; color: #fef3c7; }
+.hole-type-recovery { background: #7c2d12; color: #fed7aa; }
+.hole-type-pressure { background: #4c1d95; color: #e9d5ff; }
+.hole-type-balanced { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
 .loop-stage-results {
   --stage-accent: #f472b6;
 }

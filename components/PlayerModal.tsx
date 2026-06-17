@@ -64,7 +64,7 @@ export default function PlayerModal({ player, allTournaments, onClose }: PlayerM
                 {player.consistency}
               </span>
               <span className="specialty-badge" title={t("player.specialty")}>
-                {t(`stat.${getPlayerSpecialty(player)}`)}
+                {t(`specialty.${getPlayerSpecialty(player)}`)}
               </span>
               {activeInjuries.length > 0 && (
                 <span className="injury-chip" title={t("injury.penalty", { pts: injuryPenaltyPts })}>
