@@ -1370,6 +1370,12 @@ body {
   margin-top: 0;
 }
 
+/* More specific to override .loop-status > div { flex-direction: column } */
+.loop-status > .achievement-row {
+  flex-direction: row;
+  align-items: center;
+}
+
 .achievement-badge {
   display: inline-flex;
   align-items: center;
