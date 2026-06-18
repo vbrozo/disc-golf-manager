@@ -69,29 +69,40 @@ export default function GameFlow() {
     return <StartScreen />;
   }
 
+  const onRankings = () => setShowRankings(true);
+  const onHistory = () => setShowHistory(true);
+  const onUpgrades = () => setShowUpgrades(true);
+
   if (showRankings) {
-    return <RankingList onClose={() => setShowRankings(false)} />;
+    return (
+      <>
+        <RankingList onClose={() => setShowRankings(false)} />
+        <BottomNav onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />
+      </>
+    );
   }
 
   if (showHistory) {
     return (
-      <div className="app-main">
-        <ClubHistoryModal onClose={() => setShowHistory(false)} />
-      </div>
+      <>
+        <div className="app-main">
+          <ClubHistoryModal onClose={() => setShowHistory(false)} />
+        </div>
+        <BottomNav onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />
+      </>
     );
   }
 
   if (showUpgrades) {
     return (
-      <div className="app-main">
-        <ClubUpgradesModal onClose={() => setShowUpgrades(false)} />
-      </div>
+      <>
+        <div className="app-main">
+          <ClubUpgradesModal onClose={() => setShowUpgrades(false)} />
+        </div>
+        <BottomNav onRankings={onRankings} onHistory={onHistory} onUpgrades={onUpgrades} />
+      </>
     );
   }
-
-  const onRankings = () => setShowRankings(true);
-  const onHistory = () => setShowHistory(true);
-  const onUpgrades = () => setShowUpgrades(true);
 
   const stageEl = (() => {
     switch (flowStage) {
