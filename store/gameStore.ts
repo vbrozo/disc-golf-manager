@@ -109,6 +109,8 @@ export interface TournamentSummary {
   clubReputation: number;
   /** Per-club-player hole sequences for the playback animation, ordered best first. */
   playerTracks: PlayerHoleTrack[];
+  /** Entry fee each player in the field paid to enter. */
+  entryFee: number;
   /** Injuries sustained by club players during this tournament. */
   newInjuries?: import("@/game/simulation/tournamentSimulator").TournamentInjury[];
 }
@@ -317,6 +319,7 @@ function buildTournamentSummary(
     })),
     clubEarnings: settlement.earnings,
     clubReputation: settlement.reputationGained,
+    entryFee: settlement.entryFee,
     playerTracks: clubStandings.map((s) => ({
       playerName: playerDisplayName(s.player),
       rounds: s.rounds.map((round) =>
