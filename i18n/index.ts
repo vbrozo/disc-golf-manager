@@ -303,6 +303,18 @@ const en: Dict = {
   "nav.club": "Club",
   "nav.rankings": "Rankings",
   "nav.history": "History",
+  // Roster management
+  "roster.freeAgents": "Free Agents",
+  "roster.sign": "Sign ({fee})",
+  "roster.release": "Release",
+  "roster.releaseConfirm": "Release {name}?",
+  "roster.scout": "Scout ({fee})",
+  "roster.potential": "Potential",
+  "roster.potentialUnknown": "???",
+  "roster.clubFull": "Club full",
+  "roster.retired": "Retired: {names}",
+  "roster.noFunds": "Not enough funds",
+  "roster.maxPlayers": "Max {n} players",
 };
 
 const hr: Dict = {
@@ -592,6 +604,18 @@ const hr: Dict = {
   "nav.club": "Klub",
   "nav.rankings": "Rang lista",
   "nav.history": "Povijest",
+  // Upravljanje igračkim kadrom
+  "roster.freeAgents": "Slobodni igrači",
+  "roster.sign": "Potpiši ({fee})",
+  "roster.release": "Otpusti",
+  "roster.releaseConfirm": "Otpusti {name}?",
+  "roster.scout": "Skautiraj ({fee})",
+  "roster.potential": "Potencijal",
+  "roster.potentialUnknown": "???",
+  "roster.clubFull": "Klub pun",
+  "roster.retired": "Umirovio se: {names}",
+  "roster.noFunds": "Nema dovoljno sredstava",
+  "roster.maxPlayers": "Max {n} igrača",
 };
 
 const DICTS: Record<Language, Dict> = { en, hr };

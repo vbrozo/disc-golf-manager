@@ -39,6 +39,11 @@ export interface Player {
   preferredShotShape: ShotShape;
   injuries: Injury[];
   /**
+   * Whether the club has scouted this player and knows their true potential.
+   * Undefined / false means the potential value is hidden in the UI.
+   */
+  potentialKnown?: boolean;
+  /**
    * True for AI-generated opponents that fill out a tournament field. Club
    * players leave this unset.
    */

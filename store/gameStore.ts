@@ -6,6 +6,7 @@ import type { Disc, DiscLoadout, DiscType } from "@/models/Disc";
 import type { Player } from "@/models/Player";
 import type { Tournament, TournamentResult } from "@/models/Tournament";
 import type { TrainingResult, TrainingType } from "@/types";
+import { PLAYER_STAT_KEYS } from "@/types";
 import { generateTournamentInjuries } from "@/game/simulation/tournamentSimulator";
 import {
   advanceRound,
@@ -45,6 +46,9 @@ import {
   type TrainingOptions,
 } from "@/game";
 import { appendRoundRating, averageRating } from "@/game/rating";
+
+/** Maximum number of players a club can have on its roster. */
+export const MAX_CLUB_SIZE = 6;
 
 /**
  * Everything a UI needs after the club enters a tournament: the money +
@@ -109,6 +113,8 @@ export interface TournamentSummary {
   clubReputation: number;
   /** Per-club-player hole sequences for the playback animation, ordered best first. */
   playerTracks: PlayerHoleTrack[];
+  /** Entry fee each player in the field paid to enter. */
+  entryFee: number;
   /** Injuries sustained by club players during this tournament. */
   newInjuries?: import("@/game/simulation/tournamentSimulator").TournamentInjury[];
 }
@@ -142,6 +148,8 @@ export interface NewGameOptions {
 export interface GameState {
   club: Club;
   players: Player[];
+  /** Free agents available to sign this season. */
+  freeAgents: Player[];
   /** Record of tournaments the club has played. */
   tournaments: TournamentResult[];
   /** Discs owned by the club. */
@@ -160,6 +168,8 @@ export interface GameState {
   clubHistory: SeasonSnapshot[];
   /** Purchased facility upgrades: upgrade id → current level (1 or 2). */
   clubUpgrades: Record<string, number>;
+  /** Names of players who retired at end of the most recent season. */
+  lastRetirements: string[];
 
   // --- Actions ---
   /** Switch the UI language. */
@@ -233,6 +243,24 @@ export interface GameState {
     options?: TournamentSimulationOptions
   ) => EnterTournamentResult | null;
 
+  /**
+   * Scout a player to reveal their true potential. Costs 300€.
+   * Returns false if the player is not found or club can't afford it.
+   */
+  scoutPlayer: (playerId: string) => boolean;
+
+  /**
+   * Sign a free agent onto the club roster. Costs salary × 3 as signing bonus.
+   * Returns false if player not found, club is full, or club can't afford it.
+   */
+  signPlayer: (playerId: string) => boolean;
+
+  /**
+   * Release a player from the club roster.
+   * Returns false if player not found or would leave the club with 0 players.
+   */
+  releasePlayer: (playerId: string) => boolean;
+
   // --- Game loop (season) ---
   /**
    * Start a brand-new game: reset the club to its starting money + zero
@@ -291,6 +319,68 @@ function applyRoundRating(player: Player, roundRating: number): Player {
 }
 
 /**
+ * Recalculate overall as the average of the 7 trainable stats.
+ */
+function recalcOverall(player: Player): Player {
+  const overall = Math.round(
+    (player.power + player.accuracy + player.putting + player.scramble +
+      player.consistency + player.mental + player.fitness) / 7
+  );
+  return { ...player, overall };
+}
+
+/**
+ * Apply post-tournament XP boost to a player based on their placement.
+ * Boosts a random trainable stat by 1-2 points (capped at potential).
+ * Up to 3 attempts to find a stat below potential.
+ */
+function applyTournamentXp(player: Player, placement: number): Player {
+  // Determine base boost and probability
+  let boost = 0;
+  const roll = Math.random();
+
+  if (placement === 1) {
+    boost = 2;
+  } else if (placement <= 3) {
+    boost = 1;
+  } else if (placement <= 5) {
+    boost = roll < 0.5 ? 1 : 0;
+  } else {
+    boost = roll < 0.25 ? 1 : 0;
+  }
+
+  if (boost === 0) return player;
+
+  // Shuffle the stat keys for random selection
+  const shuffled = [...PLAYER_STAT_KEYS].sort(() => Math.random() - 0.5);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const stat = shuffled[attempt % shuffled.length];
+    const currentVal = player[stat] as number;
+    if (currentVal < player.potential) {
+      const newVal = Math.min(player.potential, currentVal + boost);
+      const updated = { ...player, [stat]: newVal };
+      return recalcOverall(updated);
+    }
+  }
+
+  return player;
+}
+
+/**
+ * Generate free agents from the NPC roster for the start of a season.
+ * Takes `count` players from the roster shuffled randomly.
+ */
+function generateFreeAgents(npcRoster: Player[], count: number): Player[] {
+  const shuffled = [...npcRoster].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count).map((p) => ({
+    ...p,
+    potentialKnown: false,
+    salary: Math.round(p.overall * 15),
+  }));
+}
+
+/**
  * Build the serialisable leaderboard summary stored for the results screen.
  * `eventRatingById` maps each player id to their event rating (average of
  * per-round propagator ratings) for display in the results table.
@@ -317,6 +407,7 @@ function buildTournamentSummary(
     })),
     clubEarnings: settlement.earnings,
     clubReputation: settlement.reputationGained,
+    entryFee: settlement.entryFee,
     playerTracks: clubStandings.map((s) => ({
       playerName: playerDisplayName(s.player),
       rounds: s.rounds.map((round) =>
@@ -334,6 +425,7 @@ export const useGameStore = create<GameState>()(
     (set, get) => ({
   club: initialClub,
   players: [],
+  freeAgents: [],
   tournaments: [],
   inventory: [],
   season: INITIAL_SEASON_STATE,
@@ -343,6 +435,7 @@ export const useGameStore = create<GameState>()(
   npcRoster: [],
   clubHistory: [],
   clubUpgrades: {},
+  lastRetirements: [],
 
   setLanguage: (language) => set({ language }),
 
@@ -663,15 +756,21 @@ export const useGameStore = create<GameState>()(
 
     const injuryByPlayerId = new Map(newInjuries.map((i) => [i.playerId, i.injury]));
 
+    // Build a map of each club player's placement for XP calculation.
+    const placementByPlayerId = new Map<string, number>(
+      clubStandings.map((s) => [s.player.id, s.placement])
+    );
+
     set((s) => ({
       club: settleClubEconomy(s.club, settlement),
       tournaments: [...s.tournaments, result],
       lastTournament: summary,
-      // Update club players' ratings, tournament history, and new injuries.
+      // Update club players' ratings, tournament history, injuries, and XP.
       players: s.players.map((p) => {
         const roundRatings = perRoundRatingById.get(p.id);
         const historyEntry = historyEntryByPlayerId.get(p.id);
         const newInjury = injuryByPlayerId.get(p.id);
+        const placement = placementByPlayerId.get(p.id);
         let updated = p;
         if (roundRatings?.length) {
           updated = roundRatings.reduce((acc, rr) => applyRoundRating(acc, rr), updated);
@@ -688,6 +787,10 @@ export const useGameStore = create<GameState>()(
             injuries: [...(updated.injuries ?? []), newInjury],
           };
         }
+        // Apply post-tournament XP boost based on placement.
+        if (placement !== undefined) {
+          updated = applyTournamentXp(updated, placement);
+        }
         return updated;
       }),
       // Update NPC ratings for the players that competed in this tournament.
@@ -699,6 +802,47 @@ export const useGameStore = create<GameState>()(
     }));
 
     return { settlement, result, standings: simulation.standings };
+  },
+
+  scoutPlayer: (playerId) => {
+    const SCOUT_COST = 300;
+    const state = get();
+    const player = state.players.find((p) => p.id === playerId);
+    if (!player) return false;
+    if (state.club.money < SCOUT_COST) return false;
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - SCOUT_COST },
+      players: s.players.map((p) =>
+        p.id === playerId ? { ...p, potentialKnown: true } : p
+      ),
+    }));
+    return true;
+  },
+
+  signPlayer: (playerId) => {
+    const state = get();
+    const agent = state.freeAgents.find((p) => p.id === playerId);
+    if (!agent) return false;
+    if (state.players.length >= MAX_CLUB_SIZE) return false;
+    const signingBonus = agent.salary * 3;
+    if (state.club.money < signingBonus) return false;
+    set((s) => ({
+      club: { ...s.club, money: s.club.money - signingBonus },
+      players: [...s.players, { ...agent, isOpponent: undefined }],
+      freeAgents: s.freeAgents.filter((p) => p.id !== playerId),
+    }));
+    return true;
+  },
+
+  releasePlayer: (playerId) => {
+    const state = get();
+    const player = state.players.find((p) => p.id === playerId);
+    if (!player) return false;
+    if (state.players.length <= 1) return false;
+    set((s) => ({
+      players: s.players.filter((p) => p.id !== playerId),
+    }));
+    return true;
   },
 
   // --- Game loop (season) ---
@@ -735,6 +879,7 @@ export const useGameStore = create<GameState>()(
       return {
         club: { ...state.club, name: clubName, money: STARTING_MONEY, reputation: 0 },
         players: rosterWithDiscs,
+        freeAgents: [],
         tournaments: [],
         inventory: [],
         season: startSeasonState(INITIAL_SEASON_STATE),
@@ -743,6 +888,7 @@ export const useGameStore = create<GameState>()(
         npcRoster: generateNpcRoster(),
         clubHistory: [],
         clubUpgrades: {},
+        lastRetirements: [],
       };
     }),
 
@@ -752,6 +898,7 @@ export const useGameStore = create<GameState>()(
     set((state) => ({
       season: startSeasonState(state.season),
       flowStage: "training",
+      freeAgents: generateFreeAgents(state.npcRoster, 4),
     }));
     return get().season;
   },
@@ -808,10 +955,50 @@ export const useGameStore = create<GameState>()(
           reputationGained: results.reduce((sum, r) => sum + r.reputationGained, 0),
           endReputation: state.club.reputation,
         };
+
+        // Age increment + decline for all club players.
+        const agedPlayers = playersWithRecovery.map((p) => {
+          const newAge = p.age + 1;
+          let aged = { ...p, age: newAge };
+
+          // Apply stat decline based on age.
+          if (newAge >= 32) {
+            const declineChance = newAge >= 36 ? 0.4 : 0.2;
+            let changed = false;
+            const declinedStats: Partial<Pick<typeof aged, "power" | "accuracy" | "putting" | "scramble" | "consistency" | "mental" | "fitness">> = {};
+            for (const stat of PLAYER_STAT_KEYS) {
+              if (Math.random() < declineChance) {
+                const current = aged[stat] as number;
+                if (current > 1) {
+                  declinedStats[stat] = current - 1;
+                  changed = true;
+                }
+              }
+            }
+            if (changed) {
+              aged = { ...aged, ...declinedStats };
+              aged = recalcOverall(aged);
+            }
+          }
+
+          return aged;
+        });
+
+        // Retire players aged 38+.
+        const retiredNames: string[] = [];
+        const survivingPlayers = agedPlayers.filter((p) => {
+          if (p.age >= 38) {
+            retiredNames.push(playerDisplayName(p));
+            return false;
+          }
+          return true;
+        });
+
         return {
           season: next,
           clubHistory: [...state.clubHistory, snapshot],
-          players: playersWithRecovery.map((p) => ({
+          lastRetirements: retiredNames,
+          players: survivingPlayers.map((p) => ({
             ...p,
             seasonHistory: [
               ...(p.seasonHistory ?? []),
@@ -830,7 +1017,7 @@ export const useGameStore = create<GameState>()(
           })),
         };
       }
-      return { season: next, players: playersWithRecovery };
+      return { season: next, players: playersWithRecovery, lastRetirements: [] };
     });
     return get().season;
   },
@@ -858,6 +1045,7 @@ export const useGameStore = create<GameState>()(
       partialize: (state) => ({
         club: state.club,
         players: state.players,
+        freeAgents: state.freeAgents,
         tournaments: state.tournaments,
         inventory: state.inventory,
         season: state.season,
@@ -867,6 +1055,7 @@ export const useGameStore = create<GameState>()(
         npcRoster: state.npcRoster,
         clubHistory: state.clubHistory,
         clubUpgrades: state.clubUpgrades,
+        lastRetirements: state.lastRetirements,
       }),
       // Skip automatic hydration so the server and first client render both use
       // the default state (no mismatch). A client-only effect rehydrates after

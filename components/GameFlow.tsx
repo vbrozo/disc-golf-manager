@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useGameStore } from "@/store/gameStore";
+import { useGameStore, MAX_CLUB_SIZE } from "@/store/gameStore";
 import {
   checkEntryEligibility,
   DISC_TYPE_STAT,
@@ -411,10 +411,15 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
   const club = useGameStore((s) => s.club);
   const clubUpgrades = useGameStore((s) => s.clubUpgrades);
   const players = useGameStore((s) => s.players);
+  const freeAgents = useGameStore((s) => s.freeAgents);
+  const lastRetirements = useGameStore((s) => s.lastRetirements);
   const tournaments = useGameStore((s) => s.tournaments);
   const lastTournament = useGameStore((s) => s.lastTournament);
   const setFlowStage = useGameStore((s) => s.setFlowStage);
   const trainPlayer = useGameStore((s) => s.trainPlayer);
+  const scoutPlayer = useGameStore((s) => s.scoutPlayer);
+  const signPlayer = useGameStore((s) => s.signPlayer);
+  const releasePlayer = useGameStore((s) => s.releasePlayer);
   const costMult = trainingCostMultiplier(clubUpgrades);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -447,6 +452,34 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
     });
   };
 
+  const onScout = (e: React.MouseEvent, player: Player) => {
+    e.stopPropagation();
+    const ok = scoutPlayer(player.id);
+    if (!ok) {
+      setNotice({ tone: "bad", text: t("roster.noFunds") });
+    }
+  };
+
+  const onRelease = (e: React.MouseEvent, player: Player) => {
+    e.stopPropagation();
+    if (!window.confirm(t("roster.releaseConfirm", { name: playerFullName(player) }))) return;
+    const ok = releasePlayer(player.id);
+    if (!ok) {
+      setNotice({ tone: "bad", text: t("roster.noFunds") });
+    }
+  };
+
+  const onSign = (agent: Player) => {
+    const ok = signPlayer(agent.id);
+    if (!ok) {
+      if (players.length >= MAX_CLUB_SIZE) {
+        setNotice({ tone: "bad", text: t("roster.clubFull") });
+      } else {
+        setNotice({ tone: "bad", text: t("roster.noFunds") });
+      }
+    }
+  };
+
   return (
     <section className="loop loop-stage-training">
       {selectedPlayer && (
@@ -460,6 +493,11 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
       <h2>{t("loop.trainingTitle")}</h2>
       <p className="loop-lead">{t("training.intro")}</p>
       {noticeBar}
+      {lastRetirements.length > 0 && (
+        <div className="notice-bar notice-bar--bad">
+          {t("roster.retired", { names: lastRetirements.join(", ") })}
+        </div>
+      )}
       {newlyUnlockedTiers.length > 0 ? (
         <button
           className="level-up-banner level-up-banner--disc"
@@ -503,6 +541,22 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
                   />
                 ))}
               </div>
+              <div className="loop-player-meta">
+                <span className="loop-meta">
+                  {t("roster.potential")}:{" "}
+                  {player.potentialKnown
+                    ? player.potential
+                    : (
+                      <button
+                        className="btn btn-small"
+                        disabled={club.money < 300}
+                        onClick={(e) => onScout(e, player)}
+                      >
+                        {t("roster.scout", { fee: formatMoney(300) })}
+                      </button>
+                    )}
+                </span>
+              </div>
               <div className="loop-train-buttons">
                 {TRAINING_PROGRAMS.map((program) => {
                   const effectiveCost = Math.round(program.cost * costMult);
@@ -520,6 +574,13 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
                     </button>
                   );
                 })}
+                <button
+                  className="btn btn-small btn-danger"
+                  disabled={players.length <= 1}
+                  onClick={(e) => onRelease(e, player)}
+                >
+                  {t("roster.release")}
+                </button>
               </div>
               <FloatingNumbers
                 items={popups.items.filter((item) => item.groupId === player.id)}
@@ -528,6 +589,41 @@ function TrainingStage({ onRankings, onHistory }: { onRankings: () => void; onHi
           );
         })}
       </div>
+
+      {freeAgents.length > 0 && (
+        <div className="loop-free-agents">
+          <h3>{t("roster.freeAgents")}</h3>
+          <p className="loop-meta">{t("roster.maxPlayers", { n: MAX_CLUB_SIZE })}</p>
+          <ul className="loop-tournaments">
+            {freeAgents.map((agent) => {
+              const signingFee = agent.salary * 3;
+              const clubFull = players.length >= MAX_CLUB_SIZE;
+              const canAfford = club.money >= signingFee;
+              return (
+                <li key={agent.id} className="loop-tournament">
+                  <div className="loop-tournament-info">
+                    <strong>{playerFullName(agent)}</strong>
+                    <span className="loop-meta">
+                      OVR {agent.overall} · {t("roster.potential")}: {t("roster.potentialUnknown")} · {formatMoney(agent.salary)}/mo
+                    </span>
+                  </div>
+                  <button
+                    className="btn btn-small"
+                    disabled={clubFull || !canAfford}
+                    onClick={() => onSign(agent)}
+                    title={clubFull ? t("roster.clubFull") : !canAfford ? t("roster.noFunds") : undefined}
+                  >
+                    {clubFull
+                      ? t("roster.clubFull")
+                      : t("roster.sign", { fee: formatMoney(signingFee) })}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div className="loop-train-buttons">
         <button className="btn btn-primary" onClick={() => setFlowStage("tournament")}>
           {t("training.toTournament")}
