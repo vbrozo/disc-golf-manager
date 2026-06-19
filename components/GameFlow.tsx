@@ -752,35 +752,13 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
               {t("results.subtitle", { name: lastTournament.tournamentName })}
             </p>
             <div className="results-club-indicator" />
-            {/* Postolje — top 3 s nagradom */}
-            {(() => {
-              const top3 = lastTournament.rows.filter((r) => r.placement <= 3);
-              if (top3.length === 0) return null;
-              const podiumOrder = [2, 1, 3].map((p) => top3.find((r) => r.placement === p)).filter(Boolean) as typeof top3;
-              return (
-                <div className="podium">
-                  {podiumOrder.map((row) => {
-                    const clubPlayer = row.playerId ? playersById.get(row.playerId) : undefined;
-                    const avatar = clubPlayer ? getPlayerAvatar(clubPlayer) : getNameAvatar(row.playerName);
-                    const medal = getPlacementMedal(row.placement)!;
-                    return (
-                      <div key={row.placement} className={`podium-step podium-step-${row.placement}${row.isClubPlayer ? " podium-step-club" : ""}`}>
-                        <div className="podium-avatar"><Avatar {...avatar} size="md" /></div>
-                        <div className="podium-name">{row.playerName}</div>
-                        <div className="podium-earn">{formatMoney(row.earnings)}</div>
-                        <div className="podium-block">{medal}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
             <ol className="leaderboard">
               <li className="leaderboard-head">
                 <span className="leaderboard-pos">{t("results.colPos")}</span>
                 <span className="leaderboard-name">{t("results.colPlayer")}</span>
                 <span className="leaderboard-score">{t("results.colScore")}</span>
-                <span className="leaderboard-rating">{t("results.colRating")}</span>
+                <span className="leaderboard-earnings">{t("results.colEarnings")}</span>
+                <span className="leaderboard-fee">{t("results.colFee")}</span>
               </li>
               {lastTournament.rows.map((row) => {
                 const resultClass = !row.isClubPlayer
@@ -804,7 +782,8 @@ function ResultsStage({ onRankings, onHistory }: { onRankings: () => void; onHis
                       <span className="leaderboard-name-text">{row.playerName}</span>
                     </span>
                     <span className="leaderboard-score">{formatScoreToPar(row.totalScore)}</span>
-                    <span className="leaderboard-rating">{row.rating}</span>
+                    <span className="leaderboard-earnings">{row.earnings > 0 ? formatMoney(row.earnings) : "—"}</span>
+                    <span className="leaderboard-fee">-{formatMoney(lastTournament.entryFee)}</span>
                   </li>
                 );
               })}
