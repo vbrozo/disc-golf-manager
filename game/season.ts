@@ -11,6 +11,7 @@
 // any framework or side effects and can be unit tested in isolation.
 
 import type { Player, ShotShape } from "@/models/Player";
+import { rollInRange } from "@/utils/random";
 
 /** Phases of the season loop, in the order the player moves through them. */
 export type SeasonPhase =
@@ -202,7 +203,7 @@ function starterPlayer(
     overall,
     ...attrs,
     morale: 50,
-    potential: Math.min(100, overall + 10),
+    potential: Math.min(100, overall + rollInRange(8, 30, Math.random)),
     salary: 500,
     form: 50,
     popularity: 10,
